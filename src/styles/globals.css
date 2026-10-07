@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* PRD Palette + Accessible Deep Variants (ADR-006 & DESIGN.md §1) */
+  --bg: #FAF5EF;
+  --surface: #FFFDF9;
+  --blush: #E8C1BC;
+  --rose: #C9857B;          /* decorative only */
+  --rose-deep: #A15B52;     /* buttons, links (5.0:1 on ivory, 4.69:1 on bg) */
+  --rose-deeper: #9A554D;   /* hover/active state */
+  --cocoa: #4A2D28;         /* text (11.41:1 on bg) */
+  --cocoa-muted: #6B4F49;   /* secondary text (6.82:1 on bg) */
+  --beige: #E7D8C7;
+  --lavender: #C7B5D9;
+  --sage: #B8C0A6;
+  --gold: #B69A67;          /* decorative only */
+  --gold-deep: #7A6232;     /* readable gold (5.35:1 on bg) */
+  --success: #2F6B3F;       /* confirmations (5.88:1 on bg) */
+  --error: #A32B2B;         /* errors (6.59:1 on bg) */
+  --border: rgba(74, 45, 40, 0.14);
+  --ring: #6E3F38;          /* focus ring, >=3:1 contrast */
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--bg);
+    color: var(--cocoa);
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--cocoa);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Accessibility: Focus Visible styles conforming to WCAG 2.2 AA (≥3:1) */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Fluid Typography Classes per DESIGN.md §2 */
+.text-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.75rem, 6vw, 5rem);
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.text-h1 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.text-h2 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.text-h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.375rem, 2vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.text-eyebrow {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.text-price {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
