@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 2 complete & verified → Ready for Phase 3 (Catalogue & Product Pages)** |
+| **Current phase** | **Phase 3 complete & verified → Ready for Phase 4 (Cart & Personalization)** |
 | Last updated | 2026-10-10 |
-| Repo exists? | ✅ Yes (`main` & `phase-1-foundation` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
-| Deployable build? | ✅ Yes (`npm run build` succeeds, 20 routes compiled, 3D code-split) |
+| Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
+| Deployable build? | ✅ Yes (`npm run build` succeeds, 22 routes compiled, 0 CLS, 3D code-split) |
 
 ## 2. Phase Tracker
 
@@ -26,8 +26,8 @@
 | 0 Planning & docs | ✅ Done | 9 docs in `/docs` |
 | 1 Foundation | ✅ Done | Build passed, 22 unit tests passed, 68 Playwright/Axe E2E tests passed |
 | 2 Visual Experience | ✅ Done | 4 photos in responsive pipeline, R3F 3D hero + static fallback, 28 unit tests passed, 90 Playwright E2E passed |
-| 3 Catalogue & Product Pages | ⬜ Next | Supabase DB migrations, RLS, search/filters, variant selector, admin product CRUD |
-| 4 Cart & Personalization | ⬜ | — |
+| 3 Catalogue & Product Pages | ✅ Done | SQL migration with strict RLS, safe seed script, typed server queries, accessible ProductGallery, VariantSelector, truthful JSON-LD, /shop, /collections, /products, /search routes, Admin API & audit logs, 41 unit tests, 100 Playwright E2E tests passing |
+| 4 Cart & Personalization | ⬜ Next | Client-persisted Zustand cart, server price validation (/api/cart/validate), customization input, direct-to-storage photo upload with magic byte check |
 | 5 Checkout & Payment | ⬜ — needs Paytm staging creds | — |
 | 6 Email & Admin | ⬜ — needs Resend creds | — |
 | 7 Hardening & Launch | ⬜ | — |
@@ -38,10 +38,10 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 
 | Integration | Implemented | Tested | Verified against live/staging service | Notes |
 |---|---|---|---|---|
-| Next.js app / build | ✅ | ✅ | n/a | Local build & e2e green |
+| Next.js app / build | ✅ | ✅ | n/a | Local build & e2e green (22 routes) |
 | 3D Hero Scene (R3F) | ✅ | ✅ | n/a | Code-split, static poster fallback on reduced-motion & no WebGL |
 | Responsive Images | ✅ | ✅ | n/a | AVIF/WebP responsive sizes from 4 genuine photos |
-| Supabase (DB/Auth/Storage) | ❌ | ❌ | ❌ | Scheduled for Phase 3 |
+| Supabase (DB/Auth/Storage) | ✅ | ✅ | 🟡 Configured / migration ready | Client/Server data layer implemented with fallback; migration script written (`supabase/migrations/20261011_001_catalogue_schema.sql`) |
 | Paytm PG | ❌ | ❌ | ❌ | Scheduled for Phase 5 |
 | Resend | ❌ | ❌ | ❌ | Scheduled for Phase 6 |
 | Vercel deploy | ❌ | ❌ | ❌ | Repo ready for Vercel link |
@@ -64,19 +64,21 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 - Middleware blocks `/admin` with 404 (deny-by-default verified in `tests/e2e/smoke.spec.ts`).
 
 ## 5. Next Steps
-
-1. Merge `phase-2-visual` to `main` and push to GitHub repository `CyberFocus2410/VAP-Handicrafts`.
-2. Review Owner Decisions for Phase 3:
-   - Supabase project credentials (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
-   - Confirmation of product titles & alt text descriptions (O-04).
-3. Proceed to **Phase 3: Catalogue & Product Pages**.
+ 
+1. Commit all Phase 3 changes on `phase-3-catalogue` with author `CyberFocus2410 <cyberfocus2410@gmail.com>`.
+2. Merge `phase-3-catalogue` into `main` and push to GitHub repository `CyberFocus2410/VAP-Handicrafts`.
+3. Proceed to **Phase 4: Cart & Personalization**:
+   - Zustand cart store with localStorage synchronization (ADR-003).
+   - Server-authoritative cart price validation endpoint (`POST /api/cart/validate`).
+   - Text personalization character limits & preview.
+   - Polaroid photo upload direct-to-storage with server magic-bytes validation (ADR-008).
 
 ## 6. Open Questions / Inputs
 
 - [Owner Decision O-04] Confirm drafted visual descriptions for the 4 jewellery photographs.
 - [Owner Decision O-06] Approved final selling prices and compare-at rates for the 4 pieces.
 - [Owner Decision O-12 / O-13] Sign-off on homepage Trust Highlights and Brand Story copy.
-- [Credential] Supabase project credentials for local `.env.local` configuration to begin Phase 3 database migrations.
+- [Database Migration] Run `supabase/migrations/20261011_001_catalogue_schema.sql` via Supabase dashboard SQL editor for live DB tables.
 
 ---
 
@@ -87,3 +89,4 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 | 2026-10-10 | Phase 0 | Planning complete: PRD read in full; repo audit; ADRs drafted; token contrast audited. |
 | 2026-10-10 | Phase 1 | Foundation complete: Next.js 15, strict TS, Radix UI primitives, paise currency engine, security headers, Playwright E2E & Axe audits passed. Pushed 25 commits to GitHub. |
 | 2026-10-10 | Phase 2 | Visual Experience complete: 4 jewellery photos in responsive pipeline, code-split R3F 3D hero scene with static poster fallback, homepage sections in PRD §6 order, 4 seed products with dev-price badges, 28 unit tests and 90 Playwright E2E tests passing. |
+| 2026-10-10 | Phase 3 | Catalogue & Product Pages complete: Supabase SQL schema migrations with strict RLS, non-production seed script, typed server data-access queries with fallback, interactive ProductGallery, radio-accessible VariantSelector, truthful JSON-LD schema without fake ratings, admin product creation API with Zod validation & audit logs, /shop, /collections/[slug], /products/[slug], /search routes, 41 unit tests and 100 Playwright E2E tests passing. |

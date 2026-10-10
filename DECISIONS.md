@@ -46,10 +46,10 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 - **Consequences:** Primary buttons are a deeper rose than the PRD's swatch. Owner may adjust within AA.
 
 ### ADR-007 — Admin auth foundation built in Phase 3
-- **Status:** Proposed
+- **Status:** Accepted
 - **Context:** PRD §24 puts admin product management in Phase 3 but authentication/audit in Phase 6. Product management can't be safe without auth.
 - **Decision:** Build Supabase Auth + `admin_users` allow-list + `requireAdmin()` + audit-log writer in Phase 3. Phase 6 adds orders/email/metrics UI.
-- **Consequences:** Phase 3 grows slightly; no unauthenticated admin surface ever exists.
+- **Consequences:** Privileged operations write to `admin_audit_logs`. Unauthenticated requests to `/api/admin/products` return 401. Tested in `tests/unit/admin-catalogue.test.ts`.
 
 ### ADR-008 — Direct-to-storage uploads with server-side validation
 - **Status:** Proposed
@@ -82,8 +82,8 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 - **Decision:** Framer Motion + CSS; R3F for one hero scene. No GSAP unless a documented scroll-timeline requirement can't be met otherwise.
 
 ### ADR-014 — Plain-SQL migrations via Supabase CLI
-- **Status:** Proposed
-- **Decision:** Versioned SQL migrations (schema + RLS + constraints together), generated TS types from DB. No ORM at launch.
+- **Status:** Accepted
+- **Decision:** Versioned SQL migrations (schema + RLS + constraints together), typed server client with safe seed fallback. Seed script strictly refuses to run in production (`scripts/seed.mjs`). No ORM at launch.
 - **Alternatives:** Drizzle/Prisma (more typing ergonomics, adds a layer over Supabase RLS).
 
 ### ADR-015 — Paytm integration sourced from official docs at implementation time
