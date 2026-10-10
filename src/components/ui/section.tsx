@@ -2,12 +2,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
-  as?: React.ElementType;
+  as?: string;
   surface?: "default" | "surface" | "blush" | "beige";
 }
 
 export function Section({
-  as: Component = "section",
+  as = "section",
   surface = "default",
   className,
   children,
@@ -20,12 +20,12 @@ export function Section({
     beige: "bg-beige/30 text-cocoa",
   }[surface];
 
-  return (
-    <Component
-      className={cn("py-12 md:py-20 lg:py-28", surfaceClasses, className)}
-      {...props}
-    >
-      {children}
-    </Component>
+  return React.createElement(
+    as,
+    {
+      className: cn("py-12 md:py-20 lg:py-28", surfaceClasses, className),
+      ...props,
+    },
+    children
   );
 }

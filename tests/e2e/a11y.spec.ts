@@ -6,8 +6,7 @@ const A11Y_PAGES = ["/", "/shop", "/contact", "/about"];
 test.describe("WCAG 2.2 AA Accessibility Audits (Axe Smoke)", () => {
   for (const pagePath of A11Y_PAGES) {
     test(`has zero serious or critical accessibility violations on ${pagePath}`, async ({ page }) => {
-      await page.goto(pagePath);
-      await page.waitForLoadState("domcontentloaded");
+      await page.goto(pagePath, { waitUntil: "domcontentloaded" });
 
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

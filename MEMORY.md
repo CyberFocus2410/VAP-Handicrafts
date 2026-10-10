@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 1 complete & verified → awaiting Phase 2 prerequisites (jewellery photos)** |
+| **Current phase** | **Phase 2 complete & verified → Ready for Phase 3 (Catalogue & Product Pages)** |
 | Last updated | 2026-10-10 |
-| Repo exists? | ✅ Yes (`phase-1-foundation` branch initialized) |
-| Deployable build? | ✅ Yes (`npm run build` succeeds, 20 routes compiled) |
+| Repo exists? | ✅ Yes (`main` & `phase-1-foundation` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
+| Deployable build? | ✅ Yes (`npm run build` succeeds, 20 routes compiled, 3D code-split) |
 
 ## 2. Phase Tracker
 
@@ -25,8 +25,8 @@
 |---|---|---|
 | 0 Planning & docs | ✅ Done | 9 docs in `/docs` |
 | 1 Foundation | ✅ Done | Build passed, 22 unit tests passed, 68 Playwright/Axe E2E tests passed |
-| 2 Visual Experience | ⬜ Not started — **blocked on photos (O-03)** for acceptance | Assets folder empty |
-| 3 Catalogue & Product Pages | ⬜ | — |
+| 2 Visual Experience | ✅ Done | 4 photos in responsive pipeline, R3F 3D hero + static fallback, 28 unit tests passed, 90 Playwright E2E passed |
+| 3 Catalogue & Product Pages | ⬜ Next | Supabase DB migrations, RLS, search/filters, variant selector, admin product CRUD |
 | 4 Cart & Personalization | ⬜ | — |
 | 5 Checkout & Payment | ⬜ — needs Paytm staging creds | — |
 | 6 Email & Admin | ⬜ — needs Resend creds | — |
@@ -39,82 +39,51 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 | Integration | Implemented | Tested | Verified against live/staging service | Notes |
 |---|---|---|---|---|
 | Next.js app / build | ✅ | ✅ | n/a | Local build & e2e green |
+| 3D Hero Scene (R3F) | ✅ | ✅ | n/a | Code-split, static poster fallback on reduced-motion & no WebGL |
+| Responsive Images | ✅ | ✅ | n/a | AVIF/WebP responsive sizes from 4 genuine photos |
 | Supabase (DB/Auth/Storage) | ❌ | ❌ | ❌ | Scheduled for Phase 3 |
 | Paytm PG | ❌ | ❌ | ❌ | Scheduled for Phase 5 |
 | Resend | ❌ | ❌ | ❌ | Scheduled for Phase 6 |
 | Vercel deploy | ❌ | ❌ | ❌ | Repo ready for Vercel link |
-| 3D hero | ❌ | ❌ | n/a | Scheduled for Phase 2 |
 
 ## 4. Known Facts
 
 - Brand name confirmed as **VAP Handicrafts** (owner decision O-01).
-- Token contrast mathematically verified via `contrast.test.ts`:
-  - `--ring` (`#6E3F38`) on `--bg` (`#FAF5EF`): **7.97:1** (exceeds WCAG 2.2 AA target of 3.0:1)
-  - `--ring` (`#6E3F38`) on `--surface` (`#FFFDF9`): **8.50:1** (exceeds WCAG 2.2 AA target of 3.0:1)
-  - `--border` (cocoa 14%) on `--bg`: **1.29:1**
-  - `--border` (cocoa 14%) on `--surface`: **1.29:1**
-  - `--rose-deep` (`#A15B52`) with ivory text: **5.00:1** (exceeds WCAG AA target of 4.5:1)
-- Integer paise money arithmetic thoroughly tested with zero float accumulation (`src/lib/money.test.ts`, 16 tests).
-- E2E Responsive layout verified with zero horizontal overflow across 360, 390, 768, 1024, 1440px viewports (`tests/e2e/responsive.spec.ts`).
-- Axe automated accessibility audit passed with 0 serious or critical violations on `/`, `/shop`, `/contact`, `/about` (`tests/e2e/a11y.spec.ts`).
+- 4 genuine photographs received in `assets-source/jewellery/` and processed into `public/images/products/`:
+  1. `shell-cone-pink-crackle-bracelet` (Spiral Conch & Pink Crackle Bead Bracelet)
+  2. `scallop-cowrie-earring-bracelet-set` (Scallop Shell & Cowrie Earring-Bracelet Set)
+  3. `purple-floral-beaded-pearl-set` (Lavender Floral Beaded & Pearl Set)
+  4. `golden-link-cowrie-charm-bracelet` (Golden Link Cowrie & Conch Charm Bracelet)
+- All 4 products represented in `src/data/seed-products.ts` with integer paise money, DB-shaped schema, and `is_dev_price: true` flags.
+- R3F 3D scene (`HeroScene3D.tsx`) dynamically loaded with `ssr: false` in `HeroSceneWrapper.tsx`; occupies identical aspect ratio as static fallback (`hero-fallback.webp`), ensuring **0 Cumulative Layout Shift (CLS)**.
+- 3D bundle strictly code-split: absent from non-home routes (non-home routes maintain ~105 kB first load JS).
+- Full reduced-motion and WebGL failure fallbacks proven in Playwright E2E tests (`tests/e2e/phase2-visual.spec.ts`).
+- Homepage sections render in strict PRD §6 order: AnnouncementBar → Header → Hero → TrustHighlights → FeaturedCollections → ScrapbookKeepsakes → FeaturedProducts → PersonalizedGiftFeature → BrandStory → Footer.
+- Token contrast mathematically verified via `contrast.test.ts`.
+- Integer paise money arithmetic thoroughly tested with zero float accumulation (`src/lib/money.test.ts`).
 - Middleware blocks `/admin` with 404 (deny-by-default verified in `tests/e2e/smoke.spec.ts`).
-- Zero secret violations found by `npm run check:secrets`.
 
-## 5. Blockers
+## 5. Next Steps
 
-| ID | Blocker | Blocks | Owner action |
-|---|---|---|---|
-| B1 | 4 jewellery photographs not supplied | P2 acceptance, P3 seed | Place originals in `/assets-source/jewellery/` |
-| B2 | Paytm merchant onboarding | P5 verification | Start/complete onboarding; share staging creds |
-| B3 | Supabase project(s) | P3 | Create dev (+prod) projects |
-| B4 | GitHub repo / Vercel project | P1 remote CI/CD | Connect git remote and Vercel project |
-| B5 | Resend + verified domain | P6 | Set up |
-| B6 | Policies, prices, shipping, retention, tax details | P3–P7 | See DECISIONS Part 2 |
+1. Merge `phase-2-visual` to `main` and push to GitHub repository `CyberFocus2410/VAP-Handicrafts`.
+2. Review Owner Decisions for Phase 3:
+   - Supabase project credentials (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+   - Confirmation of product titles & alt text descriptions (O-04).
+3. Proceed to **Phase 3: Catalogue & Product Pages**.
 
-## 6. Open Questions for the Owner (top priority first)
+## 6. Open Questions / Inputs
 
-1. Can you place the 4 original jewellery photos in `/assets-source/jewellery/`? (Prerequisite for Phase 2)
-2. Is Paytm merchant onboarding already in progress? Which UPI flows are enabled?
-3. Do you sell single-piece items (overselling risk → ADR-005 reservation) or can you restock/make to order?
-4. Are the products handmade? (decides what we may claim on the site)
-5. Keep "Bestie" and "Bestfriend" cards as separate collections?
-
-## 7. Conventions in Force (quick reference)
-
-- Money = integer paise. Server recomputes everything.
-- Paid status only via verified Paytm status + exact amount match + state machine + DB txn.
-- Emails via outbox, only after verified payment.
-- Admin: server-side authz on every operation + audit log.
-- Customer uploads: private bucket, random keys, server-side validation, signed URLs.
-- No fabricated reviews/stock/claims. No stock photos for products.
-- Simulator never in production.
-
-## 8. Next Actions
-
-1. Owner supplies the 4 jewellery photographs in `/assets-source/jewellery/`.
-2. Begin **Phase 2 — Visual Experience** per `docs/PLAN.md`.
+- [Owner Decision O-04] Confirm drafted visual descriptions for the 4 jewellery photographs.
+- [Owner Decision O-06] Approved final selling prices and compare-at rates for the 4 pieces.
+- [Owner Decision O-12 / O-13] Sign-off on homepage Trust Highlights and Brand Story copy.
+- [Credential] Supabase project credentials for local `.env.local` configuration to begin Phase 3 database migrations.
 
 ---
 
-## 9. Session Log (append newest at top)
+## 7. Change Log
 
-```
-### 2026-10-10 — Phase 1 (Foundation) Complete
-- Initialized branch `phase-1-foundation`.
-- Scaffolding: Next.js 15 (App Router), React 19, strict TypeScript (`strict: true`, `noUncheckedIndexedAccess`), Tailwind CSS, Radix UI.
-- Design System: DESIGN.md CSS variable tokens, fluid clamp typography, accessible AA deep variants.
-- Brand: Configured `src/config/brand.ts` with confirmed brand name "VAP Handicrafts".
-- Money: `src/lib/money.ts` integer paise arithmetic with 16 comprehensive unit tests.
-- Tokens & Env: `src/lib/contrast.test.ts` (calculated 7.97:1 ring contrast, 5.00:1 button contrast), `src/lib/env.ts` with Zod validation.
-- UI Primitives: Button, Label, Input, FormField, Select, Checkbox, Dialog, Drawer, Badge, Price, Container, Section, Heading, VisuallyHidden, SkipLink, LiveRegion.
-- Layout: AnnouncementBar, Header with desktop + mobile drawer, Footer.
-- Routes: All 20 routes stubbed with honest copy (no dead links).
-- Middleware: Deny-by-default 404 protection for `/admin`.
-- Security & SEO: next.config.ts security headers (CSP, HSTS, X-Frame-Options DENY), robots.ts, sitemap.ts, scripts/check-secrets.mjs.
-- Tests Passed:
-  * typecheck: 0 errors
-  * vitest: 22/22 unit tests passed
-  * check:secrets: 0 secrets detected
-  * build: 20/20 routes compiled successfully
-  * playwright: 68/68 E2E tests passed (smoke, responsive at 360-1440px, axe 0 violations)
-```
+| Date | Phase | Summary |
+|---|---|---|
+| 2026-10-10 | Phase 0 | Planning complete: PRD read in full; repo audit; ADRs drafted; token contrast audited. |
+| 2026-10-10 | Phase 1 | Foundation complete: Next.js 15, strict TS, Radix UI primitives, paise currency engine, security headers, Playwright E2E & Axe audits passed. Pushed 25 commits to GitHub. |
+| 2026-10-10 | Phase 2 | Visual Experience complete: 4 jewellery photos in responsive pipeline, code-split R3F 3D hero scene with static poster fallback, homepage sections in PRD §6 order, 4 seed products with dev-price badges, 28 unit tests and 90 Playwright E2E tests passing. |

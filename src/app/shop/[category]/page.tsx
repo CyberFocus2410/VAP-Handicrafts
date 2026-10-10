@@ -1,36 +1,54 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
+import { ProductCard } from "@/components/ui/product-card";
 import { ArrowLeft } from "lucide-react";
+import { SEED_PRODUCTS } from "@/data/seed-products";
 
 interface CategoryPageProps {
   params: Promise<{ category: string }>;
 }
 
-const validCategories: Record<string, { title: string; description: string }> = {
+const validCategories: Record<string, { title: string; description: string; filterCategory?: string }> = {
+  "shell-jewellery": {
+    title: "Shell Jewellery",
+    description: "Handcrafted charm bracelets, earrings, and delicate accessories made with natural ocean shells.",
+    filterCategory: "shell-jewellery",
+  },
   jewellery: {
     title: "Shell Jewellery",
-    description: "Handcrafted charm bracelets, earrings, and delicate accessories.",
+    description: "Handcrafted charm bracelets, earrings, and delicate accessories made with natural ocean shells.",
+    filterCategory: "shell-jewellery",
+  },
+  "personalized-gifts": {
+    title: "Personalized Keepsakes & Polaroids",
+    description: "Custom photo cards, heartfelt keepsake frames, and memories preserved forever.",
+    filterCategory: "personalized-gifts",
   },
   keepsakes: {
     title: "Personalized Keepsakes",
     description: "Custom photo cards, heartfelt keepsake frames, and memories preserved forever.",
+    filterCategory: "personalized-gifts",
   },
   "gift-sets": {
     title: "Gift Sets",
     description: "Curated gift combinations packaged with luxury presentation.",
+    filterCategory: "shell-jewellery",
+  },
+  "return-favors": {
+    title: "Festive & Return Favors",
+    description: "Charming tokens of gratitude for weddings, ceremonies, and milestone celebrations.",
   },
 };
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { category } = await params;
   const data = validCategories[category];
-  if (!data) return { title: "Category Not Found" };
+  if (!data) return { title: "Category Not Found | VAP Handicrafts" };
   return {
-    title: data.title,
+    title: `${data.title} | VAP Handicrafts`,
     description: data.description,
   };
 }
@@ -40,7 +58,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const categoryData = validCategories[category];
 
   if (!categoryData) {
-    // If not in the pre-defined categories, still display a friendly placeholder or notFound
     return (
       <Section surface="default" className="py-16">
         <Container className="text-center">
@@ -59,6 +76,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </Section>
     );
   }
+
+  const matchingProducts = categoryData.filterCategory
+    ? SEED_PRODUCTS.filter((p) => p.category_slug === categoryData.filterCategory)
+    : [];
 
   return (
     <Section surface="default" className="py-12 md:py-20">
@@ -79,11 +100,19 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </p>
         </div>
 
-        <div className="rounded-md border border-dashed border-border p-12 text-center bg-surface/50">
-          <p className="text-cocoa-muted text-sm max-w-md mx-auto">
-            Catalogue seed data and interactive product cards are scheduled for Phase 3 upon approval of product photos and pricing.
-          </p>
-        </div>
+        {matchingProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {matchingProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed border-border p-12 text-center bg-surface/50">
+            <p className="text-cocoa-muted text-sm max-w-md mx-auto">
+              Catalogue seed data and interactive product cards are scheduled for Phase 3 upon approval of product photos and pricing.
+            </p>
+          </div>
+        )}
       </Container>
     </Section>
   );

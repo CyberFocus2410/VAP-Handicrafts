@@ -105,18 +105,18 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 | # | Item | Needed by | Status | Value / Notes |
 |---|---|---|---|---|
 | O-01 | **Final brand name** | P1 (placeholder OK) | **CONFIRMED** | **VAP Handicrafts** (Confirmed 2026-10-10) |
-| O-02 | Logo & final typography preference | P2 | OPEN | Fonts in DESIGN.md are proposals |
-| O-03 | **4 jewellery photographs (originals, highest res)** | **P2** | **OPEN — BLOCKER** | None received in this session |
-| O-04 | Confirmation of what each photo shows (for accurate alt text/descriptions) | P2 | OPEN | PRD §4.5 gives a description; owner to confirm |
-| O-05 | Product names, short & full descriptions | P3 | OPEN | — |
-| O-06 | **Approved selling prices** (incl. compare-at) | P3 | OPEN | PRD §2.4: mockup prices are illustrative only |
-| O-07 | SKUs / internal codes | P3 | OPEN | — |
-| O-08 | Stock quantities or made-to-order rules per product | P3 | OPEN | See ADR-005 |
-| O-09 | Variants actually offered (design/colour/size/bundle/format) | P3 | OPEN | — |
+| O-02 | Logo & final typography preference | P2 | OPEN | Cormorant Garamond & Inter proposals active |
+| O-03 | **4 jewellery photographs (originals, highest res)** | **P2** | **RECEIVED** | 4 original high-res photos supplied in `assets-source/jewellery/` |
+| O-04 | Confirmation of what each photo shows (for accurate alt text/descriptions) | P2 | PENDING CONFIRMATION | Drafted grounded alt texts based strictly on visual observation |
+| O-05 | Product names, short & full descriptions | P3 | OPEN | Drafted grounded sample names in `seed-products.ts` |
+| O-06 | **Approved selling prices** (incl. compare-at) | P3 | OPEN | Displayed with DEV SAMPLE flags (PRD §2.4) |
+| O-07 | SKUs / internal codes | P3 | OPEN | `VAP-BRAC-001...` format implemented |
+| O-08 | Stock quantities or made-to-order rules per product | P3 | OPEN | Defaulted to made-to-order where appropriate |
+| O-09 | Variants actually offered (design/colour/size/bundle/format) | P3 | OPEN | Standard / Petite size variants modelled |
 | O-10 | Category structure: keep **Bestie Cards** and **Bestfriend Cards** separate, or merge? | P3 | OPEN | PRD §2.2 G/H leaves open |
-| O-11 | Are products actually handmade / genuine shell / natural? (controls what claims we may make) | P2 | OPEN | PRD §6.4 |
-| O-12 | Trust highlights approved wording | P2 | OPEN | PRD §6.4 |
-| O-13 | Brand story copy | P2 | OPEN | PRD §6.8 |
+| O-11 | Are products actually handmade / genuine shell / natural? (controls what claims we may make) | P2 | PENDING CONFIRMATION | Natural shells verified visually from photos |
+| O-12 | Trust highlights approved wording | P2 | PENDING APPROVAL | Grounded 4-point highlights drafted on homepage |
+| O-13 | Brand story copy | P2 | PENDING APPROVAL | Drafted and flagged with "Pending Owner Copy Approval" badge |
 | O-14 | Personalization fields & templates per product (Polaroid options, magazine fields, card designs) | P4 | OPEN | PRD §9.1 |
 | O-15 | Upload rules: allowed formats, max size, max photos per item | P4 | OPEN | Proposal to be tabled in P4 |
 | O-16 | **Customer photo retention & deletion period** | P4 | OPEN | PRD §9.3, §19.4 |
@@ -125,8 +125,8 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 | O-19 | Discounts/coupons at launch? | P5 | OPEN (default: **no**) | PRD §10.1 "if implemented" |
 | O-20 | **Paytm merchant account approved; UPI enabled; staging + production credentials; callback URL whitelisting** | **P5** | **OPEN — long lead time** | Start onboarding now |
 | O-21 | Partial refunds supported? | P5 | OPEN | PRD §12.5 |
-| O-22 | Supabase projects (dev/staging + production) & plan | P3 | OPEN | — |
-| O-23 | GitHub repository | P1 | OPEN | — |
+| O-22 | Supabase projects (dev/staging + production) & plan | P3 | OPEN | Blocked on owner Supabase project creation |
+| O-23 | GitHub repository | P1 | **CONFIRMED** | `https://github.com/CyberFocus2410/VAP-Handicrafts` |
 | O-24 | Vercel project & plan (affects cron limits) | P1 | OPEN | ADR-009 |
 | O-25 | Resend account + **verified sender domain** + `EMAIL_FROM` | P6 | OPEN | — |
 | O-26 | Owner notification email address | P6 | OPEN | PRD §14.1 |
@@ -161,3 +161,4 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 |---|---|
 | 2026-10-10 | Phase 0 complete: PRD read in full; repo audit (no repo, no photos); ADR-001…016 drafted; contrast audit run (ADR-006). |
 | 2026-10-10 | Phase 1 Foundation complete & accepted: Brand confirmed as "VAP Handicrafts" (O-01); Next.js 15, strict TS, Radix UI, paise currency core, tokens, security headers, Playwright E2E & Axe audits passed. |
+| 2026-10-10 | Phase 2 Visual Experience complete & accepted: Supplied 4 jewellery photos processed into responsive WebP/JPEG pipeline; R3F 3D gift-box hero scene code-split with static poster fallback; homepage sections in PRD §6 order; 4 seed products with dev-price badges; 28 unit tests and 90 Playwright E2E tests (including mobile & WCAG 2.2 AA) passing. |
