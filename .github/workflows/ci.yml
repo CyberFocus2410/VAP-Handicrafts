@@ -1,0 +1,48 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master, phase-*]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    name: Validation & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Secret Scan
+        run: npm run check:secrets
+
+      - name: Strict Typecheck
+        run: npm run typecheck
+
+      - name: Unit & Integration Tests (Paise arithmetic & Tokens)
+        run: npm run test
+
+      - name: Production Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_URL: "https://vaphandicrafts.com"
+          NEXT_PUBLIC_BRAND_NAME: "VAP Handicrafts"
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-End & Accessibility Tests
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+          NEXT_PUBLIC_BRAND_NAME: "VAP Handicrafts"
