@@ -19,6 +19,8 @@ const IGNORED_PATHS = [
   "playwright-report",
   "package-lock.json",
   ".env.example",
+  ".env",
+  ".env.local",
   "docs",
   "ARCHITECTURE.md",
   "PRD.md",
