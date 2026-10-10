@@ -4,11 +4,20 @@ const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   APP_ENV: z.enum(["development", "test", "production"]).default("development"),
   CRON_SECRET: z.string().min(16).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_BRAND_NAME: z.string().default("VAP Handicrafts"),
+  NEXT_PUBLIC_SUPABASE_URL: z
+    .string()
+    .url()
+    .default("https://qepfiubmjueooacemhzz.supabase.co"),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z
+    .string()
+    .min(1)
+    .default("sb_anon_placeholder"),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -30,6 +39,8 @@ export function validateEnv(
   const clientResult = clientSchema.safeParse({
     NEXT_PUBLIC_APP_URL: runtimeEnv.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_BRAND_NAME: runtimeEnv.NEXT_PUBLIC_BRAND_NAME,
+    NEXT_PUBLIC_SUPABASE_URL: runtimeEnv.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: runtimeEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
 
   if (!clientResult.success) {
@@ -43,6 +54,7 @@ export function validateEnv(
     NODE_ENV: (runtimeEnv.NODE_ENV as "development" | "test" | "production") ?? "development",
     APP_ENV: (runtimeEnv.APP_ENV as "development" | "test" | "production") ?? "development",
     CRON_SECRET: runtimeEnv.CRON_SECRET,
+    SUPABASE_SERVICE_ROLE_KEY: runtimeEnv.SUPABASE_SERVICE_ROLE_KEY,
   };
 
   if (isServer) {
