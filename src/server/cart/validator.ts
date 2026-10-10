@@ -1,0 +1,137 @@
+import "server-only";
+import { getProductBySlug, listProducts } from "@/server/catalogue/queries";
+import {
+  type CartLineIntent,
+  type ValidatedCartLine,
+  type ValidatedCartResponse,
+  type CartNotice,
+} from "@/lib/cart/types";
+import { assertValidPaise } from "@/lib/money";
+
+export const FREE_SHIPPING_THRESHOLD_PAISE = 99900; // ₹999 in paise
+export const STANDARD_SHIPPING_PAISE = 9900; // ₹99 in paise
+
+/**
+ * Validates and re-prices client cart line intents against authoritative database catalogue data.
+ * Prevents price tampering, enforces stock limits, and computes shipping rules.
+ */
+export async function validateAndPriceCart(
+  intents: CartLineIntent[]
+): Promise<ValidatedCartResponse> {
+  const validatedLines: ValidatedCartLine[] = [];
+  const notices: CartNotice[] = [];
+
+  // Fetch all active products for fallback/resolution
+  const catalogueResult = await listProducts({ limit: 50 });
+  const allProducts = catalogueResult.products;
+
+  for (const intent of intents) {
+    // 1. Resolve product by slug or id
+    let product = await getProductBySlug(intent.productSlug);
+    if (!product) {
+      product = allProducts.find((p) => p.id === intent.productId) ?? null;
+    }
+
+    if (!product || product.status !== "active") {
+      notices.push({
+        lineId: intent.lineId,
+        type: "OUT_OF_STOCK",
+        message: `An item in your cart is currently no longer available and was omitted.`,
+      });
+      continue;
+    }
+
+    // 2. Resolve variant
+    const variant = product.variants.find((v) => v.id === intent.variantId) ?? product.variants[0];
+    if (!variant) {
+      notices.push({
+        lineId: intent.lineId,
+        type: "OUT_OF_STOCK",
+        message: `Selected variant for "${product.name}" is unavailable.`,
+      });
+      continue;
+    }
+
+    // 3. Stock validation
+    const maxAvailable = typeof variant.stockQuantity === "number" ? variant.stockQuantity : 10;
+    const isAvailable = variant.inStock && maxAvailable > 0;
+
+    if (!isAvailable) {
+      notices.push({
+        lineId: intent.lineId,
+        type: "OUT_OF_STOCK",
+        message: `"${product.name} (${variant.name})" is currently sold out.`,
+      });
+      continue;
+    }
+
+    let resolvedQty = Math.max(1, intent.quantity);
+    if (resolvedQty > maxAvailable) {
+      resolvedQty = maxAvailable;
+      notices.push({
+        lineId: intent.lineId,
+        type: "STOCK_ADJUSTED",
+        message: `Quantity for "${product.name} (${variant.name})" was adjusted to available stock (${maxAvailable}).`,
+      });
+    }
+
+    // 4. Authoritative Pricing
+    const priceMinor = variant.priceMinor;
+    assertValidPaise(priceMinor, "variant.priceMinor");
+    const subtotalMinor = priceMinor * resolvedQty;
+    assertValidPaise(subtotalMinor, "line.subtotalMinor");
+
+    const primaryImg = product.images.find((img) => img.isPrimary) ?? product.images[0];
+
+    validatedLines.push({
+      lineId: intent.lineId,
+      productId: product.id,
+      productSlug: product.slug,
+      productName: product.name,
+      variantId: variant.id,
+      variantName: variant.name,
+      sku: variant.sku,
+      imageUrl: primaryImg?.url ?? "/images/products/shell-cone-pink-crackle-bracelet.webp",
+      imageAlt: primaryImg?.alt ?? product.name,
+      priceMinor,
+      compareAtPriceMinor: variant.compareAtPriceMinor ?? product.compareAtPriceMinor ?? null,
+      quantity: resolvedQty,
+      subtotalMinor,
+      isDevPrice: variant.isDevPrice,
+      inStock: isAvailable,
+      availableStock: maxAvailable,
+      customization: intent.customization,
+    });
+  }
+
+  // 5. Cart-level Totals
+  const subtotalMinor = validatedLines.reduce((acc, line) => acc + line.subtotalMinor, 0);
+  assertValidPaise(subtotalMinor, "cart.subtotalMinor");
+
+  const itemCount = validatedLines.reduce((acc, line) => acc + line.quantity, 0);
+
+  // Shipping calculation
+  const qualifiesForFreeShipping = subtotalMinor >= FREE_SHIPPING_THRESHOLD_PAISE || subtotalMinor === 0;
+  const shippingMinor = qualifiesForFreeShipping ? 0 : STANDARD_SHIPPING_PAISE;
+  const discountMinor = 0;
+  const totalMinor = subtotalMinor + shippingMinor - discountMinor;
+  assertValidPaise(totalMinor, "cart.totalMinor");
+
+  const amountNeededForFreeShippingMinor = Math.max(
+    0,
+    FREE_SHIPPING_THRESHOLD_PAISE - subtotalMinor
+  );
+
+  return {
+    valid: validatedLines.length > 0 || intents.length === 0,
+    lines: validatedLines,
+    itemCount,
+    subtotalMinor,
+    shippingMinor,
+    discountMinor,
+    totalMinor,
+    freeShippingThresholdMinor: FREE_SHIPPING_THRESHOLD_PAISE,
+    amountNeededForFreeShippingMinor,
+    notices,
+  };
+}
