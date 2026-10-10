@@ -9,12 +9,14 @@ import { VariantSelector } from "@/components/catalogue/VariantSelector";
 import { Price } from "@/components/ui/price";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useCartStore } from "@/lib/cart/cart-store";
 
 interface ProductDetailsViewProps {
   product: ProductDetail;
 }
 
 export function ProductDetailsView({ product }: ProductDetailsViewProps) {
+  const addItem = useCartStore((s) => s.addItem);
   const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant>(
     product.variants[0] || {
       id: "var-default",
@@ -38,6 +40,12 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
+    addItem({
+      productId: product.id,
+      productSlug: product.slug,
+      variantId: selectedVariant.id,
+      quantity: 1,
+    });
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2500);
   };
@@ -172,6 +180,13 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
                   : isAdded
                   ? "Added to Cart ✓"
                   : "Add to Cart"}
+              </Button>
+
+              <Button asChild variant="outline" size="lg" className="w-full border-rose-deep/40 text-rose-deep hover:bg-blush/20">
+                <Link href={`/personalize/${product.slug}`} className="flex items-center justify-center gap-2">
+                  <Sparkles className="w-4 h-4 text-rose-deep" />
+                  <span>Personalize As a Keepsake Gift</span>
+                </Link>
               </Button>
 
               <Button asChild variant="secondary" size="lg" className="w-full">

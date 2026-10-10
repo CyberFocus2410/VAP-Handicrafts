@@ -6,6 +6,7 @@ import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { LiveRegionProvider } from "@/components/ui/live-region";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import "@/styles/globals.css";
 
 const fontDisplay = Cormorant_Garamond({
@@ -67,6 +68,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <CartDrawer />
         </LiveRegionProvider>
       </body>
     </html>

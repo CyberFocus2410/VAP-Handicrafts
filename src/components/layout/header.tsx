@@ -14,10 +14,18 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { useCartStore } from "@/lib/cart/cart-store";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const pathname = usePathname();
+  const openDrawer = useCartStore((s) => s.openDrawer);
+  const items = useCartStore((s) => s.items);
+  const hasHydrated = useCartStore((s) => s.hasHydrated);
+
+  const itemCount = hasHydrated
+    ? items.reduce((total, item) => total + item.quantity, 0)
+    : 0;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-surface/95 backdrop-blur-md transition-colors">
@@ -118,19 +126,20 @@ export function Header() {
 
         {/* Right Actions: Cart */}
         <div className="flex items-center space-x-2">
-          <Link
-            href="/cart"
+          <button
+            type="button"
+            onClick={openDrawer}
             className="relative inline-flex h-11 w-11 items-center justify-center rounded-sm text-cocoa transition-colors hover:bg-beige/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="View shopping cart with 0 items"
+            aria-label={`View shopping cart with ${itemCount} items`}
           >
             <ShoppingBag className="h-5 w-5" aria-hidden="true" />
             <span
               className="absolute top-2 right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-deep px-1 text-[10px] font-semibold text-surface"
               aria-hidden="true"
             >
-              0
+              {itemCount}
             </span>
-          </Link>
+          </button>
         </div>
       </Container>
     </header>
