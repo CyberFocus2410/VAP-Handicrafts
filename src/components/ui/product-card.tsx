@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export interface ProductCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ProductCardProps extends React.HTMLAttributes<HTMLElement> {
   product: Product;
 }
 
@@ -16,7 +16,7 @@ export function ProductCard({ product, className, ...props }: ProductCardProps) 
   const productUrl = `/shop/${product.category_slug}/${product.slug}`;
 
   return (
-    <div
+    <article
       className={cn(
         "group flex flex-col overflow-hidden rounded-md border border-border bg-surface p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover motion-reduce:hover:translate-y-0",
         className
@@ -93,6 +93,6 @@ export function ProductCard({ product, className, ...props }: ProductCardProps) 
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

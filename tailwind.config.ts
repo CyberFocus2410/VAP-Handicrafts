@@ -18,6 +18,7 @@ const config: Config = {
       colors: {
         bg: "var(--bg)",
         surface: "var(--surface)",
+        ivory: "#FFFDF9",
         blush: "var(--blush)",
         rose: {
           DEFAULT: "var(--rose)",
