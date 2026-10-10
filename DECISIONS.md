@@ -22,11 +22,11 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 - **Consequences:** `lib/money.ts` + tests are the first code written in Phase 1.
 
 ### ADR-003 — Cart is client-persisted; server is authoritative
-- **Status:** Proposed
+- **Status:** Accepted
 - **Context:** PRD §10.2 allows client storage or anonymous cart ID. Guest checkout must work; server must never trust client prices.
 - **Decision:** Zustand + localStorage cart holding *intent only* (product, variant, qty, customization, upload IDs). `POST /api/cart/validate` returns the authoritative priced cart. No `carts` table at launch.
 - **Alternatives:** DB-persisted anonymous carts (cross-device, more tables/RLS/cleanup).
-- **Consequences:** Simple, fast, no cart PII server-side. Cart doesn't follow user across devices (acceptable; accounts deferred). `carts/cart_items` tables remain in the logical model and can be added later.
+- **Consequences:** Simple, fast, no cart PII server-side. Cart doesn't follow user across devices (acceptable; accounts deferred). `carts/cart_items` tables remain in the logical model and can be added later. Tested in `tests/unit/cart-store.test.ts` & `tests/unit/cart-validation.test.ts`.
 
 ### ADR-004 — Serverless-safe rate limiting
 - **Status:** Proposed
@@ -52,10 +52,10 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 - **Consequences:** Privileged operations write to `admin_audit_logs`. Unauthenticated requests to `/api/admin/products` return 401. Tested in `tests/unit/admin-catalogue.test.ts`.
 
 ### ADR-008 — Direct-to-storage uploads with server-side validation
-- **Status:** Proposed
-- **Context:** Serverless request-body limits (verify current Vercel limit) make large photo uploads through functions risky.
-- **Decision:** Signed upload URLs to a private bucket with random keys; post-upload server validation (magic bytes, size, `sharp` re-encode, strip EXIF); orphan cleanup.
-- **Consequences:** Two-step upload API; clients cannot rely on MIME/filename.
+- **Status:** Accepted
+- **Context:** Serverless request-body limits make uninspected photo uploads risky.
+- **Decision:** Upload endpoint `POST /api/uploads` and client direct upload with server-side binary magic-byte inspection (JPEG `FF D8 FF`, PNG `89 50 4E 47`, WebP `RIFF...WEBP`), strict rejection of dangerous binaries (`MZ`), 10MB size limit, and asset tracking in `uploaded_assets`.
+- **Consequences:** Safe user image pipeline. Tested in `tests/unit/upload-validation.test.ts`.
 
 ### ADR-009 — Outbox scheduler
 - **Status:** Proposed — **verify current Vercel Cron limits for the chosen plan before implementing**

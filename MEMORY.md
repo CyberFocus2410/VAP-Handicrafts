@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 3 complete & verified → Ready for Phase 4 (Cart & Personalization)** |
-| Last updated | 2026-10-10 |
+| **Current phase** | **Phase 4 complete & verified → Ready for Phase 5 (Checkout & Payment)** |
+| Last updated | 2026-10-11 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
-| Deployable build? | ✅ Yes (`npm run build` succeeds, 22 routes compiled, 0 CLS, 3D code-split) |
+| Deployable build? | ✅ Yes (`npm run build` succeeds, 24 routes compiled, 0 CLS, 3D code-split) |
 
 ## 2. Phase Tracker
 
@@ -27,8 +27,8 @@
 | 1 Foundation | ✅ Done | Build passed, 22 unit tests passed, 68 Playwright/Axe E2E tests passed |
 | 2 Visual Experience | ✅ Done | 4 photos in responsive pipeline, R3F 3D hero + static fallback, 28 unit tests passed, 90 Playwright E2E passed |
 | 3 Catalogue & Product Pages | ✅ Done | SQL migration with strict RLS, safe seed script, typed server queries, accessible ProductGallery, VariantSelector, truthful JSON-LD, /shop, /collections, /products, /search routes, Admin API & audit logs, 41 unit tests, 100 Playwright E2E tests passing |
-| 4 Cart & Personalization | ⬜ Next | Client-persisted Zustand cart, server price validation (/api/cart/validate), customization input, direct-to-storage photo upload with magic byte check |
-| 5 Checkout & Payment | ⬜ — needs Paytm staging creds | — |
+| 4 Cart & Personalization | ✅ Done | Client-persisted Zustand cart store (`vap_cart_v1`), server price & stock validation (`POST /api/cart/validate`), separate lines for distinct customizations (PRD §9.4), Polaroid live preview builder (`/personalize/[slug]`), binary magic-byte photo upload validation (`POST /api/uploads`), CartDrawer & /cart page with ₹999 free shipping bar, 57 unit tests, 106 Playwright E2E tests passing |
+| 5 Checkout & Payment | ⬜ Next | Needs Paytm staging credentials / simulator fallback; order state machine; checkout flow; stock reservation |
 | 6 Email & Admin | ⬜ — needs Resend creds | — |
 | 7 Hardening & Launch | ⬜ | — |
 
@@ -64,21 +64,24 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 - Middleware blocks `/admin` with 404 (deny-by-default verified in `tests/e2e/smoke.spec.ts`).
 
 ## 5. Next Steps
- 
-1. Commit all Phase 3 changes on `phase-3-catalogue` with author `CyberFocus2410 <cyberfocus2410@gmail.com>`.
-2. Merge `phase-3-catalogue` into `main` and push to GitHub repository `CyberFocus2410/VAP-Handicrafts`.
-3. Proceed to **Phase 4: Cart & Personalization**:
-   - Zustand cart store with localStorage synchronization (ADR-003).
-   - Server-authoritative cart price validation endpoint (`POST /api/cart/validate`).
-   - Text personalization character limits & preview.
-   - Polaroid photo upload direct-to-storage with server magic-bytes validation (ADR-008).
+
+1. Commit all Phase 4 changes on `phase-4-cart` with author `CyberFocus2410 <cyberfocus2410@gmail.com>`.
+2. Merge `phase-4-cart` into `main` and push to GitHub repository `CyberFocus2410/VAP-Handicrafts`.
+3. Proceed to **Phase 5: Checkout & Payment**:
+   - `PaymentProvider` interface and Paytm adapter with checksum signing/verification.
+   - Order state machine (`pending` → `payment_initiated` → `paid` / `failed` / `expired`).
+   - Guest checkout form with address validation (Indian PIN codes, phone).
+   - Stock reservation logic with automatic release / expiration.
+   - Secure server-side callback verification (`POST /api/paytm/callback`).
+   - Payment simulator for isolated staging/dev testing without credentials.
 
 ## 6. Open Questions / Inputs
 
 - [Owner Decision O-04] Confirm drafted visual descriptions for the 4 jewellery photographs.
 - [Owner Decision O-06] Approved final selling prices and compare-at rates for the 4 pieces.
 - [Owner Decision O-12 / O-13] Sign-off on homepage Trust Highlights and Brand Story copy.
-- [Database Migration] Run `supabase/migrations/20261011_001_catalogue_schema.sql` via Supabase dashboard SQL editor for live DB tables.
+- [Database Migrations] Run `supabase/migrations/20261011_001_catalogue_schema.sql` and `supabase/migrations/20261011_002_cart_and_uploads.sql` via Supabase dashboard SQL editor for live DB tables.
+- [Paytm Credentials] Merchant ID (`PAYTM_MID`), Merchant Key (`PAYTM_MERCHANT_KEY`), and Website (`PAYTM_WEBSITE`) required for live test environment verification in Phase 5. Dev simulator will isolate tests until keys are provided.
 
 ---
 
@@ -90,3 +93,4 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 | 2026-10-10 | Phase 1 | Foundation complete: Next.js 15, strict TS, Radix UI primitives, paise currency engine, security headers, Playwright E2E & Axe audits passed. Pushed 25 commits to GitHub. |
 | 2026-10-10 | Phase 2 | Visual Experience complete: 4 jewellery photos in responsive pipeline, code-split R3F 3D hero scene with static poster fallback, homepage sections in PRD §6 order, 4 seed products with dev-price badges, 28 unit tests and 90 Playwright E2E tests passing. |
 | 2026-10-10 | Phase 3 | Catalogue & Product Pages complete: Supabase SQL schema migrations with strict RLS, non-production seed script, typed server data-access queries with fallback, interactive ProductGallery, radio-accessible VariantSelector, truthful JSON-LD schema without fake ratings, admin product creation API with Zod validation & audit logs, /shop, /collections/[slug], /products/[slug], /search routes, 41 unit tests and 100 Playwright E2E tests passing. |
+| 2026-10-11 | Phase 4 | Cart & Personalization complete: Client-persisted Zustand cart store (`vap_cart_v1`), server price & stock validation (`POST /api/cart/validate`), separate lines for distinct customizations (PRD §9.4), Polaroid live preview builder (`/personalize/[slug]`), binary magic-byte photo upload validation (`POST /api/uploads`), CartDrawer & /cart page with ₹999 free shipping bar, 57 unit tests, 106 Playwright E2E tests, 8 Axe a11y tests passing. |
