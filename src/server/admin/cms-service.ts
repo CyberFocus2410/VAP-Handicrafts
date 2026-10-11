@@ -79,15 +79,6 @@ if (categoriesStore.size === 0) {
     },
     {
       id: "cat-3",
-      slug: "gift-sets",
-      name: "Gift Sets",
-      description: "Coordinated shell jewellery and custom card gift pairings for birthdays and anniversaries.",
-      imageUrl: "/images/products/scallop-cowrie-earring-bracelet-set.webp",
-      displayOrder: 3,
-      isActive: true,
-    },
-    {
-      id: "cat-4",
       slug: "cards-and-gifts",
       name: "Cards & Gifts",
       description: "Artfully packaged gifts for birthdays, anniversaries, and personal milestones.",

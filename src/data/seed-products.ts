@@ -186,4 +186,76 @@ export const SEED_PRODUCTS: Product[] = [
     ],
     tags: ["charm bracelet", "beach", "cowrie", "gold-tone", "shells"],
   },
+  {
+    id: "00000000-0000-4000-8000-000000000005",
+    name: "Custom Relationship Licence Card",
+    slug: "relationship-licence-card",
+    category_slug: "personalized-cards",
+    category_name: "Personalized Cards",
+    description:
+      "Bespoke couples relationship licence keepsake card featuring your couple picture, partner names, anniversary date, and heartfelt personalized vows printed on 350 GSM archival cardstock with protective sleeve.",
+    price_minor: 49900, // ₹499
+    compare_at_price_minor: 69900, // ₹699
+    is_dev_price: true,
+    status: "active",
+    stock_quantity: 50,
+    fulfilment_type: "made_to_order",
+    materials: ["350 GSM Archival Cardstock", "Matte Velvet Lamination", "Protective Acrylic Sleeve"],
+    dimensions: "Credit Card Size (85.6mm x 53.98mm) / A6 Keepsake",
+    images: [
+      {
+        url: "/images/templates/relationship-licence-template.webp",
+        alt: "Personalized Relationship Licence Card with couple photo and romantic vows",
+        width: 800,
+        height: 1000,
+        is_primary: true,
+      },
+    ],
+    variants: [
+      {
+        id: "var-005-licence",
+        name: "Standard Archival Keepsake",
+        sku: "VAP-CARD-001-REL",
+        price_minor: 49900,
+        in_stock: true,
+      },
+    ],
+    tags: ["relationship licence", "personalized card", "anniversary", "couples", "keepsake"],
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000006",
+    name: "Handmade Polaroid Keepsake Photo Card",
+    slug: "polaroid-keepsake-card",
+    category_slug: "personalized-cards",
+    category_name: "Personalized Cards",
+    description:
+      "High-gloss classic polaroid keepsake card customized with your uploaded picture, handwritten date, and heartfelt dedication message.",
+    price_minor: 29900, // ₹299
+    compare_at_price_minor: 44900, // ₹449
+    is_dev_price: true,
+    status: "active",
+    stock_quantity: 40,
+    fulfilment_type: "made_to_order",
+    materials: ["Fuji Premium Gloss Photo Paper", "300 GSM Backing Board", "Hand-stamped wax envelope"],
+    dimensions: "Classic Polaroid (3.5 x 4.25 inches)",
+    images: [
+      {
+        url: "/images/templates/relationship-licence-template.webp",
+        alt: "Personalized Polaroid Keepsake Photo Card with handwritten caption",
+        width: 800,
+        height: 1000,
+        is_primary: true,
+      },
+    ],
+    variants: [
+      {
+        id: "var-006-polaroid",
+        name: "Single Polaroid Keepsake",
+        sku: "VAP-CARD-002-POL",
+        price_minor: 29900,
+        in_stock: true,
+      },
+    ],
+    tags: ["polaroid", "photo card", "memories", "custom gift"],
+  },
 ];

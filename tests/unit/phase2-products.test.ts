@@ -5,8 +5,10 @@ import { SEED_PRODUCTS } from "@/data/seed-products";
 import { assertValidPaise } from "@/lib/money";
 
 describe("Phase 2 Seed Products & Photography Integrity", () => {
-  it("contains exactly 4 authentic products matching the supplied jewellery photos", () => {
-    expect(SEED_PRODUCTS).toHaveLength(4);
+  it("contains 4 authentic products matching the supplied jewellery photos", () => {
+    const jewellery = SEED_PRODUCTS.filter((p) => p.category_slug === "shell-jewellery");
+    expect(jewellery).toHaveLength(4);
+    expect(SEED_PRODUCTS.length).toBeGreaterThanOrEqual(4);
   });
 
   it("stores all prices as strict positive integer paise (no floats)", () => {

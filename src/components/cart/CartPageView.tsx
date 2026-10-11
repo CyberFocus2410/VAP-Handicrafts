@@ -81,7 +81,7 @@ export function CartPageView() {
             Your Cart is Empty
           </Heading>
           <p className="text-sm text-cocoa-muted leading-relaxed">
-            Discover handcrafted shell jewellery, gift sets, and personalized creations made with authentic ocean shells.
+            Discover handcrafted shell jewellery, personalized cards, and romantic creations made with authentic ocean shells.
           </p>
         </div>
         <Button asChild size="lg" className="rounded-full px-8 shadow-sm">

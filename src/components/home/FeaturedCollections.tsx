@@ -21,7 +21,7 @@ const COLLECTIONS: CollectionItem[] = [
   },
   {
     title: "Bracelet & Earring Sets",
-    category: "Gift Sets",
+    category: "Coordinated Pairs",
     href: "/shop/shell-jewellery",
     image: "/images/products/scallop-cowrie-earring-bracelet-set.webp",
     description: "Coordinated sets pairing fan shells, dangling cowrie pearls, and crackle beads.",

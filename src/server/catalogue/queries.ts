@@ -50,16 +50,6 @@ const STATIC_CATEGORIES: Category[] = [
     isActive: true,
   },
   {
-    id: "10000000-0000-4000-8000-000000000006",
-    slug: "gift-sets",
-    name: "Gift Sets",
-    description: "Coordinated shell jewellery and custom card gift pairings for birthdays and anniversaries.",
-    imageUrl: "/images/products/scallop-cowrie-earring-bracelet-set.webp",
-    parentId: null,
-    displayOrder: 5,
-    isActive: true,
-  },
-  {
     id: "10000000-0000-4000-8000-000000000004",
     slug: "return-favors",
     name: "Festive & Return Favors",
@@ -271,7 +261,11 @@ export async function listProducts(
     products = products.filter(
       (p) =>
         p.categorySlug === filter.categorySlug ||
-        (filter.categorySlug === "jewellery" && p.categorySlug === "shell-jewellery")
+        (filter.categorySlug === "jewellery" && p.categorySlug === "shell-jewellery") ||
+        (filter.categorySlug === "personalized-cards" &&
+          (p.categorySlug === "personalized-cards" || p.categorySlug === "personalized-gifts")) ||
+        (filter.categorySlug === "personalized-gifts" &&
+          (p.categorySlug === "personalized-cards" || p.categorySlug === "personalized-gifts"))
     );
   }
 

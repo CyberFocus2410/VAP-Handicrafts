@@ -38,6 +38,7 @@ describe("Phase 6 CRM & CMS Services", () => {
       const customers = await listAllCustomers();
       const first = customers[0];
       expect(first).toBeDefined();
+      if (!first) throw new Error("first patron undefined");
 
       const testTags = ["VIP Patron", "Loves Cowrie Shells", "Fast Shipper"];
       const testNotes = "Prefers extra bubble wrap and handwritten thank you note.";
@@ -129,6 +130,7 @@ describe("Phase 6 CRM & CMS Services", () => {
       const products = await listCmsProducts();
       const target = products[0];
       expect(target).toBeDefined();
+      if (!target) throw new Error("target product undefined");
 
       const updated = await updateCmsProduct(target.id, {
         stockQuantity: 28,

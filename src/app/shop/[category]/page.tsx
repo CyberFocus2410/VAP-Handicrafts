@@ -4,8 +4,9 @@ import { Section } from "@/components/ui/section";
 import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ui/product-card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MessageCircle } from "lucide-react";
 import { SEED_PRODUCTS } from "@/data/seed-products";
+import { PersonalizationRequestForm } from "@/components/catalogue/PersonalizationRequestForm";
 
 interface CategoryPageProps {
   params: Promise<{ category: string }>;
@@ -23,19 +24,14 @@ const validCategories: Record<string, { title: string; description: string; filt
     filterCategory: "shell-jewellery",
   },
   "personalized-gifts": {
-    title: "Personalized Cards & Custom Gifts",
+    title: "Personalized Cards & Keepsakes",
     description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
-    filterCategory: "personalized-gifts",
+    filterCategory: "personalized-cards",
   },
   "personalized-cards": {
     title: "Personalized Cards",
     description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
-    filterCategory: "personalized-gifts",
-  },
-  "gift-sets": {
-    title: "Gift Sets",
-    description: "Curated gift combinations packaged with luxury presentation.",
-    filterCategory: "shell-jewellery",
+    filterCategory: "personalized-cards",
   },
   "return-favors": {
     title: "Festive & Return Favors",
@@ -62,14 +58,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <Section surface="default" className="py-16">
         <Container className="text-center">
           <Heading level="h1" className="mb-4">
-            Category: {category}
+            Category Not Found
           </Heading>
           <p className="text-cocoa-muted mb-8">
-            Products for this category will be populated in Phase 3.
+            The collection you are looking for is unavailable or has been updated.
           </p>
           <Button asChild variant="secondary">
             <Link href="/shop">
-              <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" /> Back to Shop
+              <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" /> Back to All Collections
             </Link>
           </Button>
         </Container>
@@ -77,8 +73,16 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     );
   }
 
+  const isPersonalized =
+    category === "personalized-cards" || category === "personalized-gifts";
+
   const matchingProducts = categoryData.filterCategory
-    ? SEED_PRODUCTS.filter((p) => p.category_slug === categoryData.filterCategory)
+    ? SEED_PRODUCTS.filter((p) => {
+        if (isPersonalized) {
+          return p.category_slug === "personalized-cards" || p.category_slug === "personalized-gifts";
+        }
+        return p.category_slug === categoryData.filterCategory;
+      })
     : [];
 
   return (
@@ -107,12 +111,33 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             ))}
           </div>
         ) : (
-          <div className="rounded-md border border-dashed border-border p-12 text-center bg-surface/50">
-            <p className="text-cocoa-muted text-sm max-w-md mx-auto">
-              Catalogue seed data and interactive product cards are scheduled for Phase 3 upon approval of product photos and pricing.
+          <div className="rounded-3xl border border-[#2D1A16]/10 p-12 text-center bg-white/60 shadow-sm max-w-xl mx-auto">
+            <span className="text-3xl mb-3 block">🐚</span>
+            <h3 className="font-serif text-xl font-bold text-[#2D1A16] mb-2">
+              Custom Creations on Request
+            </h3>
+            <p className="text-cocoa-muted text-sm max-w-md mx-auto mb-6 leading-relaxed">
+              We handcraft bespoke tokens and favours for destination weddings, festive ceremonies, and private events.
             </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild variant="primary">
+                <Link href="/contact">Inquire for Custom Order</Link>
+              </Button>
+              <a
+                href="https://wa.me/919311516813"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition flex items-center gap-1.5"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp Founders
+              </a>
+            </div>
           </div>
         )}
+
+        {/* Embedded Interactive Personalization & CRM Form for Cards */}
+        {isPersonalized && <PersonalizationRequestForm />}
       </Container>
     </Section>
   );

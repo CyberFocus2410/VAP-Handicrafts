@@ -57,7 +57,7 @@ export const BRAND: BrandConfig = {
   secondaryTagline: "Crafted with Heart",
   motto: "Your Happiness Our Craft ♡",
   description:
-    "Handmade Gifts, Premium Cards & Personalised Creations crafted with heart. From authentic shell jewellery to custom relationship cards, we bring your emotions to life.",
+    "From authentic shell jewellery to custom relationship cards, we bring your emotions to life.",
   logo: {
     src: "/images/brand/logo.webp",
     pngSrc: "/images/brand/logo.png",
@@ -78,7 +78,6 @@ export const BRAND: BrandConfig = {
     { label: "Shop All", href: "/shop" },
     { label: "Shell Jewellery", href: "/shop/jewellery" },
     { label: "Personalized Cards", href: "/shop/personalized-cards" },
-    { label: "Gift Sets", href: "/shop/gift-sets" },
     { label: "Our Story", href: "/about" },
     { label: "Contact Us", href: "/contact" },
   ],
@@ -89,7 +88,7 @@ export const BRAND: BrandConfig = {
         { label: "All Collections", href: "/shop" },
         { label: "Shell Jewellery", href: "/shop/jewellery" },
         { label: "Personalized Cards", href: "/shop/personalized-cards" },
-        { label: "Gift Sets", href: "/shop/gift-sets" },
+        { label: "Polaroid Keepsakes", href: "/shop/personalized-cards" },
       ],
     },
     {
@@ -97,6 +96,8 @@ export const BRAND: BrandConfig = {
       links: [
         { label: "Our Story", href: "/about" },
         { label: "Contact Us", href: "/contact" },
+        { label: "Custom Inquiries", href: "/contact" },
+        { label: "Artisan Workshop", href: "/about" },
       ],
     },
     {

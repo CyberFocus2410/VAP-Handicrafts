@@ -9,7 +9,7 @@ import { BrandStory } from "@/components/home/BrandStory";
 export const metadata = {
   title: "VAP Handicrafts | Shell Jewellery & Personalized Gifts",
   description:
-    "Handcrafted shell jewellery, bridesmaid gift sets, and bespoke personalized gifts made with natural seashells and crackle beads. Delivered across India with secure UPI payments.",
+    "Handcrafted shell jewellery and bespoke personalized cards made with natural seashells and crackle beads. Delivered across India with secure UPI payments.",
 };
 
 export default function HomePage() {

@@ -9,7 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/shop",
     "/shop/jewellery",
     "/shop/personalized-cards",
-    "/shop/gift-sets",
     "/about",
     "/contact",
     "/shipping-policy",

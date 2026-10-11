@@ -34,7 +34,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <p className="text-sm text-cocoa-muted max-w-lg mx-auto">
             {query
               ? `Showing results matching "${query}"`
-              : "Find authentic ocean shell jewellery, matching gift sets, and personalized cards."}
+              : "Find authentic ocean shell jewellery and custom personalized cards."}
           </p>
 
           {/* Search Bar Form */}

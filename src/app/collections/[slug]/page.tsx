@@ -9,6 +9,7 @@ import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Heading } from "@/components/ui/heading";
 import { Badge } from "@/components/ui/badge";
+import { PersonalizationRequestForm } from "@/components/catalogue/PersonalizationRequestForm";
 
 interface CollectionPageProps {
   params: Promise<{ slug: string }>;
@@ -124,6 +125,11 @@ export default async function CollectionPage({ params, searchParams }: Collectio
             <p className="text-sm text-cocoa font-medium">No items found matching the current filters.</p>
             <p className="mt-1 text-xs text-cocoa-muted">Try clearing the filters or check back shortly.</p>
           </div>
+        )}
+
+        {/* Embedded Interactive Personalization & CRM Form for Cards */}
+        {(slug === "personalized-cards" || slug === "personalized-gifts") && (
+          <PersonalizationRequestForm />
         )}
       </Container>
     </Section>
