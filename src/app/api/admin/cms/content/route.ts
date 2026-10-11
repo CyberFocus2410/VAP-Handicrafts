@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   getSiteContentConfig,
   updateSiteContentConfig,
@@ -30,6 +31,12 @@ export async function POST(req: NextRequest) {
     }
 
     const updated = await updateSiteContentConfig(patch);
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {
+      // Non-fatal
+    }
     return NextResponse.json({ success: true, config: updated });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update site content";
