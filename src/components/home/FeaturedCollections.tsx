@@ -34,11 +34,11 @@ const COLLECTIONS: CollectionItem[] = [
     description: "Hand-threaded floral beadwork accented with baroque pearls and golden findings.",
   },
   {
-    title: "Personalized Keepsakes & Polaroids",
-    category: "Memories",
-    href: "/shop/personalized-gifts",
-    image: "/images/products/golden-link-cowrie-charm-bracelet.webp",
-    description: "Custom photo prints, bespoke message cards, and anniversary keepsakes.",
+    title: "Relationship Licences & Cards",
+    category: "Personalized",
+    href: "/shop/personalized-cards",
+    image: "/images/templates/relationship-licence-template.webp",
+    description: "Custom couple partnership licences, Polaroid photo cards, and heartfelt dedication notes.",
   },
 ];
 
