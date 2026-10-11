@@ -2,6 +2,11 @@ import "server-only";
 import { getSupabaseAnonClient } from "@/server/db/supabase";
 import { SEED_PRODUCTS, type Product as SeedProduct } from "@/data/seed-products";
 import {
+  listCmsProducts,
+  listCmsCategories,
+  type CmsProduct,
+} from "@/server/admin/cms-service";
+import {
   type Category,
   type ProductDetail,
   type CatalogueFilter,
@@ -106,32 +111,76 @@ function mapSeedProductToDetail(p: SeedProduct): ProductDetail {
   };
 }
 
+function mapCmsProductToDetail(p: CmsProduct): ProductDetail {
+  return {
+    id: p.id,
+    categoryId: null,
+    categorySlug: p.categorySlug,
+    categoryName: p.categoryName,
+    slug: p.slug,
+    name: p.name,
+    description: p.description,
+    status: p.status,
+    fulfilmentType: p.fulfilmentType,
+    materials: p.materials ? p.materials.split(",").map((s) => s.trim()) : [],
+    dimensions: p.dimensions || null,
+    isBestseller: p.isBestseller ?? false,
+    isNewArrival: p.isNewArrival ?? false,
+    variants: [
+      {
+        id: `var-${p.id}`,
+        productId: p.id,
+        name: "Standard",
+        sku: `VAP-${p.slug.toUpperCase().slice(0, 10)}`,
+        priceMinor: p.priceMinor,
+        compareAtPriceMinor: p.compareAtPriceMinor || null,
+        stockQuantity: p.stockQuantity,
+        isDevPrice: false,
+        inStock: p.inStock,
+        attributes: {},
+      },
+    ],
+    images: [
+      {
+        id: `img-${p.id}`,
+        productId: p.id,
+        url: p.imageUrl,
+        alt: p.imageAlt || p.name,
+        width: 800,
+        height: 1000,
+        displayOrder: 1,
+        isPrimary: true,
+      },
+    ],
+    priceMinor: p.priceMinor,
+    compareAtPriceMinor: p.compareAtPriceMinor || null,
+    isDevPrice: false,
+    inStock: p.inStock,
+  };
+}
+
 /**
- * Lists all active categories.
+ * Lists all active categories (CMS-backed).
  */
 export async function listCategories(): Promise<Category[]> {
   try {
-    const supabase = getSupabaseAnonClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true });
-
-    if (!error && data && data.length > 0) {
-      return data.map((d) => ({
-        id: d.id,
-        slug: d.slug,
-        name: d.name,
-        description: d.description,
-        imageUrl: d.image_url,
-        parentId: d.parent_id,
-        displayOrder: d.display_order,
-        isActive: d.is_active,
-      }));
+    const cmsCats = await listCmsCategories();
+    if (cmsCats && cmsCats.length > 0) {
+      return cmsCats
+        .filter((c) => c.isActive)
+        .map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          description: c.description,
+          imageUrl: c.imageUrl,
+          parentId: null,
+          displayOrder: c.displayOrder,
+          isActive: c.isActive,
+        }));
     }
   } catch {
-    // Fallback if table not yet migrated
+    // Fallback if error
   }
 
   return STATIC_CATEGORIES;
@@ -146,7 +195,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 }
 
 /**
- * Lists products matching filter, sorting, and pagination parameters.
+ * Lists products matching filter, sorting, and pagination parameters (CMS & Supabase unified).
  */
 export async function listProducts(
   filterParams?: Partial<CatalogueFilter>
@@ -158,105 +207,26 @@ export async function listProducts(
 }> {
   const filter = CatalogueFilterSchema.parse(filterParams ?? {});
 
-  // Try fetching from Supabase
+  let products: ProductDetail[] = [];
+
+  // 1. Fetch from CMS store (which includes live-edited and seeded products)
   try {
-    const supabase = getSupabaseAnonClient();
-    let query = supabase
-      .from("products")
-      .select("*, categories!inner(slug, name), product_variants(*), product_images(*)", { count: "exact" })
-      .eq("status", "active");
-
-    if (filter.categorySlug) {
-      query = query.eq("categories.slug", filter.categorySlug);
-    }
-    if (filter.search) {
-      query = query.textSearch("search_tsv", filter.search);
-    }
-
-    const { data, count, error } = await query;
-    if (!error && data && data.length > 0) {
-      let mapped: ProductDetail[] = data.map((d) => {
-        const variants = (d.product_variants || []).map((v: any) => ({
-          id: v.id,
-          productId: v.product_id,
-          name: v.name,
-          sku: v.sku,
-          priceMinor: v.price_minor,
-          compareAtPriceMinor: v.compare_at_price_minor,
-          stockQuantity: v.stock_quantity,
-          isDevPrice: v.is_dev_price,
-          inStock: v.in_stock,
-          attributes: v.attributes || {},
-        }));
-
-        const images = (d.product_images || []).map((img: any) => ({
-          id: img.id,
-          productId: img.product_id,
-          url: img.url,
-          alt: img.alt,
-          width: img.width,
-          height: img.height,
-          displayOrder: img.display_order,
-          isPrimary: img.is_primary,
-        }));
-
-        const primaryVar = variants[0];
-        return {
-          id: d.id,
-          categoryId: d.category_id,
-          categorySlug: d.categories?.slug || "shell-jewellery",
-          categoryName: d.categories?.name || "Shell Jewellery",
-          slug: d.slug,
-          name: d.name,
-          description: d.description,
-          status: d.status,
-          fulfilmentType: d.fulfilment_type,
-          materials: d.materials || [],
-          dimensions: d.dimensions,
-          isBestseller: d.is_bestseller || false,
-          isNewArrival: d.is_new_arrival || false,
-          variants: variants.length > 0 ? variants : [],
-          images: images.length > 0 ? images : [],
-          priceMinor: primaryVar?.priceMinor ?? 0,
-          compareAtPriceMinor: primaryVar?.compareAtPriceMinor,
-          isDevPrice: primaryVar?.isDevPrice ?? true,
-          inStock: (primaryVar?.stockQuantity ?? 1) > 0,
-        };
-      });
-
-      // Price filter
-      if (typeof filter.minPriceMinor === "number") {
-        mapped = mapped.filter((p) => p.priceMinor >= filter.minPriceMinor!);
-      }
-      if (typeof filter.maxPriceMinor === "number") {
-        mapped = mapped.filter((p) => p.priceMinor <= filter.maxPriceMinor!);
-      }
-      if (filter.inStockOnly) {
-        mapped = mapped.filter((p) => p.inStock);
-      }
-
-      // Sort
-      if (filter.sort === "price_asc") {
-        mapped.sort((a, b) => a.priceMinor - b.priceMinor);
-      } else if (filter.sort === "price_desc") {
-        mapped.sort((a, b) => b.priceMinor - a.priceMinor);
-      }
-
-      const total = count ?? mapped.length;
-      return {
-        products: mapped,
-        total,
-        page: filter.page,
-        totalPages: Math.ceil(total / filter.limit) || 1,
-      };
+    const cmsList = await listCmsProducts();
+    if (cmsList && cmsList.length > 0) {
+      products = cmsList
+        .filter((p) => p.status === "active")
+        .map(mapCmsProductToDetail);
     }
   } catch {
-    // Fall back to seed data if Supabase tables not populated
+    // Non-fatal
   }
 
-  // Fallback: in-memory seed products
-  let products = SEED_PRODUCTS.map(mapSeedProductToDetail);
+  // 2. Fallback to SEED_PRODUCTS if empty
+  if (products.length === 0) {
+    products = SEED_PRODUCTS.map(mapSeedProductToDetail);
+  }
 
+  // 3. Category Filter
   if (filter.categorySlug) {
     products = products.filter(
       (p) =>
@@ -269,6 +239,7 @@ export async function listProducts(
     );
   }
 
+  // 4. Search Filter
   if (filter.search) {
     const q = filter.search.toLowerCase();
     products = products.filter(
@@ -279,6 +250,7 @@ export async function listProducts(
     );
   }
 
+  // 5. Price Filter
   if (typeof filter.minPriceMinor === "number") {
     products = products.filter((p) => p.priceMinor >= filter.minPriceMinor!);
   }
@@ -289,6 +261,7 @@ export async function listProducts(
     products = products.filter((p) => p.inStock);
   }
 
+  // 6. Sort
   if (filter.sort === "price_asc") {
     products.sort((a, b) => a.priceMinor - b.priceMinor);
   } else if (filter.sort === "price_desc") {
@@ -311,6 +284,18 @@ export async function listProducts(
  * Retrieves a single active product by slug.
  */
 export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
+  // 1. Try CMS store
+  try {
+    const cmsList = await listCmsProducts();
+    const cmsMatch = cmsList.find((p) => p.slug === slug && p.status === "active");
+    if (cmsMatch) {
+      return mapCmsProductToDetail(cmsMatch);
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  // 2. Try Supabase
   try {
     const supabase = getSupabaseAnonClient();
     const { data, error } = await supabase
@@ -372,6 +357,7 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     // Fall back to seed data if error
   }
 
+  // 3. Fallback to in-memory seed products
   const seed = SEED_PRODUCTS.find((p) => p.slug === slug);
   return seed ? mapSeedProductToDetail(seed) : null;
 }
