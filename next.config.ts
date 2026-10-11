@@ -51,6 +51,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["@supabase/supabase-js"],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
