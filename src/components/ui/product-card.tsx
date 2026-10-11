@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +15,8 @@ export interface ProductCardProps extends React.HTMLAttributes<HTMLElement> {
 
 export function ProductCard({ product, className, ...props }: ProductCardProps) {
   const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
+  const initialUrl = primaryImage?.url || "/images/products/shell-cone-pink-crackle-bracelet.webp";
+  const [imgSrc, setImgSrc] = React.useState<string>(initialUrl);
   const productUrl = `/shop/${product.category_slug}/${product.slug}`;
 
   return (
@@ -25,16 +29,15 @@ export function ProductCard({ product, className, ...props }: ProductCardProps) 
     >
       {/* 4:5 Aspect Ratio Image Container */}
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-bg">
-        {primaryImage && (
-          <Image
-            src={primaryImage.url}
-            alt={primaryImage.alt}
-            width={primaryImage.width}
-            height={primaryImage.height}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
-          />
-        )}
+        <Image
+          src={imgSrc}
+          alt={primaryImage?.alt || product.name}
+          width={primaryImage?.width || 800}
+          height={primaryImage?.height || 1000}
+          onError={() => setImgSrc("/images/products/shell-cone-pink-crackle-bracelet.webp")}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
+        />
 
         {/* Badges Overlay */}
         <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
