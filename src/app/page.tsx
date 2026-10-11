@@ -6,6 +6,8 @@ import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { PersonalizedGiftFeature } from "@/components/home/PersonalizedGiftFeature";
 import { BrandStory } from "@/components/home/BrandStory";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "VAP Handicrafts | Shell Jewellery & Personalized Gifts",
   description:
