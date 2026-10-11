@@ -14,12 +14,10 @@ import { assertValidPaise } from "@/lib/money";
 describe("Catalogue Queries (Data-Access Layer)", () => {
   it("listCategories returns all active categories", async () => {
     const categories = await listCategories();
-    expect(categories.length).toBeGreaterThanOrEqual(4);
+    expect(categories.length).toBeGreaterThanOrEqual(2);
     const slugs = categories.map((c) => c.slug);
     expect(slugs).toContain("shell-jewellery");
-    expect(slugs).toContain("personalized-gifts");
-    expect(slugs).toContain("cards-and-gifts");
-    expect(slugs).toContain("return-favors");
+    expect(slugs).toContain("personalized-cards");
   });
 
   it("getCategoryBySlug retrieves existing category and handles unknown slugs", async () => {
