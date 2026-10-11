@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   createOrder,
   markOrderPaid,
+  submitPaymentProof,
   markOrderShipped,
   markOrderFulfilled,
   listAllOrders,
@@ -101,5 +102,54 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
 
     expect(shipRes.success).toBe(false);
     expect(shipRes.error).toContain("Illegal transition from payment_initiated to shipped");
+  });
+
+  it("handles UPI QR payment proof submission and admin verification", async () => {
+    const { order } = await createOrder({
+      items: [
+        {
+          lineId: "line-test-upi",
+          productId: "prod-bracelet-spiral-conch",
+          productSlug: "spiral-conch-pink-crackle-bracelet",
+          variantId: "var-spiral-conch-pink",
+          quantity: 1,
+        },
+      ],
+      address: {
+        fullName: "Aarti Sharma",
+        phone: "9811223344",
+        email: "aarti@example.com",
+        streetAddress: "45 Gomti Nagar",
+        city: "Lucknow",
+        state: "Uttar Pradesh",
+        pincode: "226010",
+        country: "India",
+      },
+    });
+
+    expect(order.status).toBe("payment_initiated");
+
+    // Customer uploads screenshot & UTR
+    const proofRes = submitPaymentProof({
+      orderReference: order.orderReference,
+      paymentProofUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      paymentUtr: "UPI-409123847291",
+    });
+
+    expect(proofRes.success).toBe(true);
+    expect(proofRes.order?.status).toBe("payment_proof_submitted");
+    expect(proofRes.order?.paymentUtr).toBe("UPI-409123847291");
+    expect(proofRes.order?.paymentProofSubmittedAt).toBeDefined();
+
+    // Admin verifies payment
+    const verifyRes = markOrderPaid({
+      orderReference: order.orderReference,
+      providerTxnId: "UPI-409123847291",
+      amountMinor: order.totalMinor,
+    });
+
+    expect(verifyRes.success).toBe(true);
+    expect(verifyRes.order?.status).toBe("paid");
+    expect(verifyRes.order?.paymentVerifiedAt).toBeDefined();
   });
 });
