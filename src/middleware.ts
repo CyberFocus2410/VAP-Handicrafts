@@ -4,15 +4,24 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect /admin routes by default (deny-by-default until secure admin auth in Phase 3/6)
+  // Admin routes protection (PRD Phase 6)
   if (pathname.startsWith("/admin")) {
-    return new NextResponse("Not Found", {
-      status: 404,
-      statusText: "Not Found",
-      headers: {
-        "Content-Type": "text/plain",
-      },
-    });
+    // Allow admin login page and static assets
+    if (pathname === "/admin/login") {
+      return NextResponse.next();
+    }
+
+    const adminCookie = request.cookies.get("vap_admin_session");
+    const isDev = process.env.NODE_ENV === "development";
+
+    // In dev mode or with valid admin session cookie, grant access
+    if (adminCookie?.value === "active" || isDev) {
+      return NextResponse.next();
+    }
+
+    // Otherwise redirect to admin login
+    const loginUrl = new URL("/admin/login", request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
