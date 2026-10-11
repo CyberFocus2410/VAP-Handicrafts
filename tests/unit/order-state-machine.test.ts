@@ -12,6 +12,22 @@ describe("Order State Machine (PRD §12)", () => {
     expect(step2.nextState).toBe("paid");
   });
 
+  it("transitions payment_initiated -> payment_proof_submitted -> paid (UPI QR flow)", () => {
+    const submitProof = transitionOrder("payment_initiated", "payment_proof_submitted");
+    expect(submitProof.success).toBe(true);
+    expect(submitProof.nextState).toBe("payment_proof_submitted");
+
+    const adminVerify = transitionOrder("payment_proof_submitted", "paid");
+    expect(adminVerify.success).toBe(true);
+    expect(adminVerify.nextState).toBe("paid");
+  });
+
+  it("allows admin rejection of payment proof: payment_proof_submitted -> failed", () => {
+    const adminReject = transitionOrder("payment_proof_submitted", "failed");
+    expect(adminReject.success).toBe(true);
+    expect(adminReject.nextState).toBe("failed");
+  });
+
   it("safely ignores late failed or expired events once order is paid (PRD §12 terminal rule)", () => {
     const lateFail = transitionOrder("paid", "failed");
     expect(lateFail.success).toBe(false);
