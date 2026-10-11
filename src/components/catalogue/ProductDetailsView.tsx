@@ -35,6 +35,13 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
 
   const [isAdded, setIsAdded] = React.useState(false);
 
+  const isCardProduct =
+    product.categorySlug === "personalized-cards" ||
+    product.categorySlug === "personalized-gifts" ||
+    product.slug.includes("card") ||
+    product.slug.includes("polaroid") ||
+    product.slug.includes("licence");
+
   const isOutOfStock =
     !selectedVariant.inStock ||
     (typeof selectedVariant.stockQuantity === "number" && selectedVariant.stockQuantity === 0);
@@ -221,14 +228,20 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
             )}
 
             {/* Trust Assurances */}
-            <div className="grid grid-cols-1 gap-3 rounded-md border border-border/70 bg-surface p-4 text-xs sm:grid-cols-3">
-              <div className="flex items-start gap-2.5">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-rose-deep" />
-                <div>
-                  <span className="font-semibold text-cocoa">100% Authentic</span>
-                  <p className="text-[11px] text-cocoa-muted">Real natural sea shells</p>
+            <div
+              className={`grid grid-cols-1 gap-3 rounded-md border border-border/70 bg-surface p-4 text-xs ${
+                isCardProduct ? "sm:grid-cols-2" : "sm:grid-cols-3"
+              }`}
+            >
+              {!isCardProduct && (
+                <div className="flex items-start gap-2.5">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-rose-deep" />
+                  <div>
+                    <span className="font-semibold text-cocoa">100% Authentic</span>
+                    <p className="text-[11px] text-cocoa-muted">Real natural sea shells</p>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex items-start gap-2.5">
                 <Truck className="h-4 w-4 shrink-0 text-rose-deep" />
                 <div>
