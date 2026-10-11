@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { BRAND } from "@/config/brand";
 
 interface AdminNavProps {
   currentTab?: "overview" | "orders" | "customers" | "inquiries" | "products" | "categories" | "content";
@@ -37,8 +38,8 @@ export const AdminNav: React.FC<AdminNavProps> = ({ currentTab }) => {
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#A05A44]/30 shadow-sm bg-[#FAF5EF] flex-shrink-0">
             <Image
-              src="/images/brand/vap-logo.png"
-              alt="VAP Handicrafts"
+              src={BRAND.logo.src}
+              alt={BRAND.name}
               fill
               className="object-contain p-1"
             />
@@ -46,14 +47,14 @@ export const AdminNav: React.FC<AdminNavProps> = ({ currentTab }) => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#2D1A16]">
-                VAP Handicrafts
+                {BRAND.name}
               </span>
               <span className="px-2 py-0.5 text-[11px] font-semibold bg-[#A05A44]/10 text-[#A05A44] rounded-full uppercase tracking-wider">
                 Admin CRM & CMS
               </span>
             </div>
             <p className="text-xs text-[#2D1A16]/60">
-              Artisan Jewellery • Custom Keepsakes • Live Store Management
+              Artisan Jewellery • Personalized Cards • Live Store Management
             </p>
           </div>
         </div>
