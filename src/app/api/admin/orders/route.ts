@@ -77,6 +77,49 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === "verify_payment") {
+      const { markOrderPaid } = await import("@/server/orders/service");
+      const providerTxnId = body.providerTxnId || order.paymentUtr || `UPI-VERIFIED-${Date.now()}`;
+      const res = markOrderPaid({
+        orderReference,
+        providerTxnId,
+        amountMinor: order.totalMinor,
+      });
+
+      if (!res.success) {
+        return NextResponse.json(
+          { success: false, error: res.error },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        order: res.order,
+        message: "Payment successfully verified! Order marked as PAID and confirmation email enqueued to customer.",
+      });
+    }
+
+    if (action === "reject_payment") {
+      const { markOrderFailed } = await import("@/server/orders/service");
+      const res = markOrderFailed({
+        orderReference,
+        reason: body.reason || "Payment proof verification rejected by artisan admin",
+      });
+
+      if (!res.success) {
+        return NextResponse.json(
+          { success: false, error: res.error },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Payment proof rejected and order marked as failed.",
+      });
+    }
+
     if (action === "mark_fulfilled") {
       const res = markOrderFulfilled({ orderReference });
       if (!res.success) {
