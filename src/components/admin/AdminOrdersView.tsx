@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatINR } from "@/lib/money";
+import { AdminNav } from "./AdminNav";
 import { PackingSlipModal } from "./PackingSlipModal";
 
 interface AdminOrder {
@@ -165,35 +166,8 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
   return (
     <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10">
       <div className="max-w-6xl mx-auto">
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 relative">
-              <Image
-                src="/images/brand/logo.webp"
-                alt="VAP Emblem"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="font-serif text-2xl font-bold text-[#2D1A16]">
-                Workshop Order Management
-              </h1>
-              <p className="text-xs text-[#735D57]">
-                Pulkit Varshney &amp; Vivan &bull; Artisan Fulfillment Dashboard
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs font-medium text-[#735D57] hover:text-[#2D1A16] px-3 py-2 rounded-lg border border-[#E5DCD3] bg-white transition"
-            >
-              &larr; View Storefront
-            </Link>
-          </div>
-        </div>
+        {/* Unified Admin Navigation */}
+        <AdminNav currentTab="orders" />
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

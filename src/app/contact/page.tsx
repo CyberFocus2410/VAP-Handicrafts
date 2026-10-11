@@ -5,8 +5,7 @@ import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/ui/form-field";
-import { Input } from "@/components/ui/input";
+import { ContactForm } from "@/components/contact/ContactForm";
 
 export const metadata = {
   title: "Contact Us",
@@ -101,71 +100,15 @@ export default function ContactPage() {
         </div>
 
         {/* Contact Form */}
-        <div className="rounded-lg border border-border bg-surface p-8 shadow-sm max-w-xl mx-auto">
-          <Heading level="h2" className="text-2xl mb-6 text-center">
+        <div className="rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-sm max-w-xl mx-auto">
+          <Heading level="h2" className="text-2xl mb-2 text-center">
             Send Us A Message
           </Heading>
+          <p className="text-xs text-cocoa-muted text-center mb-6">
+            Share your gift requirements, bulk order questions, or custom keepsake ideas.
+          </p>
 
-          <form
-            className="space-y-5"
-            onSubmit={undefined}
-            aria-label="Contact inquiry form"
-          >
-            <FormField
-              id="contact-name"
-              label="Your Full Name"
-              required
-            >
-              {({ id, error, "aria-describedby": ariaDescribedBy, "aria-required": ariaRequired }) => (
-                <Input
-                  id={id}
-                  name="name"
-                  type="text"
-                  placeholder="e.g. Priya Sharma"
-                  required={ariaRequired}
-                  error={error}
-                  aria-describedby={ariaDescribedBy}
-                />
-              )}
-            </FormField>
-
-            <FormField
-              id="contact-email"
-              label="Email Address"
-              required
-            >
-              {({ id, error, "aria-describedby": ariaDescribedBy, "aria-required": ariaRequired }) => (
-                <Input
-                  id={id}
-                  name="email"
-                  type="email"
-                  placeholder="priya@example.com"
-                  required={ariaRequired}
-                  error={error}
-                  aria-describedby={ariaDescribedBy}
-                />
-              )}
-            </FormField>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="contact-message" className="text-sm font-medium text-cocoa">
-                Message <span className="text-error" aria-hidden="true">*</span>
-              </label>
-              <textarea
-                id="contact-message"
-                name="message"
-                rows={4}
-                required
-                placeholder="How can we help you today?"
-                className="flex w-full rounded-sm border border-border bg-surface px-3 py-2 text-base text-cocoa transition-colors placeholder:text-cocoa-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-              />
-            </div>
-
-            <Button type="button" variant="primary" size="md" className="w-full">
-              <Send className="w-4 h-4 mr-1.5" aria-hidden="true" />
-              Send Message
-            </Button>
-          </form>
+          <ContactForm />
         </div>
       </Container>
     </Section>
