@@ -10,7 +10,7 @@ const HIGHLIGHTS = [
   {
     icon: Gift,
     title: "Gift-Ready Presentation",
-    description: "Every item arrives nestled in thoughtful keepsake packaging.",
+    description: "Every item arrives nestled in charming, gift-ready presentation.",
   },
   {
     icon: Truck,
@@ -20,7 +20,7 @@ const HIGHLIGHTS = [
   {
     icon: MessageCircleHeart,
     title: "Artisan Direct Care",
-    description: "Direct assistance via WhatsApp and email for custom requests.",
+    description: "Direct WhatsApp assistance from Pulkit & Vivan for personalized cards.",
   },
 ];
 

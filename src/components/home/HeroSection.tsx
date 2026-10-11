@@ -31,9 +31,9 @@ export function HeroSection() {
             </h1>
 
             <p className="mt-6 max-w-xl text-body-lg text-cocoa-muted">
-              Handcrafted shell jewellery and thoughtful keepsakes for your favourite
-              people. Natural ocean shells, delicate pastel beads, and keepsake gift boxes
-              curated in India.
+              Handcrafted shell jewellery, premium cards, and personalized creations for your favourite
+              people. Natural ocean shells, delicate pastel beads, and custom relationship cards
+              crafted with heart in India.
             </p>
 
             {/* CTA Group: Real <a> links that work instantly before or without JS/animations */}
@@ -46,7 +46,7 @@ export function HeroSection() {
               </Button>
 
               <Button asChild variant="secondary" size="lg">
-                <Link href="/shop/personalized-gifts">Bespoke Keepsakes</Link>
+                <Link href="/shop/personalized-cards">Personalized Cards</Link>
               </Button>
             </div>
 

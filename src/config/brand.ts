@@ -8,11 +8,24 @@ export interface FooterSection {
   readonly links: readonly NavItem[];
 }
 
+export interface BrandContactPerson {
+  readonly name: string;
+  readonly phone: string;
+  readonly phoneRaw: string;
+}
+
 export interface BrandConfig {
   readonly name: string;
   readonly legalName: string;
   readonly tagline: string;
+  readonly secondaryTagline: string;
+  readonly motto: string;
   readonly description: string;
+  readonly logo: {
+    readonly src: string;
+    readonly pngSrc: string;
+    readonly alt: string;
+  };
   readonly currency: {
     readonly code: string;
     readonly symbol: string;
@@ -29,17 +42,27 @@ export interface BrandConfig {
   readonly contact: {
     readonly email: string;
     readonly phone: string;
+    readonly phoneDisplay: string;
     readonly location: string;
-    readonly instagram?: string;
+    readonly instagram: string;
+    readonly instagramUrl: string;
+    readonly representatives: readonly BrandContactPerson[];
   };
 }
 
 export const BRAND: BrandConfig = {
   name: "VAP Handicrafts",
-  legalName: "VAP Handicrafts Private Limited",
-  tagline: "Handcrafted shell jewellery, heartfelt keepsakes & personalized gifts",
+  legalName: "VAP Handicrafts",
+  tagline: "Small Details ✨ Big Emotions",
+  secondaryTagline: "Crafted with Heart",
+  motto: "Your Happiness Our Craft ♡",
   description:
-    "Cherish every memory with bespoke shell jewellery, custom keepsake frames, and heartfelt personalized gifts crafted with timeless warmth.",
+    "Handmade Gifts, Premium Cards & Personalised Keepsakes crafted with heart. From authentic shell jewellery to custom relationship cards, we bring your emotions to life.",
+  logo: {
+    src: "/images/brand/logo.webp",
+    pngSrc: "/images/brand/logo.png",
+    alt: "VAP Handicrafts — Crafted with Heart",
+  },
   currency: {
     code: "INR",
     symbol: "₹",
@@ -47,17 +70,17 @@ export const BRAND: BrandConfig = {
   },
   announcement: {
     enabled: true,
-    text: "Handcrafted with love across India • Every piece tells a story",
+    text: "Small Details ✨ Big Emotions • Free delivery on orders over ₹999",
     linkText: "Explore Collection",
     linkHref: "/shop",
   },
   navigation: [
     { label: "Shop All", href: "/shop" },
-    { label: "Jewellery", href: "/shop/jewellery" },
-    { label: "Keepsakes", href: "/shop/keepsakes" },
+    { label: "Shell Jewellery", href: "/shop/jewellery" },
+    { label: "Personalized Cards", href: "/shop/personalized-cards" },
     { label: "Gift Sets", href: "/shop/gift-sets" },
     { label: "Our Story", href: "/about" },
-    { label: "Contact", href: "/contact" },
+    { label: "Contact Us", href: "/contact" },
   ],
   footerSections: [
     {
@@ -65,7 +88,7 @@ export const BRAND: BrandConfig = {
       links: [
         { label: "All Collections", href: "/shop" },
         { label: "Shell Jewellery", href: "/shop/jewellery" },
-        { label: "Keepsakes", href: "/shop/keepsakes" },
+        { label: "Personalized Cards", href: "/shop/personalized-cards" },
         { label: "Gift Sets", href: "/shop/gift-sets" },
       ],
     },
@@ -87,8 +110,23 @@ export const BRAND: BrandConfig = {
     },
   ],
   contact: {
-    email: "care@vaphandicrafts.com",
-    phone: "+91 98765 43210",
-    location: "India",
+    email: "vaphandicrafts@gmail.com",
+    phone: "+91 9311516813",
+    phoneDisplay: "+91 9311516813 / +91 9310039258",
+    location: "Delhi NCR, India",
+    instagram: "@vaphandicraft",
+    instagramUrl: "https://www.instagram.com/vaphandicraft",
+    representatives: [
+      {
+        name: "Pulkit Garg",
+        phone: "+91 9311516813",
+        phoneRaw: "+919311516813",
+      },
+      {
+        name: "Vivan Mittal",
+        phone: "+91 9310039258",
+        phoneRaw: "+919310039258",
+      },
+    ],
   },
 } as const;

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, ShoppingBag } from "lucide-react";
 import { BRAND } from "@/config/brand";
@@ -44,13 +45,26 @@ export function Header() {
             </DrawerTrigger>
             <DrawerContent side="left" className="w-[85vw] max-w-sm flex flex-col justify-between">
               <div>
-                <DrawerHeader className="pb-6 border-b border-border/60">
-                  <DrawerTitle className="font-display text-2xl font-medium tracking-tight text-cocoa">
-                    {BRAND.name}
-                  </DrawerTitle>
-                  <p className="text-xs text-cocoa-muted mt-1">
-                    {BRAND.tagline}
-                  </p>
+                <DrawerHeader className="pb-6 border-b border-border/60 text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-12 w-12 rounded-full overflow-hidden shadow-sm border border-gold-deep/20 bg-ivory shrink-0">
+                      <Image
+                        src={BRAND.logo.src}
+                        alt={BRAND.name}
+                        width={48}
+                        height={48}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div>
+                      <DrawerTitle className="font-display text-2xl font-medium tracking-tight text-cocoa">
+                        {BRAND.name}
+                      </DrawerTitle>
+                      <p className="text-xs text-cocoa-muted mt-0.5">
+                        {BRAND.tagline}
+                      </p>
+                    </div>
+                  </div>
                 </DrawerHeader>
 
                 <nav className="mt-6 flex flex-col space-y-1" aria-label="Mobile Navigation">
@@ -77,8 +91,9 @@ export function Header() {
               </div>
 
               <div className="pt-6 border-t border-border/60 text-xs text-cocoa-muted">
-                <p>{BRAND.contact.email}</p>
-                <p className="mt-1">{BRAND.contact.phone}</p>
+                <p className="font-medium text-cocoa">{BRAND.contact.email}</p>
+                <p className="mt-1">{BRAND.contact.phoneDisplay}</p>
+                <p className="mt-2 text-[11px] text-cocoa-muted/80">{BRAND.motto}</p>
               </div>
             </DrawerContent>
           </Drawer>
@@ -88,14 +103,26 @@ export function Header() {
         <div className="flex items-center">
           <Link
             href="/"
-            className="flex flex-col group rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex items-center gap-2.5 sm:gap-3 group rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <span className="font-display text-2xl sm:text-3xl font-medium tracking-tight text-cocoa transition-colors group-hover:text-rose-deep">
-              {BRAND.name}
-            </span>
-            <span className="hidden sm:inline-block text-[10px] tracking-widest uppercase text-cocoa-muted font-medium">
-              Handcrafted Gifts
-            </span>
+            <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden shadow-sm border border-gold-deep/20 bg-ivory shrink-0 transition-transform group-hover:scale-105">
+              <Image
+                src={BRAND.logo.src}
+                alt={BRAND.name}
+                width={48}
+                height={48}
+                className="h-full w-full object-contain"
+                priority
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-display text-xl sm:text-2xl font-medium tracking-tight text-cocoa transition-colors group-hover:text-rose-deep leading-none">
+                {BRAND.name}
+              </span>
+              <span className="hidden sm:inline-block text-[10px] tracking-widest uppercase text-cocoa-muted font-medium mt-1">
+                {BRAND.tagline}
+              </span>
+            </div>
           </Link>
         </div>
 

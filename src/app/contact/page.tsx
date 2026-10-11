@@ -1,4 +1,5 @@
-import { Mail, Phone, MapPin, Send } from "lucide-react";
+import Image from "next/image";
+import { Mail, Phone, MapPin, Send, Instagram } from "lucide-react";
 import { BRAND } from "@/config/brand";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 
 export const metadata = {
   title: "Contact Us",
-  description: "Get in touch with the VAP Handicrafts team for customer care, orders, or inquiries.",
+  description: "Get in touch with Pulkit Garg and Vivan Mittal at VAP Handicrafts for personalized gifts and custom orders.",
 };
 
 export default function ContactPage() {
@@ -17,18 +18,30 @@ export default function ContactPage() {
     <Section surface="default" className="py-16 md:py-24">
       <Container className="max-w-4xl">
         <div className="text-center mb-12">
+          <div className="relative h-20 w-20 rounded-full overflow-hidden shadow-md border-2 border-gold-deep/30 bg-ivory mx-auto mb-4">
+            <Image
+              src={BRAND.logo.src}
+              alt={BRAND.name}
+              width={80}
+              height={80}
+              className="h-full w-full object-contain"
+              priority
+            />
+          </div>
           <Heading level="eyebrow" className="mb-2">
-            Get In Touch
+            {BRAND.tagline}
           </Heading>
           <Heading level="h1" className="mb-4">
-            We&apos;d Love To Hear From You
+            Connect With Us
           </Heading>
           <p className="text-base text-cocoa-muted max-w-lg mx-auto">
-            Have a question about a custom keepsake, shipping, or an existing order? Reach out and our team will gladly assist you.
+            {BRAND.motto} — Have a question about personalized cards, shell jewellery, or custom gifting? Reach out directly to our founders.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        {/* Contact Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {/* Email Support */}
           <div className="rounded-md border border-border bg-surface p-6 text-center">
             <div className="w-10 h-10 rounded-full bg-blush/30 text-rose-deep flex items-center justify-center mx-auto mb-3">
               <Mail className="w-5 h-5" aria-hidden="true" />
@@ -36,31 +49,54 @@ export default function ContactPage() {
             <h2 className="font-semibold text-cocoa text-sm mb-1">Email Support</h2>
             <a
               href={`mailto:${BRAND.contact.email}`}
-              className="text-sm text-rose-deep hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              className="text-xs sm:text-sm text-rose-deep font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm break-all"
             >
               {BRAND.contact.email}
             </a>
           </div>
 
+          {/* Instagram */}
+          <div className="rounded-md border border-border bg-surface p-6 text-center">
+            <div className="w-10 h-10 rounded-full bg-blush/30 text-rose-deep flex items-center justify-center mx-auto mb-3">
+              <Instagram className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <h2 className="font-semibold text-cocoa text-sm mb-1">Instagram</h2>
+            <a
+              href={BRAND.contact.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-rose-deep font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              {BRAND.contact.instagram}
+            </a>
+          </div>
+
+          {/* Pulkit Garg */}
           <div className="rounded-md border border-border bg-surface p-6 text-center">
             <div className="w-10 h-10 rounded-full bg-blush/30 text-rose-deep flex items-center justify-center mx-auto mb-3">
               <Phone className="w-5 h-5" aria-hidden="true" />
             </div>
-            <h2 className="font-semibold text-cocoa text-sm mb-1">Phone / WhatsApp</h2>
+            <h2 className="font-semibold text-cocoa text-sm mb-1">Pulkit Garg</h2>
             <a
-              href={`tel:${BRAND.contact.phone.replace(/\s+/g, "")}`}
-              className="text-sm text-rose-deep hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              href="tel:+919311516813"
+              className="text-sm text-rose-deep font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
-              {BRAND.contact.phone}
+              +91 9311516813
             </a>
           </div>
 
+          {/* Vivan Mittal */}
           <div className="rounded-md border border-border bg-surface p-6 text-center">
             <div className="w-10 h-10 rounded-full bg-blush/30 text-rose-deep flex items-center justify-center mx-auto mb-3">
-              <MapPin className="w-5 h-5" aria-hidden="true" />
+              <Phone className="w-5 h-5" aria-hidden="true" />
             </div>
-            <h2 className="font-semibold text-cocoa text-sm mb-1">Location</h2>
-            <p className="text-sm text-cocoa-muted">{BRAND.contact.location}</p>
+            <h2 className="font-semibold text-cocoa text-sm mb-1">Vivan Mittal</h2>
+            <a
+              href="tel:+919310039258"
+              className="text-sm text-rose-deep font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
+              +91 9310039258
+            </a>
           </div>
         </div>
 
