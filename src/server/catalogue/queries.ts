@@ -34,36 +34,6 @@ const STATIC_CATEGORIES: Category[] = [
     displayOrder: 2,
     isActive: true,
   },
-  {
-    id: "10000000-0000-4000-8000-000000000005",
-    slug: "personalized-gifts",
-    name: "Personalized Gifts",
-    description: "Custom photo prints, relationship cards, and memories preserved forever.",
-    imageUrl: "/images/products/golden-link-cowrie-charm-bracelet.webp",
-    parentId: null,
-    displayOrder: 3,
-    isActive: true,
-  },
-  {
-    id: "10000000-0000-4000-8000-000000000003",
-    slug: "cards-and-gifts",
-    name: "Cards & Gifts",
-    description: "Artfully packaged gifts for birthdays, anniversaries, and milestones.",
-    imageUrl: "/images/products/scallop-cowrie-earring-bracelet-set.webp",
-    parentId: null,
-    displayOrder: 4,
-    isActive: true,
-  },
-  {
-    id: "10000000-0000-4000-8000-000000000004",
-    slug: "return-favors",
-    name: "Festive & Return Favors",
-    description: "Charming tokens of gratitude for weddings, ceremonies, and milestone celebrations.",
-    imageUrl: "/images/products/purple-floral-beaded-pearl-set.webp",
-    parentId: null,
-    displayOrder: 4,
-    isActive: true,
-  },
 ];
 
 function mapSeedProductToDetail(p: SeedProduct): ProductDetail {
@@ -159,16 +129,47 @@ function mapCmsProductToDetail(p: CmsProduct): ProductDetail {
   };
 }
 
+const DEFUNCT_CATEGORY_SLUGS = new Set([
+  "return-favors",
+  "festive-return-favors",
+  "cards-and-gifts",
+  "personalized-gifts",
+  "personalized-keepsakes",
+  "keepsakes",
+  "giftsets",
+  "gift-sets",
+]);
+
 /**
- * Lists all active categories (CMS-backed).
+ * Lists all active categories (CMS-backed, deduplicated, to-the-point).
  */
 export async function listCategories(): Promise<Category[]> {
   try {
     const cmsCats = await listCmsCategories();
     if (cmsCats && cmsCats.length > 0) {
-      return cmsCats
-        .filter((c) => c.isActive)
-        .map((c) => ({
+      const seenSlugs = new Set<string>();
+      const uniqueCats: Category[] = [];
+
+      for (const c of cmsCats) {
+        if (!c.isActive) continue;
+        const normalizedSlug = c.slug.toLowerCase().trim();
+        const normalizedName = c.name.toLowerCase().trim();
+
+        if (
+          DEFUNCT_CATEGORY_SLUGS.has(normalizedSlug) ||
+          normalizedName.includes("festive") ||
+          normalizedName.includes("favor") ||
+          normalizedName.includes("keepsake")
+        ) {
+          continue;
+        }
+
+        if (seenSlugs.has(normalizedSlug)) {
+          continue;
+        }
+        seenSlugs.add(normalizedSlug);
+
+        uniqueCats.push({
           id: c.id,
           slug: c.slug,
           name: c.name,
@@ -177,7 +178,12 @@ export async function listCategories(): Promise<Category[]> {
           parentId: null,
           displayOrder: c.displayOrder,
           isActive: c.isActive,
-        }));
+        });
+      }
+
+      if (uniqueCats.length > 0) {
+        return uniqueCats.sort((a, b) => a.displayOrder - b.displayOrder);
+      }
     }
   } catch {
     // Fallback if error
