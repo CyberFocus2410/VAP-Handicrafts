@@ -223,9 +223,22 @@ export function CartDrawer() {
                         <div className="mt-2 rounded-md bg-sand/60 p-2 text-[11px] text-cocoa space-y-0.5 border border-cocoa/5">
                           <div className="flex items-center gap-1 font-semibold text-rose-deep">
                             <Sparkles className="w-3 h-3" />
-                            <span>Personalized Keepsake</span>
+                            <span>
+                              {line.customization.templateId === "relationship_licence"
+                                ? "Relationship Licence Card"
+                                : "Personalized Card"}
+                            </span>
                           </div>
-                          {line.customization.recipientName && (
+                          {line.customization.licenseHolder && (
+                            <p>Holders: <strong>{line.customization.licenseHolder}</strong></p>
+                          )}
+                          {line.customization.validFrom && (
+                            <p className="text-[10px] text-cocoa-muted">Valid From: {line.customization.validFrom}</p>
+                          )}
+                          {line.customization.signature && (
+                            <p className="text-[10px] italic">Signature: {line.customization.signature}</p>
+                          )}
+                          {line.customization.recipientName && !line.customization.licenseHolder && (
                             <p>For: <strong>{line.customization.recipientName}</strong></p>
                           )}
                           {line.customization.caption && (
