@@ -194,11 +194,27 @@ const DEFAULT_SITE_CONTENT: SiteContentConfig = {
 let siteContentStore: SiteContentConfig =
   globalWithCMS.__vapSiteContent ?? (globalWithCMS.__vapSiteContent = DEFAULT_SITE_CONTENT);
 
+// High-Concurrency Traffic Shield: 20s TTL protects database during surges
+let lastProductsFetchTime = 0;
+const PRODUCTS_CACHE_TTL_MS = 20_000;
+
+let lastCategoriesFetchTime = 0;
+const CATEGORIES_CACHE_TTL_MS = 60_000;
+
 /* -------------------------------------------------------------------------- */
 /*                               Product API                                  */
 /* -------------------------------------------------------------------------- */
 
 export async function listCmsProducts(): Promise<CmsProduct[]> {
+  const now = Date.now();
+  // Under sudden high traffic (e.g. 1,000 users browsing together), serve from memory store
+  // if synced within TTL. This shields database connections and delivers sub-millisecond responses.
+  if (productsStore.size > 0 && now - lastProductsFetchTime < PRODUCTS_CACHE_TTL_MS) {
+    return Array.from(productsStore.values()).sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
   try {
     const supabase = getSupabaseAdminClient();
     const { data: dbProducts } = await supabase
@@ -207,6 +223,7 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
       .order("created_at", { ascending: false });
 
     if (dbProducts && dbProducts.length > 0) {
+      lastProductsFetchTime = now;
       // Sync into CMS store
       for (const p of dbProducts) {
         const primaryVar = p.product_variants?.[0];
@@ -297,6 +314,7 @@ export async function createCmsProduct(input: {
   };
 
   productsStore.set(id, newProduct);
+  lastProductsFetchTime = 0;
 
   // Attempt Supabase insert if available
   try {
@@ -366,6 +384,7 @@ export async function updateCmsProduct(
   };
 
   productsStore.set(id, updated);
+  lastProductsFetchTime = 0;
 
   // Sync to Supabase
   try {
@@ -431,6 +450,7 @@ export async function updateCmsProduct(
 
 export async function deleteCmsProduct(id: string): Promise<boolean> {
   productsStore.delete(id);
+  lastProductsFetchTime = 0;
 
   try {
     const supabase = getSupabaseAdminClient();
@@ -447,6 +467,28 @@ export async function deleteCmsProduct(id: string): Promise<boolean> {
 /* -------------------------------------------------------------------------- */
 
 export async function listCmsCategories(): Promise<CmsCategory[]> {
+  const now = Date.now();
+  if (categoriesStore.size > 0 && now - lastCategoriesFetchTime < CATEGORIES_CACHE_TTL_MS) {
+    const seen = new Set<string>();
+    const cleanList: CmsCategory[] = [];
+    for (const c of Array.from(categoriesStore.values()).sort((a, b) => a.displayOrder - b.displayOrder)) {
+      const normSlug = c.slug.toLowerCase().trim();
+      const normName = c.name.toLowerCase().trim();
+      if (
+        DEFUNCT_CMS_CATEGORY_SLUGS.has(normSlug) ||
+        normName.includes("festive") ||
+        normName.includes("favor") ||
+        normName.includes("keepsake") ||
+        seen.has(normSlug)
+      ) {
+        continue;
+      }
+      seen.add(normSlug);
+      cleanList.push(c);
+    }
+    return cleanList;
+  }
+
   try {
     const supabase = getSupabaseAdminClient();
     const { data: dbCats } = await supabase
@@ -455,6 +497,7 @@ export async function listCmsCategories(): Promise<CmsCategory[]> {
       .order("display_order", { ascending: true });
 
     if (dbCats && dbCats.length > 0) {
+      lastCategoriesFetchTime = now;
       for (const c of dbCats) {
         const normSlug = c.slug?.toLowerCase().trim() || "";
         const normName = c.name?.toLowerCase().trim() || "";
@@ -537,6 +580,7 @@ export async function createCmsCategory(input: {
   };
 
   categoriesStore.set(id, newCat);
+  lastCategoriesFetchTime = 0;
 
   try {
     const supabase = getSupabaseAdminClient();
@@ -571,6 +615,7 @@ export async function updateCmsCategory(
   };
 
   categoriesStore.set(id, updated);
+  lastCategoriesFetchTime = 0;
 
   try {
     const supabase = getSupabaseAdminClient();
