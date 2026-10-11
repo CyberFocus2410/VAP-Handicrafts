@@ -75,7 +75,7 @@ export function FeaturedCollections() {
             <Link
               key={col.title}
               href={col.href}
-              className="group relative flex flex-col overflow-hidden rounded-md border border-border bg-surface p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover motion-reduce:hover:translate-y-0"
+              className="group relative flex flex-col overflow-hidden rounded-md border border-border bg-surface p-3 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_32px_-8px_rgba(45,26,22,0.18)] hover:border-gold-deep/40 motion-reduce:hover:translate-y-0"
             >
               <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-bg">
                 <Image
