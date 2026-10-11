@@ -33,7 +33,7 @@ export function PersonalizedGiftFeature() {
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-rose-deep/20 bg-blush/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-rose-deep">
                 <Sparkles className="h-3.5 w-3.5 text-rose-deep" aria-hidden="true" />
-                <span>Bespoke Keepsakes</span>
+                <span>Personalized Cards & Gifts</span>
               </div>
 
               <h2
@@ -45,15 +45,15 @@ export function PersonalizedGiftFeature() {
               </h2>
 
               <p className="mt-4 max-w-xl text-body text-cocoa-muted">
-                From couple cards and bestfriend keepsakes to personalized magazine covers
-                and custom photo prints, make every gift feel deeply personal and impossible
+                From couple relationship licences and custom Polaroid cards to heartfelt
+                personal dedication notes, make every gift feel deeply personal and impossible
                 to forget.
               </p>
 
               <div className="mt-8">
                 <Button asChild size="lg" className="shadow-soft">
-                  <Link href="/shop/personalized-gifts">
-                    Explore Personalized Gifts
+                  <Link href="/shop/personalized-cards">
+                    Explore Personalized Cards
                   </Link>
                 </Button>
               </div>
