@@ -23,19 +23,15 @@ const validCategories: Record<string, { title: string; description: string; filt
     description: "Handcrafted charm bracelets, earrings, and delicate accessories made with natural ocean shells.",
     filterCategory: "shell-jewellery",
   },
-  "personalized-gifts": {
-    title: "Personalized Cards & Keepsakes",
-    description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
-    filterCategory: "personalized-cards",
-  },
   "personalized-cards": {
     title: "Personalized Cards",
     description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
     filterCategory: "personalized-cards",
   },
-  "return-favors": {
-    title: "Festive & Return Favors",
-    description: "Charming tokens of gratitude for weddings, ceremonies, and milestone celebrations.",
+  "personalized-gifts": {
+    title: "Personalized Cards",
+    description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
+    filterCategory: "personalized-cards",
   },
 };
 
