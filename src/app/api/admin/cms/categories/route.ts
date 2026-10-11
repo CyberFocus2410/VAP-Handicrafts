@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   listCmsCategories,
   createCmsCategory,
@@ -25,11 +26,25 @@ export async function POST(req: NextRequest) {
 
     if (action === "update" && id) {
       const updated = await updateCmsCategory(id, patch);
+      try {
+        revalidatePath("/");
+        revalidatePath("/shop");
+        revalidatePath("/shop/[category]", "page");
+      } catch {
+        // Non-fatal
+      }
       return NextResponse.json({ success: true, category: updated });
     }
 
     if (action === "create" && category) {
       const created = await createCmsCategory(category);
+      try {
+        revalidatePath("/");
+        revalidatePath("/shop");
+        revalidatePath("/shop/[category]", "page");
+      } catch {
+        // Non-fatal
+      }
       return NextResponse.json({ success: true, category: created });
     }
 
