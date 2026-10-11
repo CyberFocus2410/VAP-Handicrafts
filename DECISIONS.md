@@ -34,10 +34,9 @@ Rule: an `Accepted` ADR is not changed without a new ADR that supersedes it.
 - **Open:** Needs an Upstash account (or choose Postgres limiter to avoid another vendor). **Owner/lead to choose.**
 
 ### ADR-005 — Stock reservation policy
-- **Status:** Proposed — **owner input needed** (do you sell single-quantity handmade-style items where overselling is costly?)
-- **Options:** (A) reserve at order creation, release on verified failure/expiry; (B) deduct only on verified payment.
-- **Recommendation:** A, with release only after provider status confirms non-success. See ARCHITECTURE §5.5.
-- **Consequences:** Requires expiry + reconciliation job; must have tests for concurrent buyers of last unit.
+- **Status:** Accepted (Option A confirmed by owner on 2026-10-11)
+- **Decision:** Reserve stock at order creation with a 15-minute lease timer (`stock_reservations` table / status). If payment fails or expires, stock is automatically released. Stock is permanently deducted only on verified payment success (`PAID` order status).
+- **Consequences:** Prevents concurrent overselling of limited/single-quantity handmade jewellery pieces. Requires automated expiry handling and reconciliation. Tested in Phase 5 unit and integration tests.
 
 ### ADR-006 — Accessible colour variants
 - **Status:** Proposed
