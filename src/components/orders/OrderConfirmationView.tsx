@@ -31,6 +31,9 @@ export function OrderConfirmationView({
   }, [initialStatus, clearCart]);
 
   const isPaid = initialStatus === "paid";
+  const isPendingVerification =
+    initialStatus === "verification_pending" ||
+    initialStatus === "payment_proof_submitted";
   const isFailed = initialStatus === "failed";
 
   return (
@@ -41,6 +44,10 @@ export function OrderConfirmationView({
           {isPaid ? (
             <div className="w-full h-full rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
               <CheckCircle2 className="w-10 h-10" />
+            </div>
+          ) : isPendingVerification ? (
+            <div className="w-full h-full rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800">
+              <Clock className="w-10 h-10" />
             </div>
           ) : isFailed ? (
             <div className="w-full h-full rounded-full bg-rose-100 flex items-center justify-center text-error">
@@ -57,6 +64,8 @@ export function OrderConfirmationView({
         <h1 className="font-serif text-3xl sm:text-4xl font-medium text-cocoa mb-2">
           {isPaid
             ? "Thank You! Order Confirmed"
+            : isPendingVerification
+            ? "Payment Proof Received"
             : isFailed
             ? "Payment Not Completed"
             : "Verifying Your Payment..."}
@@ -66,7 +75,46 @@ export function OrderConfirmationView({
           Order Reference: <strong className="text-cocoa font-bold">{orderReference}</strong>
         </p>
 
-        {isPaid ? (
+        {isPendingVerification ? (
+          <div className="space-y-6 text-left bg-surface p-6 sm:p-8 rounded-xl border border-border shadow-sm mb-8">
+            <div className="border-b border-border/80 pb-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-amber-800 flex items-center gap-1.5 mb-1">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Verification In Progress</span>
+              </span>
+              <p className="text-sm text-cocoa-muted leading-relaxed">
+                Thank you! We have received your UPI payment screenshot. Our artisan team will verify the payment against our UPI account and send your official order confirmation email shortly.
+              </p>
+            </div>
+
+            <div className="rounded-lg bg-amber-50/60 p-4 border border-amber-200/80 space-y-2 text-xs text-cocoa">
+              <p className="font-semibold text-amber-900">What happens next?</p>
+              <ul className="space-y-1.5 text-cocoa-muted">
+                <li>&bull; Artisan team verifies payment with bank / UPI UTR</li>
+                <li>&bull; Official order confirmation sent to your email with receipt</li>
+                <li>&bull; Handcrafted creation &amp; custom printing begins</li>
+                <li>&bull; Safe courier dispatch with live tracking number</li>
+              </ul>
+            </div>
+
+            <div className="pt-2 text-xs text-cocoa-muted flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border/60">
+              <span>Have a question about your custom card or payment?</span>
+              <div className="flex items-center gap-3">
+                {BRAND.contact.representatives[0] && (
+                  <a
+                    href={`https://wa.me/919311516813?text=Hi! Regarding my order ${orderReference}, I have submitted the payment screenshot.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-rose-deep hover:underline"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>WhatsApp {BRAND.contact.representatives[0].name}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : isPaid ? (
           <div className="space-y-6 text-left bg-surface p-6 sm:p-8 rounded-xl border border-border shadow-sm mb-8">
             <div className="border-b border-border/80 pb-4">
               <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1">
