@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import { getProductBySlug } from "@/server/catalogue/queries";
 import { ProductDetailsView } from "@/components/catalogue/ProductDetailsView";
 
+export const dynamic = "force-dynamic";
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
