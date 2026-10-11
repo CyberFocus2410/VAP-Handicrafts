@@ -78,6 +78,15 @@ if (categoriesStore.size === 0) {
       isActive: true,
     },
     {
+      id: "cat-personalized-gifts",
+      slug: "personalized-gifts",
+      name: "Personalized Gifts",
+      description: "Custom photo prints, relationship cards, and memories preserved forever.",
+      imageUrl: "/images/templates/relationship-licence-template.webp",
+      displayOrder: 3,
+      isActive: true,
+    },
+    {
       id: "cat-3",
       slug: "cards-and-gifts",
       name: "Cards & Gifts",
