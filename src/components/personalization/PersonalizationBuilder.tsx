@@ -95,23 +95,38 @@ export function PersonalizationBuilder({ product }: PersonalizationBuilderProps)
     }
   };
 
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [isSuccessAdded, setIsSuccessAdded] = React.useState(false);
+
   const isFormValid = React.useMemo(() => {
     if (selectedTemplateKey === "relationship_licence") {
-      return Boolean(
-        licenseHolder.trim() &&
-        validFrom.trim() &&
-        signature.trim() &&
-        (photoUploadId || previewUrl)
-      );
+      return Boolean(licenseHolder.trim());
     }
     if (selectedTemplateKey === "polaroid") {
-      return Boolean(recipientName.trim() && caption.trim() && (photoUploadId || previewUrl));
+      return Boolean(recipientName.trim() || caption.trim());
     }
-    return Boolean(recipientName.trim() && message.trim());
-  }, [selectedTemplateKey, licenseHolder, validFrom, signature, photoUploadId, previewUrl, recipientName, caption, message]);
+    return Boolean(recipientName.trim() || message.trim());
+  }, [selectedTemplateKey, licenseHolder, recipientName, caption, message]);
 
   const handleAddToCart = () => {
-    if (!isFormValid || !selectedVariant) return;
+    setSubmitError(null);
+
+    if (selectedTemplateKey === "relationship_licence" && !licenseHolder.trim()) {
+      setSubmitError("Please enter the couple/partner names for your Relationship Licence.");
+      return;
+    }
+    if (selectedTemplateKey === "polaroid" && !recipientName.trim() && !caption.trim()) {
+      setSubmitError("Please enter a caption or recipient name for your Polaroid Card.");
+      return;
+    }
+    if (selectedTemplateKey === "card" && !recipientName.trim() && !message.trim()) {
+      setSubmitError("Please enter a recipient name or message for your Custom Card.");
+      return;
+    }
+    if (!selectedVariant) {
+      setSubmitError("Please select a variant to proceed.");
+      return;
+    }
 
     addItem({
       productId: product.id,
@@ -120,7 +135,7 @@ export function PersonalizationBuilder({ product }: PersonalizationBuilderProps)
       quantity: 1,
       customization: {
         templateId: selectedTemplateKey,
-        recipientName: selectedTemplateKey === "relationship_licence" ? licenseHolder.trim() : recipientName.trim(),
+        recipientName: selectedTemplateKey === "relationship_licence" ? licenseHolder.trim() : (recipientName.trim() || "Cherished One"),
         senderName: senderName.trim() || undefined,
         occasion: selectedTemplateKey === "relationship_licence" ? "Partnership / Love" : occasion,
         caption: caption.trim() || undefined,
@@ -138,7 +153,9 @@ export function PersonalizationBuilder({ product }: PersonalizationBuilderProps)
       },
     });
 
+    setIsSuccessAdded(true);
     openDrawer();
+    setTimeout(() => setIsSuccessAdded(false), 3000);
   };
 
   return (
@@ -506,26 +523,34 @@ export function PersonalizationBuilder({ product }: PersonalizationBuilderProps)
         </div>
 
         {/* Action Button */}
-        <div className="pt-4 border-t border-border/80">
+        <div className="pt-4 border-t border-border/80 space-y-3">
+          {submitError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2.5 animate-shake">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span className="font-medium">{submitError}</span>
+            </div>
+          )}
+          {isSuccessAdded && (
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 shrink-0 text-emerald-600" />
+              <span className="font-semibold">Custom card successfully added to your cart! Reviewing cart drawer...</span>
+            </div>
+          )}
           <Button
             type="button"
             size="lg"
-            disabled={!isFormValid || isUploading}
+            disabled={isUploading}
             onClick={handleAddToCart}
-            className="w-full justify-center gap-2 py-6 text-sm font-semibold rounded-full shadow-md"
+            className="w-full justify-center gap-2 py-6 text-sm font-semibold rounded-full shadow-md transition-all active:scale-[0.99]"
           >
-            <span>Add Custom Gift to Cart</span>
+            <span>{isSuccessAdded ? "Added to Cart ✓" : "Add Custom Gift to Cart"}</span>
             <ArrowRight className="w-4 h-4" />
           </Button>
-          {!isFormValid && (
-            <p className="mt-2 text-center text-[11px] text-cocoa-muted">
-              {selectedTemplateKey === "relationship_licence"
-                ? "Please upload a couple photo and enter names, date, and signature to proceed."
-                : selectedTemplateKey === "polaroid"
-                ? "Please upload a photo and enter caption and recipient name."
-                : "Please enter recipient name and message."}
-            </p>
-          )}
+          <p className="text-center text-[11px] text-cocoa-muted leading-relaxed">
+            {photoUploadId || previewUrl
+              ? "✓ Photo attached and will be printed on 350 GSM archival cardstock."
+              : "Photo is optional — you can upload now or WhatsApp your photo to +91 9311516813 after ordering."}
+          </p>
         </div>
       </div>
 
