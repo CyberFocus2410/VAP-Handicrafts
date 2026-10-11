@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HeroSceneWrapper } from "@/components/home/HeroSceneWrapper";
+import { HeroVideoShowcase } from "@/components/home/HeroVideoShowcase";
 import { PolaroidFrame } from "@/components/ui/polaroid-frame";
 
 export function HeroSection() {
@@ -72,9 +72,9 @@ export function HeroSection() {
               aria-hidden="true"
             />
 
-            {/* 3D Scene Container (with static poster fallback for SSR/Reduced Motion/No-WebGL) */}
+            {/* 3D Interactive Video Showcase */}
             <div className="relative z-10 w-full max-w-[460px]">
-              <HeroSceneWrapper />
+              <HeroVideoShowcase />
             </div>
 
             {/* Layered Accent Polaroid (Visible on medium/large screens) */}
