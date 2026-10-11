@@ -392,6 +392,36 @@ export async function updateCmsProduct(
         })
         .eq("product_id", id);
     }
+
+    if (patch.imageUrl !== undefined) {
+      const { data: existingImg } = await supabase
+        .from("product_images")
+        .select("id")
+        .eq("product_id", id)
+        .order("is_primary", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingImg) {
+        await supabase
+          .from("product_images")
+          .update({
+            url: updated.imageUrl,
+            alt: updated.name,
+          })
+          .eq("id", existingImg.id);
+      } else {
+        await supabase.from("product_images").insert({
+          product_id: id,
+          url: updated.imageUrl,
+          alt: updated.name,
+          width: 800,
+          height: 1000,
+          display_order: 1,
+          is_primary: true,
+        });
+      }
+    }
   } catch {
     // Non-fatal
   }
