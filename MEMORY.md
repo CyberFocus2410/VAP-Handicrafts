@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **CRM & CMS Artisan Suite Complete & Verified · Storefront Brand Copy & Personalized Cards Streamlined** |
+| **Current phase** | **UPI QR Code Payment with Screenshot Verification & Production Deploy Readiness** |
 | Last updated | 2026-10-11 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
-| Deployable build? | ✅ Yes (`npm run build` succeeds, 36 routes compiled, 0 errors, 3D code-split) |
+| Deployable build? | ✅ Yes (`npm run build` succeeds, 37 routes compiled, 0 errors, 89 unit tests green) |
 
 ## 2. Phase Tracker
 
@@ -33,6 +33,7 @@
 | 7 Hardening & Launch Readiness | ✅ Done | Replaced 3D gift box with interactive 3D Handcrafted Conch Shell Bracelet & Dangling Earrings scene, purged all developer placeholders / dev-sample badges / "owner will confirm" notes, removed all keepsake box references across all views and metadata, 14 unit test suites (78 tests) passing, 108 Playwright E2E tests (100% green), Next.js production build green (31 routes). |
 | 8 CRM & CMS Suite | ✅ Done | Unified Admin Command Hub (`/admin`), Customer 360° CRM (`/admin/customers`), Custom Gifting & Inquiries Leads Pipeline (`/admin/inquiries`), Catalogue & Inventory CMS (`/admin/products`), Categories CMS (`/admin/categories`), Storefront & Hero CMS (`/admin/content`), Public Inquiries API & Contact form (`/contact`), SQL migration `005_crm_and_cms.sql`, 15 unit test suites (86 tests) passing 100% green, production build green (36 routes). |
 | 9 Storefront Polishing | ✅ Done | Removed "Gift Sets" everywhere (nav, footer, filters, sitemap); updated brand description copy to exact text; added personalized card products and interactive Personalization Request Form connected to CRM & CMS; balanced footer column heights (4x4x4). |
+| 10 UPI QR & Screenshot Verification | ✅ Done | Merchant UPI QR code displayed at checkout (`/images/brand/upi-qr.png`); customer uploads payment screenshot & optional UTR; order state machine transitions (`payment_proof_submitted`); CRM Orders tab displays proof thumbnail with click-to-zoom modal; "✓ Verify & Confirm Payment" button confirms payment and dispatches confirmation email via Resend; fixed `next.config.ts` image remote patterns; full test suite (89 tests) & production build (37 routes) 100% green. |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 
