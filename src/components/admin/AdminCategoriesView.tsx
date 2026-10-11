@@ -265,7 +265,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Festive & Return Favors"
+                    placeholder="e.g. Shell Necklaces"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
                   />
                 </div>
