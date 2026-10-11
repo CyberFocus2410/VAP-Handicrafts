@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroVideoShowcase } from "@/components/home/HeroVideoShowcase";
-import { PolaroidFrame } from "@/components/ui/polaroid-frame";
 
 export function HeroSection() {
   return (
@@ -75,18 +74,6 @@ export function HeroSection() {
             {/* 3D Interactive Video Showcase */}
             <div className="relative z-10 w-full max-w-[460px]">
               <HeroVideoShowcase />
-            </div>
-
-            {/* Layered Accent Polaroid (Flanking the video cleanly to the side without overlapping) */}
-            <div className="absolute -bottom-6 -left-20 z-20 hidden sm:block md:-bottom-8 md:-left-36 lg:-left-44 xl:-left-48">
-              <PolaroidFrame
-                src="/images/products/shell-cone-pink-crackle-bracelet.webp"
-                alt="Cone shell bracelet with pink crackle beads"
-                caption="Natural Cone Shells"
-                subcaption="Handmade in India"
-                rotation="left"
-                className="w-36 md:w-44 shadow-card-hover"
-              />
             </div>
           </div>
         </div>
