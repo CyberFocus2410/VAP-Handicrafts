@@ -38,8 +38,77 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   const [editingProduct, setEditingProduct] = useState<CmsProduct | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
 
+  // Image Upload & Resolve State
+  const [isUploadingAddImage, setIsUploadingAddImage] = useState<boolean>(false);
+  const [isUploadingEditImage, setIsUploadingEditImage] = useState<boolean>(false);
+
   // Quick Action Notification
   const [notification, setNotification] = useState<string>("");
+
+  const handleFileUpload = async (file: File, target: "add" | "edit") => {
+    const isAdd = target === "add";
+    if (isAdd) setIsUploadingAddImage(true);
+    else setIsUploadingEditImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/cms/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        if (isAdd) {
+          setFormImageUrl(data.url);
+        } else {
+          setEditingProduct((prev) => (prev ? { ...prev, imageUrl: data.url } : null));
+        }
+        setNotification("Product photo uploaded & hosted successfully!");
+        setTimeout(() => setNotification(""), 3500);
+      } else {
+        alert(data.error || "Failed to upload image");
+      }
+    } catch {
+      alert("Network error during image upload");
+    } finally {
+      if (isAdd) setIsUploadingAddImage(false);
+      else setIsUploadingEditImage(false);
+    }
+  };
+
+  const handleResolveUrl = async (rawUrl: string, target: "add" | "edit") => {
+    if (!rawUrl.trim()) return;
+    const isAdd = target === "add";
+    if (isAdd) setIsUploadingAddImage(true);
+    else setIsUploadingEditImage(true);
+
+    try {
+      const res = await fetch("/api/admin/cms/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: rawUrl.trim() }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        if (isAdd) {
+          setFormImageUrl(data.url);
+        } else {
+          setEditingProduct((prev) => (prev ? { ...prev, imageUrl: data.url } : null));
+        }
+        setNotification("Link resolved & direct photo imported!");
+        setTimeout(() => setNotification(""), 3500);
+      } else {
+        alert(data.error || "Could not resolve image URL");
+      }
+    } catch {
+      alert("Failed to resolve link");
+    } finally {
+      if (isAdd) setIsUploadingAddImage(false);
+      else setIsUploadingEditImage(false);
+    }
+  };
 
   const filteredProducts = products.filter((p) => {
     const matchesCategory =
@@ -573,18 +642,75 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
-                    Image URL *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formImageUrl}
-                    onChange={(e) => setFormImageUrl(e.target.value)}
-                    placeholder="/images/products/... or https://..."
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
-                  />
+                <div className="space-y-1.5 p-3 rounded-2xl bg-[#2D1A16]/5 border border-[#2D1A16]/10">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-[#2D1A16]/80">
+                      Product Photo (Upload or Paste Link) *
+                    </label>
+                    {isUploadingAddImage && (
+                      <span className="text-[10px] text-amber-700 animate-pulse font-medium">
+                        Uploading &amp; Hosting Photo...
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
+                    {/* Live Preview */}
+                    <div className="relative w-16 h-20 rounded-xl overflow-hidden border border-[#2D1A16]/20 bg-stone-100 flex-shrink-0 shadow-xs">
+                      <img
+                        src={formImageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "/images/products/shell-cone-pink-crackle-bracelet.webp";
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex-1 w-full space-y-2">
+                      {/* Direct File Picker */}
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
+                          <span>📷 Upload Photo File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(file, "add");
+                            }}
+                          />
+                        </label>
+                        <span className="text-[10px] text-[#2D1A16]/60">Upload directly from device</span>
+                      </div>
+
+                      {/* URL input and resolver */}
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          required
+                          value={formImageUrl}
+                          onChange={(e) => setFormImageUrl(e.target.value)}
+                          placeholder="Paste image link or use Upload button above"
+                          className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                        />
+                        {(formImageUrl.includes("ibb.co/") || formImageUrl.includes("imgbb.com/")) && (
+                          <button
+                            type="button"
+                            onClick={() => handleResolveUrl(formImageUrl, "add")}
+                            className="px-2.5 py-1.5 rounded-xl bg-amber-600 text-white text-[10px] font-bold hover:bg-amber-700 whitespace-nowrap"
+                            title="Auto-convert imgbb viewer page to direct photo"
+                          >
+                            ⚡ Convert imgbb
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-[#2D1A16]/60 leading-normal">
+                    💡 Click <strong>&quot;Upload Photo File&quot;</strong> to upload directly to Supabase storage. If pasting an imgbb link, click <strong>&quot;Convert imgbb&quot;</strong> to fetch the raw image.
+                  </p>
                 </div>
 
                 <div>
@@ -754,18 +880,76 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
-                    Image URL
-                  </label>
-                  <input
-                    type="text"
-                    value={editingProduct.imageUrl}
-                    onChange={(e) =>
-                      setEditingProduct({ ...editingProduct, imageUrl: e.target.value })
-                    }
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
-                  />
+                <div className="space-y-1.5 p-3 rounded-2xl bg-[#2D1A16]/5 border border-[#2D1A16]/10">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-[#2D1A16]/80">
+                      Product Photo (Upload or Paste Link)
+                    </label>
+                    {isUploadingEditImage && (
+                      <span className="text-[10px] text-amber-700 animate-pulse font-medium">
+                        Uploading &amp; Hosting Photo...
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
+                    {/* Live Preview */}
+                    <div className="relative w-16 h-20 rounded-xl overflow-hidden border border-[#2D1A16]/20 bg-stone-100 flex-shrink-0 shadow-xs">
+                      <img
+                        src={editingProduct.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "/images/products/shell-cone-pink-crackle-bracelet.webp";
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex-1 w-full space-y-2">
+                      {/* Direct File Picker */}
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
+                          <span>📷 Change Photo File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(file, "edit");
+                            }}
+                          />
+                        </label>
+                        <span className="text-[10px] text-[#2D1A16]/60">Upload directly from device</span>
+                      </div>
+
+                      {/* URL input and resolver */}
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          value={editingProduct.imageUrl}
+                          onChange={(e) =>
+                            setEditingProduct({ ...editingProduct, imageUrl: e.target.value })
+                          }
+                          placeholder="Paste image link or use Change Photo button above"
+                          className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                        />
+                        {(editingProduct.imageUrl.includes("ibb.co/") || editingProduct.imageUrl.includes("imgbb.com/")) && (
+                          <button
+                            type="button"
+                            onClick={() => handleResolveUrl(editingProduct.imageUrl, "edit")}
+                            className="px-2.5 py-1.5 rounded-xl bg-amber-600 text-white text-[10px] font-bold hover:bg-amber-700 whitespace-nowrap"
+                            title="Auto-convert imgbb viewer page to direct photo"
+                          >
+                            ⚡ Convert imgbb
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-[#2D1A16]/60 leading-normal">
+                    💡 Click <strong>&quot;Change Photo File&quot;</strong> to upload directly to Supabase storage. If pasting an imgbb link, click <strong>&quot;Convert imgbb&quot;</strong> to fetch the raw image.
+                  </p>
                 </div>
 
                 <div>
