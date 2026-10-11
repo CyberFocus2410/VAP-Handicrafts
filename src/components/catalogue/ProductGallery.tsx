@@ -14,14 +14,17 @@ interface ProductGalleryProps {
 export function ProductGallery({ images }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const [isZoomOpen, setIsZoomOpen] = React.useState(false);
+  const [imgError, setImgError] = React.useState(false);
 
   const activeImage = images[selectedIndex] ?? images[0];
 
   const handlePrev = () => {
+    setImgError(false);
     setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
+    setImgError(false);
     setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
@@ -38,6 +41,10 @@ export function ProductGallery({ images }: ProductGalleryProps) {
     );
   }
 
+  const displayUrl = imgError
+    ? "/images/products/shell-cone-pink-crackle-bracelet.webp"
+    : activeImage.url;
+
   return (
     <div
       className="flex flex-col gap-4"
@@ -48,10 +55,11 @@ export function ProductGallery({ images }: ProductGalleryProps) {
       {/* Main Image Display */}
       <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-md border border-border bg-surface shadow-card">
         <Image
-          src={activeImage.url}
+          src={displayUrl}
           alt={activeImage.alt}
           fill
           priority
+          onError={() => setImgError(true)}
           sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover object-center transition-transform duration-300"
         />
