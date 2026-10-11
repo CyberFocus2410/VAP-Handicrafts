@@ -7,7 +7,7 @@ const InquiryInputSchema = z.object({
   email: z.string().email("Valid email required"),
   phone: z.string().optional(),
   occasion: z.string().optional(),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  message: z.string().min(3, "Please enter your message or custom request"),
 });
 
 export async function POST(req: NextRequest) {
