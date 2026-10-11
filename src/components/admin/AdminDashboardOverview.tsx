@@ -36,6 +36,9 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
   const grossSalesPaise = paidOrders.reduce((sum, o) => sum + o.totalMinor, 0);
   const aovPaise = paidOrders.length > 0 ? Math.round(grossSalesPaise / paidOrders.length) : 0;
   const pendingFulfillmentCount = orders.filter((o) => o.status === "paid").length;
+  const pendingVerificationCount = orders.filter(
+    (o) => o.status === "payment_proof_submitted"
+  ).length;
   const openInquiriesCount = inquiries.filter(
     (i) => i.status === "new" || i.status === "in_discussion"
   ).length;
@@ -61,6 +64,15 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
               Real-time pulse of your shell jewellery boutique, customer relationships, custom gifting inquiries, and storefront content.
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
+              {pendingVerificationCount > 0 && (
+                <Link
+                  href="/admin/orders"
+                  className="px-4 py-2 rounded-xl bg-amber-400 text-stone-900 text-xs sm:text-sm font-bold hover:bg-amber-300 shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <span>📸</span>
+                  <span>Verify Payments ({pendingVerificationCount} Pending)</span>
+                </Link>
+              )}
               <Link
                 href="/admin/orders"
                 className="px-4 py-2 rounded-xl bg-[#FAF5EF] text-[#2D1A16] text-xs sm:text-sm font-semibold hover:bg-white shadow-sm transition-all"
@@ -85,6 +97,29 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
             <span className="text-[220px] font-serif">🐚</span>
           </div>
         </div>
+
+        {/* Pending Verification Banner */}
+        {pendingVerificationCount > 0 && (
+          <div className="mb-8 p-5 bg-amber-50 border-2 border-amber-300 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <span className="text-3xl">📸</span>
+              <div>
+                <h3 className="text-base font-bold text-amber-950">
+                  {pendingVerificationCount} Customer Payment Screenshot{pendingVerificationCount > 1 ? "s" : ""} Awaiting Verification
+                </h3>
+                <p className="text-xs sm:text-sm text-amber-800 mt-0.5">
+                  Customers paid via UPI QR and attached payment screenshots. Confirm them in the Orders tab to trigger order confirmation emails.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/orders"
+              className="px-4 py-2.5 rounded-xl bg-amber-600 text-white text-xs sm:text-sm font-bold hover:bg-amber-700 shadow-sm shrink-0 transition-all"
+            >
+              Review Proofs &rarr;
+            </Link>
+          </div>
+        )}
 
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
