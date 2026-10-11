@@ -1,11 +1,49 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { SEED_PRODUCTS } from "@/data/seed-products";
+import { listProducts } from "@/server/catalogue/queries";
+import type { ProductDetail } from "@/server/catalogue/types";
 import { ProductCard } from "@/components/ui/product-card";
 import { Button } from "@/components/ui/button";
 
-export function FeaturedProducts() {
+function toCardProduct(product: ProductDetail) {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    category_slug: product.categorySlug,
+    category_name: product.categoryName,
+    description: product.description,
+    price_minor: product.priceMinor,
+    compare_at_price_minor: product.compareAtPriceMinor ?? null,
+    is_dev_price: product.isDevPrice,
+    status: product.status,
+    stock_quantity: product.variants[0]?.stockQuantity ?? 10,
+    fulfilment_type: product.fulfilmentType,
+    materials: product.materials,
+    dimensions: product.dimensions ?? "",
+    images: product.images.map((img: { url: string; alt: string; width: number; height: number; isPrimary: boolean }) => ({
+      url: img.url,
+      alt: img.alt,
+      width: img.width,
+      height: img.height,
+      is_primary: img.isPrimary,
+    })),
+    variants: product.variants.map((v: { id: string; name: string; sku: string; priceMinor: number; inStock: boolean }) => ({
+      id: v.id,
+      name: v.name,
+      sku: v.sku,
+      price_minor: v.priceMinor,
+      in_stock: v.inStock,
+    })),
+    tags: [],
+  };
+}
+
+export async function FeaturedProducts() {
+  const { products } = await listProducts({ sort: "featured" });
+  const displayProducts = products.slice(0, 4);
+
   return (
     <section
       aria-labelledby="featured-products-heading"
@@ -15,7 +53,7 @@ export function FeaturedProducts() {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-rose-deep">
-              Handcrafted & One-Of-A-Kind
+              Handcrafted &amp; One-Of-A-Kind
             </p>
             <h2
               id="featured-products-heading"
@@ -38,8 +76,8 @@ export function FeaturedProducts() {
 
         {/* 4-Column Responsive Grid */}
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {SEED_PRODUCTS.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {displayProducts.map((product) => (
+            <ProductCard key={product.id} product={toCardProduct(product)} />
           ))}
         </div>
 

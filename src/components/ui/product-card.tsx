@@ -14,9 +14,14 @@ export interface ProductCardProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 export function ProductCard({ product, className, ...props }: ProductCardProps) {
-  const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
-  const initialUrl = primaryImage?.url || "/images/products/shell-cone-pink-crackle-bracelet.webp";
+  const primaryImage = product.images?.find((img) => img.is_primary) ?? product.images?.[0];
+  const initialUrl = primaryImage?.url || (product as any).imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp";
   const [imgSrc, setImgSrc] = React.useState<string>(initialUrl);
+
+  React.useEffect(() => {
+    setImgSrc(initialUrl);
+  }, [initialUrl]);
+
   const productUrl = `/shop/${product.category_slug}/${product.slug}`;
 
   return (
