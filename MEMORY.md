@@ -14,7 +14,7 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **CRM & CMS Artisan Suite Complete & Verified** |
+| **Current phase** | **CRM & CMS Artisan Suite Complete & Verified · Storefront Brand Copy & Personalized Cards Streamlined** |
 | Last updated | 2026-10-11 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
 | Deployable build? | ✅ Yes (`npm run build` succeeds, 36 routes compiled, 0 errors, 3D code-split) |
@@ -32,6 +32,7 @@
 | 6 Email & Admin | ✅ Done | Resend client with test domain fallback, Transactional Outbox pattern, Buyer order confirmation + Admin alert + Order shipped templates, Admin orders management dashboard (`/admin/orders`), fulfillment actions (`mark_shipped` with courier + AWB, `mark_fulfilled`), printable workshop packing slip modal, 78 unit tests passing, production build green |
 | 7 Hardening & Launch Readiness | ✅ Done | Replaced 3D gift box with interactive 3D Handcrafted Conch Shell Bracelet & Dangling Earrings scene, purged all developer placeholders / dev-sample badges / "owner will confirm" notes, removed all keepsake box references across all views and metadata, 14 unit test suites (78 tests) passing, 108 Playwright E2E tests (100% green), Next.js production build green (31 routes). |
 | 8 CRM & CMS Suite | ✅ Done | Unified Admin Command Hub (`/admin`), Customer 360° CRM (`/admin/customers`), Custom Gifting & Inquiries Leads Pipeline (`/admin/inquiries`), Catalogue & Inventory CMS (`/admin/products`), Categories CMS (`/admin/categories`), Storefront & Hero CMS (`/admin/content`), Public Inquiries API & Contact form (`/contact`), SQL migration `005_crm_and_cms.sql`, 15 unit test suites (86 tests) passing 100% green, production build green (36 routes). |
+| 9 Storefront Polishing | ✅ Done | Removed "Gift Sets" everywhere (nav, footer, filters, sitemap); updated brand description copy to exact text; added personalized card products and interactive Personalization Request Form connected to CRM & CMS; balanced footer column heights (4x4x4). |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 
@@ -39,10 +40,10 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 
 | Integration | Implemented | Tested | Verified against live/staging service | Notes |
 |---|---|---|---|---|
-| Next.js app / build | ✅ | ✅ | n/a | Local build & e2e green (31 routes, 108 Playwright tests passing) |
+| Next.js app / build | ✅ | ✅ | n/a | Local build & e2e green (36 routes, 86 unit tests passing) |
 | 3D Hero Scene (R3F) | ✅ | ✅ | n/a | Interactive Conch Shell Bracelet & Dangling Earrings with pointer parallax & reduced-motion fallback |
 | Responsive Images | ✅ | ✅ | n/a | AVIF/WebP responsive sizes from authentic workshop photos |
-| Supabase (DB/Auth/Storage) | ✅ | ✅ | ✅ Verified Live Service | 13 core tables active & seeded; storage bucket `customization-uploads` active; migrations 001-004 created |
+| Supabase (DB/Auth/Storage) | ✅ | ✅ | ✅ Verified Live Service | 13 core tables active & seeded; storage bucket `customization-uploads` active; migrations 001-005 created |
 | Paytm PG | ✅ Implemented | ✅ Unit & Simulator E2E tested | 🟡 Simulator Verified / Live Keys Pending | Fully tested with dev simulator & authoritative server callback; ready for merchant keys |
 | Resend | ✅ Implemented | ✅ Unit & Outbox tested | 🟡 Configured with credentials | API key configured; transactional outbox pattern active |
 | Vercel deploy | 🟡 | 🟡 | 🟡 | Repo 100% deploy-ready for Vercel connection |
@@ -52,9 +53,10 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 - Brand name confirmed as **VAP Handicrafts** (owner decision O-01).
 - Founders contact info active: **Pulkit Garg (+91 9311516813)** and **Vivan Mittal (+91 9310039258)**; email `vaphandicrafts@gmail.com`; Instagram `@vaphandicraft`.
 - Official circular gold emblem logo integrated in Header, Mobile Drawer, and Footer (`/images/brand/logo.webp`).
-- Keepsakes boxes completely removed; replaced with "Personalized Cards", "Cards & Gifts", and "Gift Sets".
+- Gift Sets option completely removed across navigation, footer, category filters, and sitemaps.
+- Exact bio copy active: *"From authentic shell jewellery to custom relationship cards, we bring your emotions to life."*
 - 3D Hero features interactive procedural conch shell bracelet and dangling pearl earrings with ambient light and mouse parallax.
-- All developer placeholders ("Dev Sample", "Dev Price", "Pending Owner Copy Approval", "owner will confirm") completely removed for production.
+- Personalized Cards page features authentic card products and an interactive customization form submitting directly into the CRM inquiries pipeline.
 - Integer paise money arithmetic strictly preserved everywhere with 0 floating point math.
 - Order state machine adheres to PRD §12: terminal status immutability (`paid` cannot be overridden by late `failed` callbacks).
 - Stock reservation lease timer set to 15 minutes as per ADR-005 Option A.
