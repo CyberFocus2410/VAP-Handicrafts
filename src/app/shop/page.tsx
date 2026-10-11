@@ -7,6 +7,8 @@ import { Section } from "@/components/ui/section";
 import { Heading } from "@/components/ui/heading";
 import { Badge } from "@/components/ui/badge";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Shop All Collections | VAP Handicrafts",
   description: "Browse handcrafted shell jewellery, personalized gifts, and romantic creations made in India.",

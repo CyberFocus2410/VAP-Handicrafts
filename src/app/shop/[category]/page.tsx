@@ -5,8 +5,10 @@ import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ui/product-card";
 import { ArrowLeft, MessageCircle } from "lucide-react";
-import { SEED_PRODUCTS } from "@/data/seed-products";
+import { listProducts } from "@/server/catalogue/queries";
 import { PersonalizationRequestForm } from "@/components/catalogue/PersonalizationRequestForm";
+
+export const dynamic = "force-dynamic";
 
 interface CategoryPageProps {
   params: Promise<{ category: string }>;
@@ -72,14 +74,41 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const isPersonalized =
     category === "personalized-cards" || category === "personalized-gifts";
 
-  const matchingProducts = categoryData.filterCategory
-    ? SEED_PRODUCTS.filter((p) => {
-        if (isPersonalized) {
-          return p.category_slug === "personalized-cards" || p.category_slug === "personalized-gifts";
-        }
-        return p.category_slug === categoryData.filterCategory;
-      })
-    : [];
+  const { products: dbProducts } = await listProducts({
+    categorySlug: categoryData.filterCategory,
+  });
+
+  const matchingProducts = dbProducts.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    category_slug: p.categorySlug,
+    category_name: p.categoryName,
+    description: p.description,
+    price_minor: p.priceMinor,
+    compare_at_price_minor: p.compareAtPriceMinor ?? null,
+    is_dev_price: p.isDevPrice,
+    status: p.status,
+    stock_quantity: p.variants[0]?.stockQuantity ?? 10,
+    fulfilment_type: p.fulfilmentType,
+    materials: p.materials,
+    dimensions: p.dimensions ?? "",
+    images: p.images.map((img) => ({
+      url: img.url,
+      alt: img.alt,
+      width: img.width,
+      height: img.height,
+      is_primary: img.isPrimary,
+    })),
+    variants: p.variants.map((v) => ({
+      id: v.id,
+      name: v.name,
+      sku: v.sku,
+      price_minor: v.priceMinor,
+      in_stock: v.inStock,
+    })),
+    tags: [],
+  }));
 
   return (
     <Section surface="default" className="py-12 md:py-20">
