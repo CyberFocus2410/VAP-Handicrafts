@@ -13,28 +13,14 @@ interface CollectionItem {
 
 const COLLECTIONS: CollectionItem[] = [
   {
-    title: "Shell Bracelets",
+    title: "Shell Jewellery",
     category: "Jewellery",
     href: "/shop/shell-jewellery",
     image: "/images/products/shell-cone-pink-crackle-bracelet.webp",
     description: "Natural conch & cowrie beaded bracelets crafted for effortless seaside styling.",
   },
   {
-    title: "Bracelet & Earring Sets",
-    category: "Coordinated Pairs",
-    href: "/shop/shell-jewellery",
-    image: "/images/products/scallop-cowrie-earring-bracelet-set.webp",
-    description: "Coordinated sets pairing fan shells, dangling cowrie pearls, and crackle beads.",
-  },
-  {
-    title: "Floral Beaded Treasures",
-    category: "Handmade",
-    href: "/shop/shell-jewellery",
-    image: "/images/products/purple-floral-beaded-pearl-set.webp",
-    description: "Hand-threaded floral beadwork accented with baroque pearls and golden findings.",
-  },
-  {
-    title: "Relationship Licences & Cards",
+    title: "Personalized Cards",
     category: "Personalized",
     href: "/shop/personalized-cards",
     image: "/images/templates/relationship-licence-template.webp",
@@ -42,7 +28,30 @@ const COLLECTIONS: CollectionItem[] = [
   },
 ];
 
-export function FeaturedCollections() {
+interface FeaturedCollectionsProps {
+  categories?: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    description?: string | null;
+    imageUrl?: string | null;
+  }>;
+}
+
+export function FeaturedCollections({ categories }: FeaturedCollectionsProps) {
+  const displayItems: CollectionItem[] =
+    categories && categories.length > 0
+      ? categories.map((c) => ({
+          title: c.name,
+          category: c.name,
+          href: `/shop/${c.slug}`,
+          image: c.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp",
+          description: c.description || "Handcrafted artisan collection.",
+        }))
+      : COLLECTIONS;
+
+  const isTwoCols = displayItems.length <= 2;
+
   return (
     <section
       aria-labelledby="collections-heading"
@@ -70,8 +79,12 @@ export function FeaturedCollections() {
           </Link>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {COLLECTIONS.map((col) => (
+        <div
+          className={`mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 ${
+            isTwoCols ? "lg:grid-cols-2 max-w-4xl mx-auto" : "lg:grid-cols-4"
+          }`}
+        >
+          {displayItems.map((col) => (
             <Link
               key={col.title}
               href={col.href}

@@ -71,10 +71,11 @@ const DEFUNCT_CMS_CATEGORY_SLUGS = new Set([
 // Purge any defunct or duplicate categories on reload
 for (const [id, cat] of categoriesStore.entries()) {
   if (
+    id === "cat-1" ||
+    id === "cat-2" ||
     DEFUNCT_CMS_CATEGORY_SLUGS.has(cat.slug) ||
     cat.name.toLowerCase().includes("festive") ||
-    cat.name.toLowerCase().includes("favor") ||
-    cat.name.toLowerCase().includes("keepsake")
+    cat.name.toLowerCase().includes("favor")
   ) {
     categoriesStore.delete(id);
   }
@@ -83,7 +84,7 @@ for (const [id, cat] of categoriesStore.entries()) {
 if (categoriesStore.size === 0) {
   const initialCategories: CmsCategory[] = [
     {
-      id: "cat-1",
+      id: "10000000-0000-4000-8000-000000000001",
       slug: "shell-jewellery",
       name: "Shell Jewellery",
       description: "Handcrafted shell bracelets, matching earrings, and delicate accessories made with natural ocean shells.",
@@ -92,11 +93,11 @@ if (categoriesStore.size === 0) {
       isActive: true,
     },
     {
-      id: "cat-2",
+      id: "10000000-0000-4000-8000-000000000002",
       slug: "personalized-cards",
       name: "Personalized Cards",
       description: "Relationship licence cards, Polaroid photo cards, and custom romantic dedications.",
-      imageUrl: "/images/templates/relationship-licence-template.webp",
+      imageUrl: "https://qepfiubmjueooacemhzz.supabase.co/storage/v1/object/public/product-media/products/1791746730434-0zu5u2.png",
       displayOrder: 2,
       isActive: true,
     },

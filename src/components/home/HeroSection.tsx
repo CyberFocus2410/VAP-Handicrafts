@@ -5,8 +5,24 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroVideoShowcase } from "@/components/home/HeroVideoShowcase";
+import { SiteHeroContent } from "@/server/admin/crm-cms-types";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  hero?: SiteHeroContent;
+}
+
+export function HeroSection({ hero }: HeroSectionProps) {
+  const eyebrow = hero?.eyebrow || "Gifts That Feel Like You";
+  const title = hero?.title || "Little treasures,";
+  const italicTitlePart = hero?.italicTitlePart || "made to be loved.";
+  const description =
+    hero?.description ||
+    "Handcrafted shell jewellery, premium cards, and personalized creations for your favourite people. Natural ocean shells, delicate pastel beads, and custom relationship cards crafted with heart in India.";
+  const primaryCtaText = hero?.primaryCtaText || "Explore the Collection";
+  const primaryCtaLink = hero?.primaryCtaLink === "/products" ? "/shop" : (hero?.primaryCtaLink || "/shop");
+  const secondaryCtaText = hero?.secondaryCtaText || "Personalized Cards";
+  const secondaryCtaLink = hero?.secondaryCtaLink || "/shop/personalized-cards";
+
   return (
     <section
       aria-labelledby="hero-heading"
@@ -18,34 +34,32 @@ export function HeroSection() {
           <div className="z-10 lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-rose-deep/20 bg-blush/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-rose-deep">
               <Sparkles className="h-3.5 w-3.5 text-rose-deep" aria-hidden="true" />
-              <span>Gifts That Feel Like You</span>
+              <span>{eyebrow}</span>
             </div>
 
             <h1
               id="hero-heading"
               className="mt-5 font-serif text-display font-medium leading-[1.05] tracking-tight text-cocoa"
             >
-              Little treasures, <br />
-              <span className="italic text-rose-deep">made to be loved.</span>
+              {title} <br />
+              <span className="italic text-rose-deep">{italicTitlePart}</span>
             </h1>
 
             <p className="mt-6 max-w-xl text-body-lg text-cocoa-muted">
-              Handcrafted shell jewellery, premium cards, and personalized creations for your favourite
-              people. Natural ocean shells, delicate pastel beads, and custom relationship cards
-              crafted with heart in India.
+              {description}
             </p>
 
             {/* CTA Group: Real <a> links that work instantly before or without JS/animations */}
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button asChild size="lg" className="gap-2 shadow-soft">
-                <Link href="/shop" data-testid="hero-primary-cta">
-                  <span>Explore the Collection</span>
+                <Link href={primaryCtaLink} data-testid="hero-primary-cta">
+                  <span>{primaryCtaText}</span>
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
 
               <Button asChild variant="secondary" size="lg">
-                <Link href="/shop/personalized-cards">Personalized Cards</Link>
+                <Link href={secondaryCtaLink}>{secondaryCtaText}</Link>
               </Button>
             </div>
 

@@ -5,7 +5,7 @@ import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ui/product-card";
 import { ArrowLeft, MessageCircle } from "lucide-react";
-import { listProducts } from "@/server/catalogue/queries";
+import { listProducts, getCategoryBySlug } from "@/server/catalogue/queries";
 import { PersonalizationRequestForm } from "@/components/catalogue/PersonalizationRequestForm";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ interface CategoryPageProps {
   params: Promise<{ category: string }>;
 }
 
-const validCategories: Record<string, { title: string; description: string; filterCategory?: string }> = {
+const fallbackCategories: Record<string, { title: string; description: string; filterCategory?: string }> = {
   "shell-jewellery": {
     title: "Shell Jewellery",
     description: "Handcrafted charm bracelets, earrings, and delicate accessories made with natural ocean shells.",
@@ -39,19 +39,28 @@ const validCategories: Record<string, { title: string; description: string; filt
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { category } = await params;
-  const data = validCategories[category];
-  if (!data) return { title: "Category Not Found | VAP Handicrafts" };
+  const cmsCategory = await getCategoryBySlug(category);
+  const fallback = fallbackCategories[category];
+  const title = cmsCategory?.name || fallback?.title;
+  const description = cmsCategory?.description || fallback?.description;
+
+  if (!title) return { title: "Category Not Found | VAP Handicrafts" };
   return {
-    title: `${data.title} | VAP Handicrafts`,
-    description: data.description,
+    title: `${title} | VAP Handicrafts`,
+    description: description,
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
-  const categoryData = validCategories[category];
+  const cmsCategory = await getCategoryBySlug(category);
+  const fallback = fallbackCategories[category];
 
-  if (!categoryData) {
+  const categoryTitle = cmsCategory?.name || fallback?.title;
+  const categoryDescription = cmsCategory?.description || fallback?.description;
+  const filterSlug = cmsCategory?.slug || fallback?.filterCategory;
+
+  if (!categoryTitle || !filterSlug) {
     return (
       <Section surface="default" className="py-16">
         <Container className="text-center">
@@ -72,10 +81,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   const isPersonalized =
-    category === "personalized-cards" || category === "personalized-gifts";
+    filterSlug === "personalized-cards" || filterSlug === "personalized-gifts";
 
   const { products: dbProducts } = await listProducts({
-    categorySlug: categoryData.filterCategory,
+    categorySlug: filterSlug,
   });
 
   const matchingProducts = dbProducts.map((p) => ({
@@ -122,10 +131,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
         <div className="mb-12">
           <Heading level="h1" className="mb-3">
-            {categoryData.title}
+            {categoryTitle}
           </Heading>
           <p className="text-base text-cocoa-muted max-w-xl">
-            {categoryData.description}
+            {categoryDescription}
           </p>
         </div>
 

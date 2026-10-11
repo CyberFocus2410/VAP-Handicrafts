@@ -3,8 +3,25 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SiteBrandStoryContent } from "@/server/admin/crm-cms-types";
 
-export function BrandStory() {
+interface BrandStoryProps {
+  brandStory?: SiteBrandStoryContent;
+}
+
+export function BrandStory({ brandStory }: BrandStoryProps) {
+  const eyebrow = brandStory?.eyebrow || "Our Story";
+  const heading =
+    brandStory?.heading ||
+    "Born from the rhythm of the tides and the joy of gifting.";
+  const p1 =
+    brandStory?.narrativeParagraph1 ||
+    "At VAP Handicrafts, every piece begins with natural treasures gathered and polished to reveal their organic glow. We believe jewellery and gifts should carry emotional warmth—not mass-produced repetition.";
+  const p2 =
+    brandStory?.narrativeParagraph2 ||
+    "From alternating spiral conch shells threaded with pink crackle glass to scallop shells paired with cowrie drop earrings, our designs unite coastal elegance with modern artisanal styling.";
+  const badgeTitle = brandStory?.badgeTitle || "Curated by Hand";
+  const badgeSubtitle = brandStory?.badgeSubtitle || "Natural sea shells · India";
   return (
     <section
       aria-labelledby="brand-story-heading"
@@ -29,9 +46,9 @@ export function BrandStory() {
             {/* Floating Editorial Badge */}
             <div className="absolute -bottom-4 -right-4 rounded-sm border border-border bg-surface px-4 py-3 shadow-card sm:-bottom-6 sm:-right-6">
               <p className="font-serif text-sm font-semibold text-cocoa">
-                Curated by Hand
+                {badgeTitle}
               </p>
-              <p className="text-[11px] text-cocoa-muted">Natural sea shells · India</p>
+              <p className="text-[11px] text-cocoa-muted">{badgeSubtitle}</p>
             </div>
           </div>
 
@@ -39,7 +56,7 @@ export function BrandStory() {
           <div className="order-1 lg:order-2 lg:col-span-7">
             <div className="flex items-center gap-2">
               <p className="text-xs font-semibold uppercase tracking-widest text-rose-deep">
-                Our Story
+                {eyebrow}
               </p>
             </div>
 
@@ -47,20 +64,12 @@ export function BrandStory() {
               id="brand-story-heading"
               className="mt-3 font-serif text-h2 font-medium leading-tight text-cocoa"
             >
-              Born from the rhythm of the tides and the joy of gifting.
+              {heading}
             </h2>
 
             <div className="mt-6 space-y-4 text-body text-cocoa-muted">
-              <p>
-                At <strong>VAP Handicrafts</strong>, every piece begins with natural treasures
-                gathered and polished to reveal their organic glow. We believe jewellery
-                and gifts should carry emotional warmth—not mass-produced repetition.
-              </p>
-              <p>
-                From alternating spiral conch shells threaded with pink crackle glass to
-                scallop shells paired with cowrie drop earrings, our designs unite coastal
-                elegance with modern artisanal styling.
-              </p>
+              <p>{p1}</p>
+              <p>{p2}</p>
             </div>
 
             <div className="mt-8 flex items-center gap-4">
