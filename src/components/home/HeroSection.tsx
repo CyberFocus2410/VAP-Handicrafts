@@ -77,8 +77,8 @@ export function HeroSection() {
               <HeroVideoShowcase />
             </div>
 
-            {/* Layered Accent Polaroid (Visible on medium/large screens) */}
-            <div className="absolute -bottom-6 -left-6 z-20 hidden sm:block md:-bottom-8 md:-left-8">
+            {/* Layered Accent Polaroid (Flanking the video cleanly to the side without overlapping) */}
+            <div className="absolute -bottom-6 -left-20 z-20 hidden sm:block md:-bottom-8 md:-left-36 lg:-left-44 xl:-left-48">
               <PolaroidFrame
                 src="/images/products/shell-cone-pink-crackle-bracelet.webp"
                 alt="Cone shell bracelet with pink crackle beads"
