@@ -8,7 +8,7 @@ export const CustomizationValuesSchema = z.object({
   date: z.string().max(30).optional(),
   caption: z.string().max(100).optional(),
   templateId: z.string().max(50).optional(),
-  photoUploadId: z.string().uuid().optional(),
+  photoUploadId: z.string().max(100).optional(),
   photoPreviewUrl: z.string().optional(),
   specialInstructions: z.string().max(200).optional(),
   licenseHolder: z.string().max(100).optional(),
