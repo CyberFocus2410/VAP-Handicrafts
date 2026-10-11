@@ -11,6 +11,14 @@ export const CustomizationValuesSchema = z.object({
   photoUploadId: z.string().uuid().optional(),
   photoPreviewUrl: z.string().optional(),
   specialInstructions: z.string().max(200).optional(),
+  licenseHolder: z.string().max(100).optional(),
+  validFrom: z.string().max(50).optional(),
+  signature: z.string().max(50).optional(),
+  relationStatus: z.string().max(50).optional(),
+  licenseType: z.string().max(50).optional(),
+  validUntil: z.string().max(50).optional(),
+  emergencyContact: z.string().max(50).optional(),
+  relationshipId: z.string().max(50).optional(),
 }).passthrough();
 
 export type CustomizationValues = z.infer<typeof CustomizationValuesSchema>;
