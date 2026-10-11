@@ -39,17 +39,44 @@ export function Footer() {
               {BRAND.description}
             </p>
 
-            <div className="text-xs text-cocoa-muted space-y-1.5 pt-2">
-              <p>Email: <a href={`mailto:${BRAND.contact.email}`} className="text-rose-deep font-medium hover:underline">{BRAND.contact.email}</a></p>
-              <p>Instagram: <a href={BRAND.contact.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-rose-deep font-medium hover:underline">{BRAND.contact.instagram}</a></p>
-              <div className="pt-1 text-[11px] text-cocoa-muted space-y-0.5">
+            <div className="pt-2 text-xs">
+              <dl className="grid grid-cols-[max-content_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs text-cocoa-muted">
+                <dt className="font-medium text-cocoa">Email:</dt>
+                <dd>
+                  <a
+                    href={`mailto:${BRAND.contact.email}`}
+                    className="text-rose-deep font-medium hover:underline"
+                  >
+                    {BRAND.contact.email}
+                  </a>
+                </dd>
+
+                <dt className="font-medium text-cocoa">Instagram:</dt>
+                <dd>
+                  <a
+                    href={BRAND.contact.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-rose-deep font-medium hover:underline"
+                  >
+                    {BRAND.contact.instagram}
+                  </a>
+                </dd>
+
                 {BRAND.contact.representatives.map((rep) => (
-                  <p key={rep.phoneRaw}>
-                    <span className="font-medium text-cocoa">{rep.name}:</span>{" "}
-                    <a href={`tel:${rep.phoneRaw}`} className="hover:underline text-cocoa-muted">{rep.phone}</a>
-                  </p>
+                  <div key={rep.phoneRaw} className="contents">
+                    <dt className="font-medium text-cocoa">{rep.name}:</dt>
+                    <dd>
+                      <a
+                        href={`tel:${rep.phoneRaw}`}
+                        className="text-cocoa/90 hover:text-rose-deep hover:underline"
+                      >
+                        {rep.phone}
+                      </a>
+                    </dd>
+                  </div>
                 ))}
-              </div>
+              </dl>
             </div>
           </div>
 
@@ -80,9 +107,6 @@ export function Footer() {
           <p>
             &copy; {currentYear} {BRAND.legalName}. All rights reserved.
           </p>
-          <div className="flex items-center space-x-4">
-            <span>Secure Indian Payments (UPI, Cards, NetBanking via Paytm)</span>
-          </div>
         </div>
       </Container>
     </footer>

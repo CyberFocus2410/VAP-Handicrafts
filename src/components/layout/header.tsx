@@ -90,10 +90,24 @@ export function Header() {
                 </nav>
               </div>
 
-              <div className="pt-6 border-t border-border/60 text-xs text-cocoa-muted">
-                <p className="font-medium text-cocoa">{BRAND.contact.email}</p>
-                <p className="mt-1">{BRAND.contact.phoneDisplay}</p>
-                <p className="mt-2 text-[11px] text-cocoa-muted/80">{BRAND.motto}</p>
+              <div className="pt-6 border-t border-border/60 text-xs text-cocoa-muted space-y-2">
+                <p>
+                  <span className="font-medium text-cocoa">Email:</span>{" "}
+                  <a href={`mailto:${BRAND.contact.email}`} className="text-rose-deep font-medium hover:underline">
+                    {BRAND.contact.email}
+                  </a>
+                </p>
+                <div className="space-y-1">
+                  {BRAND.contact.representatives.map((rep) => (
+                    <p key={rep.phoneRaw}>
+                      <span className="font-medium text-cocoa">{rep.name}:</span>{" "}
+                      <a href={`tel:${rep.phoneRaw}`} className="text-cocoa/90 hover:underline">
+                        {rep.phone}
+                      </a>
+                    </p>
+                  ))}
+                </div>
+                <p className="pt-1 text-[11px] text-cocoa-muted/80">{BRAND.motto}</p>
               </div>
             </DrawerContent>
           </Drawer>
