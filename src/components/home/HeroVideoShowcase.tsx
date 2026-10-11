@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Volume2, VolumeX, Play, Pause, Sparkles, Gem } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause, Gem } from "lucide-react";
 
 export function HeroVideoShowcase() {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -112,9 +112,8 @@ export function HeroVideoShowcase() {
             }}
           />
 
-          {/* Subtle Bottom & Top Vignette Gradients */}
-          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+          {/* Subtle Top Vignette Gradient for Controls Contrast */}
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
 
           {/* Floating 3D Badge: Top Left (Depth = 40px) */}
           <div
@@ -157,30 +156,6 @@ export function HeroVideoShowcase() {
             >
               {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
             </button>
-          </div>
-
-          {/* Floating 3D Caption: Bottom Overlay (Depth = 35px) */}
-          <div
-            className="absolute bottom-4 inset-x-4 z-20 transition-transform duration-200 pointer-events-none"
-            style={{
-              transform: isHovered ? "translateZ(40px)" : "translateZ(0px)",
-            }}
-          >
-            <div className="p-3.5 rounded-2xl bg-black/60 backdrop-blur-md border border-white/20 shadow-xl text-white">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  1080p Studio Showcase
-                </span>
-                <span className="text-[10px] text-white/70 font-medium">100% Ocean Shells</span>
-              </div>
-              <p className="font-serif text-sm font-semibold text-white mt-1 leading-snug">
-                Handcrafted Shell Jewellery Sets
-              </p>
-              <p className="text-[11px] text-white/80 mt-0.5 line-clamp-1">
-                Natural cone &amp; cowrie shells, pastel beads, and gold findings
-              </p>
-            </div>
           </div>
         </div>
       </div>
