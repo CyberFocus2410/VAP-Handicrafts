@@ -1,4 +1,5 @@
 import { OrderConfirmationView } from "@/components/orders/OrderConfirmationView";
+import { getOrderByReference } from "@/server/orders/service";
 
 interface OrderPageProps {
   params: Promise<{ id: string }>;
@@ -20,10 +21,13 @@ export default async function OrderPage({ params, searchParams }: OrderPageProps
   const { id } = await params;
   const { status, error } = await searchParams;
 
+  const storedOrder = getOrderByReference(id);
+  const effectiveStatus = status || storedOrder?.status || "verification_pending";
+
   return (
     <OrderConfirmationView
       orderReference={id}
-      initialStatus={status || "paid"}
+      initialStatus={effectiveStatus}
       error={error}
     />
   );
