@@ -17,6 +17,7 @@ interface ProductDetailsViewProps {
 
 export function ProductDetailsView({ product }: ProductDetailsViewProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const openDrawer = useCartStore((s) => s.openDrawer);
   const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant>(
     product.variants[0] || {
       id: "var-default",
@@ -46,6 +47,7 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
       variantId: selectedVariant.id,
       quantity: 1,
     });
+    openDrawer();
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2500);
   };
@@ -185,7 +187,7 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
               <Button asChild variant="outline" size="lg" className="w-full border-rose-deep/40 text-rose-deep hover:bg-blush/20">
                 <Link href={`/personalize/${product.slug}`} className="flex items-center justify-center gap-2">
                   <Sparkles className="w-4 h-4 text-rose-deep" />
-                  <span>Personalize As a Keepsake Gift</span>
+                  <span>Personalize With a Custom Card</span>
                 </Link>
               </Button>
 
