@@ -3,6 +3,7 @@
 export type OrderStatus =
   | "pending"
   | "payment_initiated"
+  | "payment_proof_submitted"
   | "paid"
   | "shipped"
   | "failed"
@@ -26,11 +27,12 @@ export interface TransitionResult<T> {
 
 // Valid transitions for Order
 const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["payment_initiated", "cancelled", "expired"],
-  payment_initiated: ["paid", "failed", "cancelled", "expired"],
+  pending: ["payment_initiated", "payment_proof_submitted", "cancelled", "expired"],
+  payment_initiated: ["payment_proof_submitted", "paid", "failed", "cancelled", "expired"],
+  payment_proof_submitted: ["paid", "failed", "cancelled"],
   paid: ["shipped", "fulfilled"], // can transition to shipped, or directly fulfilled
   shipped: ["fulfilled"],
-  failed: ["payment_initiated", "cancelled"], // allowed to retry with a new payment attempt
+  failed: ["payment_initiated", "payment_proof_submitted", "cancelled"], // allowed to retry with a new payment attempt
   cancelled: [], // terminal
   expired: [], // terminal
   fulfilled: [], // terminal
