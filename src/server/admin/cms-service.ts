@@ -57,6 +57,29 @@ const categoriesStore: Map<string, CmsCategory> =
   globalWithCMS.__vapCmsCategories ?? (globalWithCMS.__vapCmsCategories = new Map());
 
 // Initialize categories store from base seed
+const DEFUNCT_CMS_CATEGORY_SLUGS = new Set([
+  "return-favors",
+  "festive-return-favors",
+  "cards-and-gifts",
+  "personalized-gifts",
+  "personalized-keepsakes",
+  "keepsakes",
+  "giftsets",
+  "gift-sets",
+]);
+
+// Purge any defunct or duplicate categories on reload
+for (const [id, cat] of categoriesStore.entries()) {
+  if (
+    DEFUNCT_CMS_CATEGORY_SLUGS.has(cat.slug) ||
+    cat.name.toLowerCase().includes("festive") ||
+    cat.name.toLowerCase().includes("favor") ||
+    cat.name.toLowerCase().includes("keepsake")
+  ) {
+    categoriesStore.delete(id);
+  }
+}
+
 if (categoriesStore.size === 0) {
   const initialCategories: CmsCategory[] = [
     {
@@ -75,33 +98,6 @@ if (categoriesStore.size === 0) {
       description: "Relationship licence cards, Polaroid photo cards, and custom romantic dedications.",
       imageUrl: "/images/templates/relationship-licence-template.webp",
       displayOrder: 2,
-      isActive: true,
-    },
-    {
-      id: "cat-personalized-gifts",
-      slug: "personalized-gifts",
-      name: "Personalized Gifts",
-      description: "Custom photo prints, relationship cards, and memories preserved forever.",
-      imageUrl: "/images/templates/relationship-licence-template.webp",
-      displayOrder: 3,
-      isActive: true,
-    },
-    {
-      id: "cat-3",
-      slug: "cards-and-gifts",
-      name: "Cards & Gifts",
-      description: "Artfully packaged gifts for birthdays, anniversaries, and personal milestones.",
-      imageUrl: "/images/products/purple-floral-beaded-pearl-set.webp",
-      displayOrder: 4,
-      isActive: true,
-    },
-    {
-      id: "cat-5",
-      slug: "return-favors",
-      name: "Festive & Return Favors",
-      description: "Charming tokens of gratitude for weddings, ceremonies, and celebrations.",
-      imageUrl: "/images/products/golden-link-cowrie-charm-bracelet.webp",
-      displayOrder: 5,
       isActive: true,
     },
   ];
@@ -430,6 +426,24 @@ export async function listCmsCategories(): Promise<CmsCategory[]> {
 
     if (dbCats && dbCats.length > 0) {
       for (const c of dbCats) {
+        const normSlug = c.slug?.toLowerCase().trim() || "";
+        const normName = c.name?.toLowerCase().trim() || "";
+        if (
+          DEFUNCT_CMS_CATEGORY_SLUGS.has(normSlug) ||
+          normName.includes("festive") ||
+          normName.includes("favor") ||
+          normName.includes("keepsake")
+        ) {
+          continue;
+        }
+
+        // Deduplicate: replace any mock/temp entry with the DB entry
+        for (const [existingId, existingCat] of categoriesStore.entries()) {
+          if (existingCat.slug === c.slug && existingId !== c.id) {
+            categoriesStore.delete(existingId);
+          }
+        }
+
         categoriesStore.set(c.id, {
           id: c.id,
           slug: c.slug,
@@ -445,9 +459,26 @@ export async function listCmsCategories(): Promise<CmsCategory[]> {
     // Non-fatal
   }
 
-  return Array.from(categoriesStore.values()).sort(
-    (a, b) => a.displayOrder - b.displayOrder
-  );
+  // Deduplicate before returning
+  const seen = new Set<string>();
+  const cleanList: CmsCategory[] = [];
+  for (const c of Array.from(categoriesStore.values()).sort((a, b) => a.displayOrder - b.displayOrder)) {
+    const normSlug = c.slug.toLowerCase().trim();
+    const normName = c.name.toLowerCase().trim();
+    if (
+      DEFUNCT_CMS_CATEGORY_SLUGS.has(normSlug) ||
+      normName.includes("festive") ||
+      normName.includes("favor") ||
+      normName.includes("keepsake") ||
+      seen.has(normSlug)
+    ) {
+      continue;
+    }
+    seen.add(normSlug);
+    cleanList.push(c);
+  }
+
+  return cleanList;
 }
 
 export async function createCmsCategory(input: {
