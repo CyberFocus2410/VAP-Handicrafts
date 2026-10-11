@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   listCmsProducts,
   createCmsProduct,
@@ -26,11 +27,19 @@ export async function POST(req: NextRequest) {
 
     if (action === "update" && id) {
       const updated = await updateCmsProduct(id, patch);
+      revalidatePath("/");
+      revalidatePath("/shop");
+      revalidatePath("/shop/[category]", "page");
+      revalidatePath("/products");
       return NextResponse.json({ success: true, product: updated });
     }
 
     if (action === "create" && product) {
       const created = await createCmsProduct(product);
+      revalidatePath("/");
+      revalidatePath("/shop");
+      revalidatePath("/shop/[category]", "page");
+      revalidatePath("/products");
       return NextResponse.json({ success: true, product: created });
     }
 
@@ -50,6 +59,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     await deleteCmsProduct(id);
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/shop/[category]", "page");
+    revalidatePath("/products");
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to delete product";
