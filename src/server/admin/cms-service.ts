@@ -237,14 +237,23 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
           categorySlug: p.categories?.slug || "shell-jewellery",
           categoryName: p.categories?.name || "Shell Jewellery",
           description: p.description || "",
-          priceMinor: primaryVar ? primaryVar.price_minor : (existing?.priceMinor ?? 49900),
-          compareAtPriceMinor: primaryVar?.compare_at_price_minor ?? existing?.compareAtPriceMinor,
+          priceMinor:
+            existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
+              ? existing.priceMinor
+              : (primaryVar ? primaryVar.price_minor : (existing?.priceMinor ?? 49900)),
+          compareAtPriceMinor:
+            existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
+              ? existing.compareAtPriceMinor
+              : (primaryVar?.compare_at_price_minor ?? existing?.compareAtPriceMinor),
           stockQuantity: primaryVar ? primaryVar.stock_quantity : (existing?.stockQuantity ?? 10),
           inStock: primaryVar ? primaryVar.stock_quantity > 0 : true,
           fulfilmentType: p.fulfilment_type === "made_to_order" ? "made_to_order" : "in_stock",
-          materials: p.materials || "",
+          materials: Array.isArray(p.materials) ? p.materials.join(", ") : (p.materials || ""),
           dimensions: p.dimensions || undefined,
-          imageUrl: primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp",
+          imageUrl:
+            existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
+              ? existing.imageUrl
+              : (primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"),
           imageAlt: primaryImg?.alt || p.name,
           status: p.status || "active",
           isBestseller: existing?.isBestseller ?? true,
@@ -333,7 +342,11 @@ export async function createCmsProduct(input: {
       category_id: cat?.id ?? null,
       description: input.description,
       fulfilment_type: input.fulfilmentType,
-      materials: input.materials,
+      materials: Array.isArray(input.materials)
+        ? input.materials
+        : typeof input.materials === "string"
+        ? input.materials.split(",").map((s) => s.trim()).filter(Boolean)
+        : [],
       dimensions: input.dimensions,
       status: input.status || "active",
     });
@@ -341,7 +354,7 @@ export async function createCmsProduct(input: {
     await supabase.from("product_variants").insert({
       product_id: id,
       name: "Default",
-      sku: `VAP-${slug.slice(0, 8).toUpperCase()}`,
+      sku: `VAP-${slug.slice(0, 8).toUpperCase()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`,
       price_minor: input.priceMinor,
       compare_at_price_minor: input.compareAtPriceMinor,
       stock_quantity: input.stockQuantity,
@@ -396,17 +409,26 @@ export async function updateCmsProduct(
         name: updated.name,
         description: updated.description,
         fulfilment_type: updated.fulfilmentType,
-        materials: updated.materials,
+        materials: Array.isArray(updated.materials)
+          ? updated.materials
+          : typeof updated.materials === "string"
+          ? updated.materials.split(",").map((s) => s.trim()).filter(Boolean)
+          : [],
         dimensions: updated.dimensions,
         status: updated.status,
       })
       .eq("id", id);
 
-    if (patch.priceMinor !== undefined || patch.stockQuantity !== undefined) {
+    if (
+      patch.priceMinor !== undefined ||
+      patch.compareAtPriceMinor !== undefined ||
+      patch.stockQuantity !== undefined
+    ) {
       await supabase
         .from("product_variants")
         .update({
           price_minor: updated.priceMinor,
+          compare_at_price_minor: updated.compareAtPriceMinor || null,
           stock_quantity: updated.stockQuantity,
           in_stock: updated.inStock,
         })

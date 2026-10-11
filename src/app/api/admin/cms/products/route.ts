@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       revalidatePath("/");
       revalidatePath("/shop");
       revalidatePath("/shop/[category]", "page");
+      revalidatePath("/shop/[category]/[slug]", "page");
       revalidatePath("/products");
       return NextResponse.json({ success: true, product: updated });
     }
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
       revalidatePath("/");
       revalidatePath("/shop");
       revalidatePath("/shop/[category]", "page");
+      revalidatePath("/shop/[category]/[slug]", "page");
       revalidatePath("/products");
       return NextResponse.json({ success: true, product: created });
     }
@@ -62,6 +64,7 @@ export async function DELETE(req: NextRequest) {
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/shop/[category]", "page");
+    revalidatePath("/shop/[category]/[slug]", "page");
     revalidatePath("/products");
     return NextResponse.json({ success: true });
   } catch (err) {

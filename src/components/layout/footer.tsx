@@ -88,7 +88,7 @@ export function Footer() {
               </h3>
               <ul className="space-y-2.5 text-sm">
                 {section.links.map((link) => (
-                  <li key={link.href}>
+                  <li key={`${section.title}-${link.label}`}>
                     <Link
                       href={link.href}
                       className="text-cocoa/80 hover:text-rose-deep transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm py-1.5 min-h-[28px] inline-flex items-center"

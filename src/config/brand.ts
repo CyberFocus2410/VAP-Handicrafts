@@ -88,7 +88,7 @@ export const BRAND: BrandConfig = {
         { label: "All Collections", href: "/shop" },
         { label: "Shell Jewellery", href: "/shop/jewellery" },
         { label: "Personalized Cards", href: "/shop/personalized-cards" },
-        { label: "Polaroid Keepsakes", href: "/shop/personalized-cards" },
+        { label: "Polaroid Keepsakes", href: "/shop/personalized-cards/polaroid-keepsake-card" },
       ],
     },
     {
