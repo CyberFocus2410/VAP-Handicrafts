@@ -92,7 +92,11 @@ function mapCmsProductToDetail(p: CmsProduct): ProductDetail {
     description: p.description,
     status: p.status,
     fulfilmentType: p.fulfilmentType,
-    materials: p.materials ? p.materials.split(",").map((s) => s.trim()) : [],
+    materials: Array.isArray(p.materials)
+      ? (p.materials as unknown as string[])
+      : typeof p.materials === "string"
+      ? p.materials.split(",").map((s) => s.trim()).filter(Boolean)
+      : [],
     dimensions: p.dimensions || null,
     isBestseller: p.isBestseller ?? false,
     isNewArrival: p.isNewArrival ?? false,
