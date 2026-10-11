@@ -40,6 +40,10 @@ export interface StoredOrder {
   trackingNumber?: string;
   courierName?: string;
   shippedAt?: string;
+  paymentProofUrl?: string;
+  paymentUtr?: string;
+  paymentProofSubmittedAt?: string;
+  paymentVerifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -130,6 +134,32 @@ export function getOrderByReference(orderReference: string): StoredOrder | null 
   return memoryOrders.get(orderReference) || null;
 }
 
+export function submitPaymentProof(params: {
+  orderReference: string;
+  paymentProofUrl: string;
+  paymentUtr?: string;
+}): { success: boolean; error?: string; order?: StoredOrder } {
+  const order = memoryOrders.get(params.orderReference);
+  if (!order) {
+    return { success: false, error: "Order not found" };
+  }
+
+  const transition = transitionOrder(order.status, "payment_proof_submitted");
+  if (!transition.success && order.status !== "payment_proof_submitted") {
+    return { success: false, error: transition.reason };
+  }
+
+  order.status = "payment_proof_submitted";
+  order.paymentProofUrl = params.paymentProofUrl;
+  if (params.paymentUtr) {
+    order.paymentUtr = params.paymentUtr.trim();
+  }
+  order.paymentProofSubmittedAt = new Date().toISOString();
+  order.updatedAt = new Date().toISOString();
+
+  return { success: true, order };
+}
+
 export function markOrderPaid(params: {
   orderReference: string;
   providerTxnId: string;
@@ -154,6 +184,7 @@ export function markOrderPaid(params: {
   }
 
   order.status = "paid";
+  order.paymentVerifiedAt = new Date().toISOString();
   order.updatedAt = new Date().toISOString();
 
   // Consume stock reservations
