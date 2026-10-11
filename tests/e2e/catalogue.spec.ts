@@ -17,8 +17,8 @@ test.describe("Phase 3 Catalogue & Product Pages", () => {
     const firstPrice = productCards.first().locator("p, span").filter({ hasText: /₹\d+/ });
     await expect(firstPrice.first()).toBeVisible();
 
-    // Verify Dev pricing badge is present
-    await expect(page.getByText(/Dev Sample|Dev Price/i).first()).toBeVisible();
+    // Verify In Stock / Made to Order badge is present
+    await expect(page.getByText(/In Stock|Made to Order/i).first()).toBeVisible();
 
     // Verify category filter pill works
     const shellPill = page.getByRole("button", { name: /Shell Jewellery/i }).first();

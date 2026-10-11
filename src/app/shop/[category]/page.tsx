@@ -23,13 +23,13 @@ const validCategories: Record<string, { title: string; description: string; filt
     filterCategory: "shell-jewellery",
   },
   "personalized-gifts": {
-    title: "Personalized Keepsakes & Polaroids",
-    description: "Custom photo cards, heartfelt keepsake frames, and memories preserved forever.",
+    title: "Personalized Cards & Custom Gifts",
+    description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
     filterCategory: "personalized-gifts",
   },
-  keepsakes: {
-    title: "Personalized Keepsakes",
-    description: "Custom photo cards, heartfelt keepsake frames, and memories preserved forever.",
+  "personalized-cards": {
+    title: "Personalized Cards",
+    description: "Custom photo cards, heartfelt relationship cards, and memories preserved with love.",
     filterCategory: "personalized-gifts",
   },
   "gift-sets": {

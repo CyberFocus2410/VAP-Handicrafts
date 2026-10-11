@@ -42,8 +42,8 @@ test.describe("Phase 4 Cart & Personalization Experience", () => {
     // Verify heading
     await expect(page.getByRole("heading", { name: /Customize for Your Favourite Person/i })).toBeVisible();
 
-    // Switch to Handcrafted Keepsake Gift Note template
-    const keepsakeTemplateBtn = page.getByRole("button", { name: /Handcrafted Keepsake Gift Note/i });
+    // Switch to Handcrafted Dedication Note template
+    const keepsakeTemplateBtn = page.getByRole("button", { name: /Handcrafted Dedication Note/i });
     await keepsakeTemplateBtn.click();
 
     // Fill in personalization fields
@@ -58,14 +58,14 @@ test.describe("Phase 4 Cart & Personalization Experience", () => {
     await expect(page.getByRole("paragraph").filter({ hasText: /Happy Birthday/i })).toBeVisible();
 
     // Add customized piece to cart
-    const addCustomBtn = page.getByRole("button", { name: /Add Customized Piece to Cart/i });
+    const addCustomBtn = page.getByRole("button", { name: /Add Custom Gift to Cart/i });
     await expect(addCustomBtn).toBeEnabled();
     await addCustomBtn.click();
 
     // Verify cart drawer opens with personalization summary pill
     const drawer = page.getByRole("dialog");
     await expect(drawer).toBeVisible();
-    await expect(drawer.getByText(/Personalized Keepsake/i)).toBeVisible();
+    await expect(drawer.getByText(/Personalized Card/i)).toBeVisible();
     await expect(drawer.getByText(/Ananya/i).first()).toBeVisible();
   });
 

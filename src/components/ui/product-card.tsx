@@ -38,11 +38,6 @@ export function ProductCard({ product, className, ...props }: ProductCardProps) 
 
         {/* Badges Overlay */}
         <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
-          {product.is_dev_price && (
-            <Badge variant="warning" className="text-[10px] uppercase tracking-wider">
-              Dev Sample
-            </Badge>
-          )}
           {product.fulfilment_type === "made_to_order" ? (
             <Badge variant="outline" className="bg-surface/90 text-[10px] backdrop-blur-sm">
               Made to Order

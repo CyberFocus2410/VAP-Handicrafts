@@ -12,16 +12,14 @@ export function middleware(request: NextRequest) {
     }
 
     const adminCookie = request.cookies.get("vap_admin_session");
-    const isDev = process.env.NODE_ENV === "development";
 
     // In dev mode or with valid admin session cookie, grant access
-    if (adminCookie?.value === "active" || isDev) {
+    if (adminCookie?.value === "active") {
       return NextResponse.next();
     }
 
-    // Otherwise redirect to admin login
-    const loginUrl = new URL("/admin/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    // Return 404 Not Found to unauthorized requests
+    return new NextResponse(null, { status: 404 });
   }
 
   return NextResponse.next();

@@ -45,7 +45,11 @@ export interface StoredOrder {
 }
 
 // In-memory store fallback for development / testing when live DB is migrating
-const memoryOrders = new Map<string, StoredOrder>();
+const globalWithOrders = globalThis as typeof globalThis & {
+  __vapMemoryOrders?: Map<string, StoredOrder>;
+};
+const memoryOrders: Map<string, StoredOrder> =
+  globalWithOrders.__vapMemoryOrders ?? (globalWithOrders.__vapMemoryOrders = new Map<string, StoredOrder>());
 
 function generateOrderReference(): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");

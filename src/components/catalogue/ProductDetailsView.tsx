@@ -124,11 +124,6 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
                 <Badge variant="secondary" className="text-xs">
                   {product.categoryName}
                 </Badge>
-                {selectedVariant.isDevPrice && (
-                  <Badge variant="warning" className="text-xs">
-                    Dev Sample Price
-                  </Badge>
-                )}
                 {product.fulfilmentType === "made_to_order" ? (
                   <Badge variant="outline" className="text-xs">
                     Made to Order

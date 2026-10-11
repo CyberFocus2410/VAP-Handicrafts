@@ -31,17 +31,17 @@ test.describe("Phase 2 Visual Experience & Homepage Sections", () => {
     // 5. Featured Products
     const products = page.locator("section[aria-labelledby='featured-products-heading']");
     await expect(products).toBeVisible();
-    await expect(products.getByText("Featured Jewellery & Keepsakes")).toBeVisible();
+    await expect(products.getByText("Featured Shell Jewellery & Gifts")).toBeVisible();
 
     // 6. Personalized Gift Feature
     const personalized = page.locator("section[aria-labelledby='personalized-heading']");
     await expect(personalized).toBeVisible();
-    await expect(personalized.getByText("Bespoke Keepsakes")).toBeVisible();
+    await expect(personalized.getByText("Personalized Cards & Gifts")).toBeVisible();
 
     // 7. Brand Story
     const story = page.locator("section[aria-labelledby='brand-story-heading']");
     await expect(story).toBeVisible();
-    await expect(story.getByText("Pending Owner Copy Approval")).toBeVisible();
+    await expect(story.getByText("Our Story", { exact: true })).toBeVisible();
   });
 
   test("hero primary CTA is a real link to /shop and navigates immediately", async ({ page }) => {
@@ -57,7 +57,7 @@ test.describe("Phase 2 Visual Experience & Homepage Sections", () => {
     await expect(page).toHaveURL(/\/shop/);
   });
 
-  test("featured products grid renders all 4 authentic products with dev-price badges", async ({ page }) => {
+  test("featured products grid renders all 4 authentic products with fulfilment badges", async ({ page }) => {
     const productsSection = page.locator("section[aria-labelledby='featured-products-heading']");
 
     // Check presence of products
@@ -66,9 +66,9 @@ test.describe("Phase 2 Visual Experience & Homepage Sections", () => {
     await expect(productsSection.getByText("Lavender Floral Beaded & Pearl Set")).toBeVisible();
     await expect(productsSection.getByText("Golden Link Cowrie & Conch Charm Bracelet")).toBeVisible();
 
-    // Ensure dev badges are present
-    const devBadges = productsSection.getByText("Dev Sample");
-    await expect(devBadges.first()).toBeVisible();
+    // Ensure production badges are present
+    const fulfilmentBadges = productsSection.getByText(/Made to Order|In Stock/i);
+    await expect(fulfilmentBadges.first()).toBeVisible();
 
     // Click first product card and verify detail page
     const firstViewBtn = productsSection.getByRole("link", { name: "View Item" }).first();

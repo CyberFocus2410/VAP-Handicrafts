@@ -51,7 +51,7 @@ test.describe("Storefront Smoke Tests", () => {
     // Navigate to Contact
     await navigateTo("Contact");
     await expect(page).toHaveURL(/\/contact/);
-    await expect(page.getByRole("heading", { name: /We'd Love To Hear From You/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Connect With Us/i })).toBeVisible();
   });
 
   test("mobile navigation drawer opens, traps focus, and closes on Escape", async ({ page, isMobile }) => {

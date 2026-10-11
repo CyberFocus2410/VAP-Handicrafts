@@ -164,7 +164,7 @@ export function CartDrawer() {
                 <div className="space-y-1">
                   <p className="font-serif text-lg font-medium text-cocoa">Your cart is empty</p>
                   <p className="text-xs text-cocoa-muted max-w-xs">
-                    Discover our handcrafted shell jewellery collection and personalized keepsake gifts.
+                    Discover our handcrafted shell jewellery collection and personalized gifts &amp; cards.
                   </p>
                 </div>
                 <Button

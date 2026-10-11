@@ -18,7 +18,7 @@ describe("Catalogue Queries (Data-Access Layer)", () => {
     const slugs = categories.map((c) => c.slug);
     expect(slugs).toContain("shell-jewellery");
     expect(slugs).toContain("personalized-gifts");
-    expect(slugs).toContain("keepsakes");
+    expect(slugs).toContain("cards-and-gifts");
     expect(slugs).toContain("return-favors");
   });
 

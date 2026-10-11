@@ -29,7 +29,7 @@ export function ScrapbookKeepsakes() {
           </h2>
           <p className="mt-3 text-body text-cocoa-muted">
             Each creation is assembled by hand using authentic ocean shells, delicate
-            pastel glass, and timeless keepsake details. Made to celebrate your most
+            pastel glass, and heartfelt details. Made to celebrate your most
             cherished moments.
           </p>
         </div>

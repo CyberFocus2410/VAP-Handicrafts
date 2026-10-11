@@ -41,7 +41,7 @@ const STATIC_CATEGORIES: Category[] = [
   },
   {
     id: "10000000-0000-4000-8000-000000000003",
-    slug: "keepsakes",
+    slug: "cards-and-gifts",
     name: "Cards & Gifts",
     description: "Artfully packaged gifts for birthdays, anniversaries, and milestones.",
     imageUrl: "/images/products/scallop-cowrie-earring-bracelet-set.webp",

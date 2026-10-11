@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Shop All Collections | VAP Handicrafts",
-  description: "Browse handcrafted shell jewellery, personalized keepsakes, and romantic gifts made in India.",
+  description: "Browse handcrafted shell jewellery, personalized gifts, and romantic creations made in India.",
 };
 
 interface ShopPageProps {
@@ -37,7 +37,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             Shop All Collections
           </Heading>
           <p className="mt-2 text-sm text-cocoa-muted max-w-2xl leading-relaxed">
-            Discover handcrafted shell jewellery, keepsake sets, and personalized gifts made with authentic ocean shells.
+            Discover handcrafted shell jewellery, gift sets, and personalized creations made with authentic ocean shells.
           </p>
         </div>
 

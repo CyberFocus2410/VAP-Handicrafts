@@ -5,7 +5,7 @@ import { CartPageView } from "@/components/cart/CartPageView";
 
 export const metadata: Metadata = {
   title: "Shopping Cart | VAP Handicrafts",
-  description: "Review and manage your selected handcrafted shell jewellery and personalized keepsakes.",
+  description: "Review and manage your selected handcrafted shell jewellery and personalized gifts.",
 };
 
 export default function CartPage() {

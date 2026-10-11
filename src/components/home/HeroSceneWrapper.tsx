@@ -20,7 +20,7 @@ function HeroStaticPoster({ priority = false }: { priority?: boolean }) {
     >
       <Image
         src="/images/hero-fallback.webp"
-        alt="Artisan crafted shell jewellery and keepsakes styled with pink linen and dried florals"
+        alt="Artisan crafted shell jewellery and personalized gifts styled with pink linen and dried florals"
         fill
         priority={priority}
         sizes="(max-width: 768px) 100vw, 50vw"

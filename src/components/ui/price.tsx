@@ -37,12 +37,6 @@ export function Price({
           <s>{formattedCompare}</s>
         </span>
       )}
-
-      {isDevPrice && (
-        <Badge variant="dev" className="text-[10px] px-1.5 py-0">
-          Dev Price
-        </Badge>
-      )}
     </div>
   );
 }

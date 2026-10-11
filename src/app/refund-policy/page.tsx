@@ -21,9 +21,9 @@ export default function RefundPolicyPage() {
             At {BRAND.name}, customer satisfaction is our top priority. Due to the bespoke nature of our catalogue, please review our refund and return guidelines below.
           </p>
 
-          <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">1. Personalized Keepsakes</h2>
+          <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">1. Personalized Cards &amp; Custom Gifts</h2>
           <p>
-            Because custom photo frames, Polaroid memories, and personalized message cards are crafted uniquely to your personal photos and specifications, they are generally non-returnable unless received damaged or with a manufacturing defect.
+            Because custom photo cards, relationship licences, and personalized message cards are crafted uniquely to your personal photos and specifications, they are generally non-returnable unless received damaged or with a manufacturing defect.
           </p>
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">2. Damaged or Defective Items</h2>

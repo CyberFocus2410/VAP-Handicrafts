@@ -26,9 +26,9 @@ export default function PrivacyPage() {
             To process your orders and deliver your handcrafted pieces, we collect your name, shipping address, contact phone number, and email. We do not store sensitive payment credentials such as UPI PINs or card numbers—all transactions are securely handled by authorized payment gateways.
           </p>
 
-          <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">2. Customer Photos & Keepsake Media</h2>
+          <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">2. Customer Photos &amp; Personalization Media</h2>
           <p>
-            Customer photographs submitted for keepsake cards or frames are stored in private, access-controlled cloud storage. Media is accessed strictly by authorized staff to fulfill your print orders, and is subject to automated retention and deletion schedules.
+            Customer photographs submitted for personalized cards or photo gifts are stored in private, access-controlled cloud storage. Media is accessed strictly by authorized staff to fulfill your print orders, and is subject to automated retention and deletion schedules.
           </p>
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">3. Contacting Us Regarding Your Data</h2>

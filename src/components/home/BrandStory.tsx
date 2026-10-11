@@ -41,9 +41,6 @@ export function BrandStory() {
               <p className="text-xs font-semibold uppercase tracking-widest text-rose-deep">
                 Our Story
               </p>
-              <Badge variant="warning" className="text-[10px]">
-                Pending Owner Copy Approval
-              </Badge>
             </div>
 
             <h2
@@ -62,12 +59,7 @@ export function BrandStory() {
               <p>
                 From alternating spiral conch shells threaded with pink crackle glass to
                 scallop shells paired with cowrie drop earrings, our designs unite coastal
-                elegance with modern keepsake styling.
-              </p>
-              <p className="text-xs italic text-cocoa-muted/80">
-                [Note for Store Owner: This brand copy is drafted as a placeholder for
-                review. You can update or replace this narrative in DECISIONS.md prior to
-                final launch.]
+                elegance with modern artisanal styling.
               </p>
             </div>
 

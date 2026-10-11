@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PersonalizePageProps): Promis
 
   return {
     title: `Personalize ${product.name} | VAP Handicrafts`,
-    description: `Create a custom polaroid keepsake or personalized gift note for ${product.name}.`,
+    description: `Create a custom polaroid card or personalized gift note for ${product.name}.`,
   };
 }
 

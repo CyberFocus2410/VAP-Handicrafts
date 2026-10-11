@@ -57,7 +57,7 @@ export const BRAND: BrandConfig = {
   secondaryTagline: "Crafted with Heart",
   motto: "Your Happiness Our Craft ♡",
   description:
-    "Handmade Gifts, Premium Cards & Personalised Keepsakes crafted with heart. From authentic shell jewellery to custom relationship cards, we bring your emotions to life.",
+    "Handmade Gifts, Premium Cards & Personalised Creations crafted with heart. From authentic shell jewellery to custom relationship cards, we bring your emotions to life.",
   logo: {
     src: "/images/brand/logo.webp",
     pngSrc: "/images/brand/logo.png",

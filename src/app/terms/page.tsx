@@ -28,7 +28,7 @@ export default function TermsPage() {
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">2. Custom Content & Uploads</h2>
           <p>
-            When uploading photos for personalized cards and keepsakes, you represent that you hold necessary rights to such media and that uploads do not violate privacy or third-party copyrights.
+            When uploading photos for personalized cards and custom gifts, you represent that you hold necessary rights to such media and that uploads do not violate privacy or third-party copyrights.
           </p>
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">3. Governing Law</h2>

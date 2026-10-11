@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Search Catalogue | VAP Handicrafts",
-  description: "Search handcrafted shell jewellery, personalized gifts, and keepsakes.",
+  description: "Search handcrafted shell jewellery, personalized gifts, and custom creations.",
 };
 
 interface SearchPageProps {
@@ -34,7 +34,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <p className="text-sm text-cocoa-muted max-w-lg mx-auto">
             {query
               ? `Showing results matching "${query}"`
-              : "Find authentic ocean shell jewellery, matching gift sets, and custom keepsakes."}
+              : "Find authentic ocean shell jewellery, matching gift sets, and personalized cards."}
           </p>
 
           {/* Search Bar Form */}

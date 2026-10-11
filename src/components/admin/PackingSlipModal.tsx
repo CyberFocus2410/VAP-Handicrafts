@@ -73,7 +73,7 @@ export const PackingSlipModal: React.FC<PackingSlipProps> = ({ order, onClose })
                 VAP HANDICRAFTS
               </h1>
               <p className="text-xs uppercase tracking-wider text-[#735D57]">
-                Handmade Shell Jewellery &bull; Personalized Keepsakes
+                Handmade Shell Jewellery &bull; Personalized Gifts &amp; Cards
               </p>
               <p className="text-xs text-[#735D57] mt-1">
                 Workshop: Pulkit Varshney &amp; Vivan &bull; +91 93685 02623 / +91 87550 51423

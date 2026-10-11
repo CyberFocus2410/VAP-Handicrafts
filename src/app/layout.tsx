@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   keywords: [
     "shell jewellery",
     "personalized gifts",
-    "keepsakes",
+    "personalized cards",
     "handmade jewellery India",
-    "polaroid keepsake",
+    "polaroid custom gifts",
     "custom gifts",
     "VAP Handicrafts",
   ],

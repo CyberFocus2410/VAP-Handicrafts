@@ -21,10 +21,10 @@ export function FeaturedProducts() {
               id="featured-products-heading"
               className="mt-2 font-serif text-h2 font-medium text-cocoa"
             >
-              Featured Jewellery & Keepsakes
+              Featured Shell Jewellery &amp; Gifts
             </h2>
             <p className="mt-2 text-sm text-cocoa-muted">
-              Handcrafted in small batches. Badges indicate dev-sample prices until owner confirms final catalogue rates.
+              Handcrafted in small batches with genuine ocean shells, lustrous pearls, and premium beads.
             </p>
           </div>
 

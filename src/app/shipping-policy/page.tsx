@@ -23,25 +23,21 @@ export default function ShippingPolicyPage() {
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">1. Processing & Crafting Times</h2>
           <p>
-            Because each personalized keepsake and handcrafted jewellery item is prepared with care:
+            Because each personalized gift and handcrafted jewellery item is prepared with care:
           </p>
           <ul className="list-disc pl-6 space-y-1 text-cocoa-muted">
             <li>Standard shell jewellery pieces ship within 2 to 4 business days.</li>
-            <li>Customized photo keepsakes and message cards require 3 to 5 business days for production and quality inspection prior to dispatch.</li>
+            <li>Customized photo cards and message cards require 3 to 5 business days for production and quality inspection prior to dispatch.</li>
           </ul>
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">2. Domestic Delivery Across India</h2>
           <p>
-            Orders are dispatched via trusted domestic courier partners. Typical transit times range from 3 to 7 business days depending on delivery location (Metro cities: 3-5 days; Non-metro locations: 5-7 days).
+            Orders are dispatched via trusted domestic courier partners (Blue Dart, DTDC, India Post Speed Post, Delhivery). Typical transit times range from 3 to 7 business days depending on delivery location (Metro cities: 3-5 days; Non-metro locations: 5-7 days).
           </p>
 
           <h2 className="text-xl font-semibold text-cocoa mt-6 mb-2">3. Shipping Rates & Tracking</h2>
           <p>
-            Standard shipping rates are calculated dynamically at checkout based on package weight and pin code. Once your package is dispatched, tracking details are sent via email.
-          </p>
-
-          <p className="text-xs text-cocoa-muted pt-6 border-t border-border">
-            Note: Exact shipping tiers and courier partner integrations are subject to owner confirmation in Phase 5.
+            Standard shipping rates are calculated dynamically at checkout based on order subtotal (FREE shipping on orders of ₹999 and above). Once your package is dispatched, tracking details are sent via email.
           </p>
         </div>
       </Container>
