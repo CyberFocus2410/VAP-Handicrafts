@@ -13,20 +13,25 @@ export interface StoredPushSubscription {
 }
 
 const DEFAULT_SUBJECT = process.env.VAPID_SUBJECT || "mailto:vaphandicrafts@gmail.com";
-const PUBLIC_VAPID_KEY =
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  "BGd6CwIhxPETH_4mnbl2EDKd_Zr1vTeavC1sxAUJhMRzFiOpgE8pTY4Srq1dMPucwXPivd7wSQjYfr3jlm1_Q5c";
-const PRIVATE_VAPID_KEY =
-  process.env.VAPID_PRIVATE_KEY ||
-  "xIdsF7GLqIclHlMQBdQkN4jmqbsH6ovWAi35gsyrSRg";
+const PUBLIC_VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+const PRIVATE_VAPID_KEY = process.env.VAPID_PRIVATE_KEY || "";
 
 let isVapidConfigured = false;
 
-function ensureVapidConfigured() {
-  if (!isVapidConfigured) {
-    webpush.setVapidDetails(DEFAULT_SUBJECT, PUBLIC_VAPID_KEY, PRIVATE_VAPID_KEY);
-    isVapidConfigured = true;
+function ensureVapidConfigured(): boolean {
+  if (!PUBLIC_VAPID_KEY || !PRIVATE_VAPID_KEY) {
+    return false;
   }
+  if (!isVapidConfigured) {
+    try {
+      webpush.setVapidDetails(DEFAULT_SUBJECT, PUBLIC_VAPID_KEY, PRIVATE_VAPID_KEY);
+      isVapidConfigured = true;
+    } catch (err) {
+      console.warn("[PushService] Failed to configure VAPID:", err);
+      return false;
+    }
+  }
+  return true;
 }
 
 export function getVapidPublicKey(): string {
@@ -112,7 +117,9 @@ export async function sendPushNotificationToAdmins(payload: {
   url?: string;
   tag?: string;
 }): Promise<{ successCount: number; failureCount: number }> {
-  ensureVapidConfigured();
+  if (!ensureVapidConfigured()) {
+    return { successCount: 0, failureCount: 0 };
+  }
   const subscriptions = await listPushSubscriptions();
 
   if (subscriptions.length === 0) {
