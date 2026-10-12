@@ -8,7 +8,7 @@ import { BRAND } from "@/config/brand";
 import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 interface AdminNavProps {
-  currentTab?: "overview" | "orders" | "customers" | "inquiries" | "products" | "categories" | "content";
+  currentTab?: "overview" | "orders" | "customers" | "inquiries" | "products" | "categories" | "content" | "promotions";
 }
 
 export const AdminNav: React.FC<AdminNavProps> = ({ currentTab }) => {
@@ -22,6 +22,7 @@ export const AdminNav: React.FC<AdminNavProps> = ({ currentTab }) => {
     { id: "products", label: "Products (CMS)", href: "/admin/products", icon: "💎" },
     { id: "categories", label: "Categories (CMS)", href: "/admin/categories", icon: "🏷️" },
     { id: "content", label: "Site Content (CMS)", href: "/admin/content", icon: "✨" },
+    { id: "promotions", label: "Shipping & Coupons", href: "/admin/promotions", icon: "🎟️" },
   ];
 
   const handleLogout = async () => {

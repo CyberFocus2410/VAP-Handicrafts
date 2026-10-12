@@ -7,16 +7,18 @@ import {
   type CartNotice,
 } from "@/lib/cart/types";
 import { assertValidPaise } from "@/lib/money";
+import { getShippingConfig, validateCoupon } from "@/server/admin/promotions-service";
 
-export const FREE_SHIPPING_THRESHOLD_PAISE = 99900; // ₹999 in paise
-export const STANDARD_SHIPPING_PAISE = 9900; // ₹99 in paise
+export const FREE_SHIPPING_THRESHOLD_PAISE = 99900; // ₹999 in paise (default fallback)
+export const STANDARD_SHIPPING_PAISE = 9900; // ₹99 in paise (default fallback)
 
 /**
  * Validates and re-prices client cart line intents against authoritative database catalogue data.
- * Prevents price tampering, enforces stock limits, and computes shipping rules.
+ * Prevents price tampering, enforces stock limits, and computes dynamic shipping & coupon rules.
  */
 export async function validateAndPriceCart(
-  intents: CartLineIntent[]
+  intents: CartLineIntent[],
+  couponCode?: string
 ): Promise<ValidatedCartResponse> {
   const validatedLines: ValidatedCartLine[] = [];
   const notices: CartNotice[] = [];
@@ -110,16 +112,56 @@ export async function validateAndPriceCart(
 
   const itemCount = validatedLines.reduce((acc, line) => acc + line.quantity, 0);
 
-  // Shipping calculation
-  const qualifiesForFreeShipping = subtotalMinor >= FREE_SHIPPING_THRESHOLD_PAISE || subtotalMinor === 0;
-  const shippingMinor = qualifiesForFreeShipping ? 0 : STANDARD_SHIPPING_PAISE;
-  const discountMinor = 0;
-  const totalMinor = subtotalMinor + shippingMinor - discountMinor;
+  // Dynamic Shipping calculation from promotions service
+  let shippingConfig = {
+    standardShippingPaise: STANDARD_SHIPPING_PAISE,
+    freeShippingThresholdPaise: FREE_SHIPPING_THRESHOLD_PAISE,
+    freeShippingEnabled: true,
+  };
+
+  try {
+    shippingConfig = await getShippingConfig();
+  } catch {
+    // Non-fatal fallback
+  }
+
+  const qualifiesForFreeShipping =
+    shippingConfig.freeShippingEnabled &&
+    (subtotalMinor >= shippingConfig.freeShippingThresholdPaise || subtotalMinor === 0);
+
+  const shippingMinor = qualifiesForFreeShipping ? 0 : shippingConfig.standardShippingPaise;
+
+  // Coupon evaluation
+  let discountMinor = 0;
+  let appliedCoupon: ValidatedCartResponse["appliedCoupon"] = undefined;
+
+  if (couponCode && couponCode.trim()) {
+    try {
+      const couponResult = await validateCoupon(couponCode, subtotalMinor);
+      if (couponResult.valid) {
+        discountMinor = couponResult.discountMinor;
+        appliedCoupon = {
+          code: couponResult.code,
+          discountMinor: couponResult.discountMinor,
+          message: couponResult.message,
+        };
+      } else if (couponResult.error) {
+        notices.push({
+          type: "INFO",
+          message: couponResult.error,
+        });
+      }
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  const totalMinor = Math.max(0, subtotalMinor + shippingMinor - discountMinor);
   assertValidPaise(totalMinor, "cart.totalMinor");
 
   const amountNeededForFreeShippingMinor = Math.max(
     0,
-    FREE_SHIPPING_THRESHOLD_PAISE - subtotalMinor
+    shippingConfig.freeShippingThresholdPaise - subtotalMinor
   );
 
   return {
@@ -130,8 +172,9 @@ export async function validateAndPriceCart(
     shippingMinor,
     discountMinor,
     totalMinor,
-    freeShippingThresholdMinor: FREE_SHIPPING_THRESHOLD_PAISE,
+    freeShippingThresholdMinor: shippingConfig.freeShippingThresholdPaise,
     amountNeededForFreeShippingMinor,
     notices,
+    appliedCoupon,
   };
 }

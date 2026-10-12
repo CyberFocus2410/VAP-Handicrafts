@@ -242,16 +242,18 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
         const existing = productsStore.get(p.id);
 
         const mappedImages =
-          existing?.images && existing.images.length > 0
-            ? existing.images
-            : dbImages.length > 0
+          dbImages.length > 0
             ? dbImages
+            : existing?.images && existing.images.length > 0
+            ? existing.images
             : [primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"];
 
         const mappedImageUrl =
-          existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
-            ? existing.imageUrl
-            : (mappedImages[0] || primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp");
+          dbImages[0] ||
+          primaryImg?.url ||
+          existing?.imageUrl ||
+          mappedImages[0] ||
+          "/images/products/shell-cone-pink-crackle-bracelet.webp";
 
         const mapped: CmsProduct = {
           id: p.id,

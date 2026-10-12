@@ -100,8 +100,22 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
       });
       const data = await res.json();
       if (data.success && data.url) {
-        handleUpdateScrapbookItem(index, "imageUrl", data.url);
-        setNotification("Polaroid photo uploaded & changed successfully!");
+        const item = scrapbook[index];
+        if (item) {
+          const updated = [...scrapbook];
+          updated[index] = { ...item, imageUrl: data.url };
+          setScrapbook(updated);
+          try {
+            await fetch("/api/admin/cms/content", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ section: "scrapbook", patch: { scrapbook: updated } }),
+            });
+          } catch {
+            // Non-fatal
+          }
+        }
+        setNotification("Polaroid photo uploaded & saved live on website!");
         setTimeout(() => setNotification(""), 3500);
       } else {
         alert(data.error || "Failed to upload image");
@@ -124,8 +138,22 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
       });
       const data = await res.json();
       if (data.success && data.url) {
-        handleUpdateScrapbookItem(index, "imageUrl", data.url);
-        setNotification("Link converted & photo updated!");
+        const item = scrapbook[index];
+        if (item) {
+          const updated = [...scrapbook];
+          updated[index] = { ...item, imageUrl: data.url };
+          setScrapbook(updated);
+          try {
+            await fetch("/api/admin/cms/content", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ section: "scrapbook", patch: { scrapbook: updated } }),
+            });
+          } catch {
+            // Non-fatal
+          }
+        }
+        setNotification("Link converted & photo saved live on website!");
         setTimeout(() => setNotification(""), 3500);
       } else {
         alert(data.error || "Could not resolve image URL");

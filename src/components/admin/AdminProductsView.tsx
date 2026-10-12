@@ -1085,60 +1085,64 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                     )}
                   </div>
 
-                  {/* Multi-Image Thumbnails Grid */}
-                  <div className="flex flex-wrap gap-2.5 items-center">
+                  {/* Multi-Image Thumbnails Grid with Mobile-Friendly Controls */}
+                  <div className="flex flex-wrap gap-2.5 items-start">
                     {(editingProduct.images && editingProduct.images.length > 0
                       ? editingProduct.images
                       : [editingProduct.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"]
                     ).map((imgUrl, idx) => (
                       <div
                         key={idx}
-                        className={`relative w-20 h-24 rounded-xl overflow-hidden border shadow-xs bg-stone-100 group ${
+                        className={`flex flex-col items-center gap-1 p-1 rounded-xl bg-white border shadow-xs ${
                           idx === 0 ? "border-[#A05A44] ring-2 ring-[#A05A44]/30" : "border-[#2D1A16]/20"
                         }`}
                       >
-                        <img
-                          src={imgUrl}
-                          alt={`View ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "/images/products/shell-cone-pink-crackle-bracelet.webp";
-                          }}
-                        />
+                        <div className="relative w-20 h-24 rounded-lg overflow-hidden bg-stone-100">
+                          <img
+                            src={imgUrl}
+                            alt={`View ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src =
+                                "/images/products/shell-cone-pink-crackle-bracelet.webp";
+                            }}
+                          />
 
-                        {/* Order Badge */}
-                        <div className="absolute top-1 left-1">
-                          <span
-                            className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
-                              idx === 0
-                                ? "bg-[#A05A44] text-white"
-                                : "bg-black/60 text-white"
-                            }`}
-                          >
-                            {idx === 0 ? "★ Cover" : `#${idx + 1}`}
-                          </span>
+                          {/* Order Badge */}
+                          <div className="absolute top-1 left-1">
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                idx === 0
+                                  ? "bg-[#A05A44] text-white"
+                                  : "bg-black/60 text-white"
+                              }`}
+                            >
+                              {idx === 0 ? "★ Cover" : `#${idx + 1}`}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Actions overlay */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
-                          {idx !== 0 && (
+                        {/* Visible Touch Controls */}
+                        <div className="flex items-center gap-1 w-full justify-between pt-0.5 px-0.5">
+                          {idx !== 0 ? (
                             <button
                               type="button"
                               onClick={() => handleSetPrimaryImage(idx, "edit")}
-                              className="w-full py-0.5 bg-white/90 text-[#2D1A16] rounded text-[9px] font-bold hover:bg-white"
+                              className="px-1.5 py-0.5 bg-stone-100 hover:bg-stone-200 text-[#2D1A16] rounded text-[9px] font-semibold transition"
                               title="Make this the cover image"
                             >
-                              ★ Set Cover
+                              ★ Cover
                             </button>
+                          ) : (
+                            <span className="text-[9px] text-[#A05A44] font-semibold px-1">Cover</span>
                           )}
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(idx, "edit")}
-                            className="w-full py-0.5 bg-red-600/90 text-white rounded text-[9px] font-bold hover:bg-red-700"
+                            className="px-1.5 py-0.5 text-rose-600 hover:text-rose-800 text-[10px] font-bold rounded hover:bg-rose-50 transition"
                             title="Remove photo"
                           >
-                            🗑 Remove
+                            ✕
                           </button>
                         </div>
                       </div>

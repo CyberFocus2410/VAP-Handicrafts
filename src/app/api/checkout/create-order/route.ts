@@ -8,6 +8,7 @@ import { getPaymentProvider } from "@/server/payments/factory";
 const CreateOrderPayloadSchema = z.object({
   items: z.array(CartLineIntentSchema).min(1, "Cart cannot be empty"),
   address: CheckoutAddressSchema,
+  couponCode: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
     const { order, validatedCart } = await createOrder({
       items: parsed.data.items,
       address: parsed.data.address,
+      couponCode: parsed.data.couponCode,
     });
 
     const provider = getPaymentProvider();

@@ -16,6 +16,7 @@ export interface AddItemInput {
 
 export interface CartStoreState {
   items: CartLineIntent[];
+  couponCode: string | null;
   isDrawerOpen: boolean;
   hasHydrated: boolean;
   lastAddedLineId: string | null;
@@ -25,6 +26,8 @@ export interface CartStoreState {
   updateQuantity: (lineId: string, quantity: number) => void;
   removeItem: (lineId: string) => void;
   updateCustomization: (lineId: string, customization: CustomizationValues) => void;
+  applyCoupon: (code: string) => void;
+  removeCoupon: () => void;
   clearCart: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -37,6 +40,7 @@ export const useCartStore = create<CartStoreState>()(
   persist(
     (set, get) => ({
       items: [],
+      couponCode: null,
       isDrawerOpen: false,
       hasHydrated: false,
       lastAddedLineId: null,
@@ -122,8 +126,16 @@ export const useCartStore = create<CartStoreState>()(
         }));
       },
 
+      applyCoupon: (code: string) => {
+        set({ couponCode: code.trim().toUpperCase() });
+      },
+
+      removeCoupon: () => {
+        set({ couponCode: null });
+      },
+
       clearCart: () => {
-        set({ items: [], lastAddedLineId: null });
+        set({ items: [], couponCode: null, lastAddedLineId: null });
       },
 
       openDrawer: () => set({ isDrawerOpen: true }),
@@ -147,8 +159,9 @@ export const useCartStore = create<CartStoreState>()(
         state?.setHasHydrated(true);
       },
       partialize: (state) => ({
-        // Strictly persist line intent only — never prices or transient UI state
+        // Strictly persist line intent & coupon only — never prices or transient UI state
         items: state.items,
+        couponCode: state.couponCode,
       }),
     }
   )

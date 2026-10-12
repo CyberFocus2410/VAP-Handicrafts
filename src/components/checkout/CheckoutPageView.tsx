@@ -32,6 +32,9 @@ export function CheckoutPageView() {
   const items = useCartStore((s) => s.items);
   const hasHydrated = useCartStore((s) => s.hasHydrated);
   const clearCart = useCartStore((s) => s.clearCart);
+  const couponCode = useCartStore((s) => s.couponCode);
+  const applyCoupon = useCartStore((s) => s.applyCoupon);
+  const removeCoupon = useCartStore((s) => s.removeCoupon);
 
   // Address form state
   const [fullName, setFullName] = React.useState("");
@@ -48,6 +51,9 @@ export function CheckoutPageView() {
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+
+  // Coupon input state
+  const [couponInput, setCouponInput] = React.useState("");
 
   // Created order state for UPI payment step
   const [createdOrder, setCreatedOrder] = React.useState<{
@@ -68,7 +74,10 @@ export function CheckoutPageView() {
   const validatedData = {
     subtotalMinor: validatedCart?.subtotalMinor ?? 0,
     shippingMinor: validatedCart?.shippingMinor ?? 9900,
+    discountMinor: validatedCart?.discountMinor ?? 0,
     totalMinor: validatedCart?.totalMinor ?? ((validatedCart?.subtotalMinor ?? 0) + 9900),
+    appliedCoupon: validatedCart?.appliedCoupon,
+    notices: validatedCart?.notices ?? [],
   };
 
   // Re-fetch authoritative price calculation
@@ -78,7 +87,7 @@ export function CheckoutPageView() {
     fetch("/api/cart/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, couponCode: couponCode || undefined }),
     })
       .then((res) => res.json())
       .then((json) => {
@@ -88,7 +97,7 @@ export function CheckoutPageView() {
         }
       })
       .catch((err) => console.error("Validation error:", err));
-  }, [items, hasHydrated]);
+  }, [items, couponCode, hasHydrated]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -136,6 +145,7 @@ export function CheckoutPageView() {
     try {
       const payload = {
         items,
+        couponCode: couponCode || undefined,
         address: {
           fullName: fullName.trim(),
           email: email.trim(),
@@ -709,12 +719,71 @@ export function CheckoutPageView() {
                 ))}
               </div>
 
+              {/* Promo Code Input or Applied Badge */}
+              <div className="pt-2 border-t border-border/70 space-y-2">
+                {validatedData.appliedCoupon ? (
+                  <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2 text-xs">
+                    <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-medium">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Code <strong>{validatedData.appliedCoupon.code}</strong> applied ({formatINR(validatedData.appliedCoupon.discountMinor)} off)</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeCoupon();
+                        setCouponInput("");
+                      }}
+                      className="text-cocoa-muted hover:text-rose-deep text-xs font-semibold ml-2 underline cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Discount code (e.g. WELCOME10)"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        className="text-xs uppercase placeholder:normal-case h-9"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!couponInput.trim()}
+                        onClick={() => {
+                          if (couponInput.trim()) {
+                            applyCoupon(couponInput.trim());
+                          }
+                        }}
+                        className="text-xs px-3 h-9"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    {couponCode && !validatedData.appliedCoupon && (
+                      <p className="text-[11px] text-rose-deep">
+                        {validatedData.notices.find((n) => n.message.toLowerCase().includes("coupon"))?.message || "Invalid or inapplicable discount coupon"}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Price Breakdown */}
               <div className="space-y-2 pt-2 border-t border-border/70 text-xs">
                 <div className="flex justify-between text-cocoa-muted">
                   <span>Subtotal</span>
                   <span className="font-medium text-cocoa">{formatINR(validatedData.subtotalMinor)}</span>
                 </div>
+                {validatedData.discountMinor > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-medium">
+                    <span>Discount ({validatedData.appliedCoupon?.code})</span>
+                    <span>-{formatINR(validatedData.discountMinor)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-cocoa-muted">
                   <span>Shipping</span>
                   <span className="font-medium text-cocoa">

@@ -46,6 +46,7 @@ export interface StoredOrder {
   paymentUtr?: string;
   paymentProofSubmittedAt?: string;
   paymentVerifiedAt?: string;
+  couponCode?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -219,12 +220,13 @@ function generateOrderReference(): string {
 export async function createOrder(params: {
   items: CartLineIntent[];
   address: CheckoutAddress;
+  couponCode?: string;
 }): Promise<{
   order: StoredOrder;
   validatedCart: ValidatedCartResponse;
 }> {
   // 1. Authoritative Server-side Re-pricing and stock check
-  const validatedCart = await validateAndPriceCart(params.items);
+  const validatedCart = await validateAndPriceCart(params.items, params.couponCode);
 
   if (validatedCart.lines.length === 0) {
     throw new Error("Cannot create order with an empty cart");
@@ -271,11 +273,18 @@ export async function createOrder(params: {
     currency: "INR",
     accessToken,
     accessTokenHash,
+    couponCode: validatedCart.appliedCoupon?.code,
     items: orderItems,
     stockReservations,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+
+  if (validatedCart.appliedCoupon?.code) {
+    import("@/server/admin/promotions-service")
+      .then((m) => m.incrementCouponUsage(validatedCart.appliedCoupon!.code))
+      .catch(() => {});
+  }
 
   memoryOrders.set(orderReference, storedOrder);
   syncOrderToSupabase(storedOrder).catch((e) => console.warn("Supabase order sync warning:", e));

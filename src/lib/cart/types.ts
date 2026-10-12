@@ -106,4 +106,9 @@ export interface ValidatedCartResponse {
   freeShippingThresholdMinor: number;
   amountNeededForFreeShippingMinor: number;
   notices: CartNotice[];
+  appliedCoupon?: {
+    code: string;
+    discountMinor: number;
+    message?: string;
+  };
 }

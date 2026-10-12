@@ -5,6 +5,7 @@ import { validateAndPriceCart } from "@/server/cart/validator";
 
 const ValidateCartPayloadSchema = z.object({
   items: z.array(CartLineIntentSchema),
+  couponCode: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await validateAndPriceCart(parsed.data.items);
+    const result = await validateAndPriceCart(parsed.data.items, parsed.data.couponCode);
 
     return NextResponse.json(
       {

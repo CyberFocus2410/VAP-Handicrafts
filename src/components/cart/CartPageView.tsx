@@ -16,9 +16,13 @@ export function CartPageView() {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const hasHydrated = useCartStore((s) => s.hasHydrated);
+  const couponCode = useCartStore((s) => s.couponCode);
+  const applyCoupon = useCartStore((s) => s.applyCoupon);
+  const removeCoupon = useCartStore((s) => s.removeCoupon);
 
   const [validatedCart, setValidatedCart] = React.useState<ValidatedCartResponse | null>(null);
   const [isValidating, setIsValidating] = React.useState(false);
+  const [couponInput, setCouponInput] = React.useState("");
 
   React.useEffect(() => {
     if (!hasHydrated) return;
@@ -45,7 +49,7 @@ export function CartPageView() {
     fetch("/api/cart/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, couponCode: couponCode || undefined }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -61,7 +65,7 @@ export function CartPageView() {
     return () => {
       isCancelled = true;
     };
-  }, [items, hasHydrated]);
+  }, [items, couponCode, hasHydrated]);
 
   if (!hasHydrated) {
     return (
@@ -98,10 +102,24 @@ export function CartPageView() {
   const lines = validatedCart?.lines || [];
   const subtotal = validatedCart?.subtotalMinor ?? 0;
   const shipping = validatedCart?.shippingMinor ?? 0;
+  const discount = validatedCart?.discountMinor ?? 0;
   const total = validatedCart?.totalMinor ?? 0;
+  const appliedCoupon = validatedCart?.appliedCoupon;
+  const notices = validatedCart?.notices ?? [];
   const neededForFreeShipping = validatedCart?.amountNeededForFreeShippingMinor ?? 99900;
   const freeShippingThreshold = validatedCart?.freeShippingThresholdMinor ?? 99900;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
+
+  const handleApplyCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    applyCoupon(couponInput.trim());
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponInput("");
+  };
 
   return (
     <div className="space-y-10">
@@ -263,11 +281,62 @@ export function CartPageView() {
               Order Summary
             </h2>
 
+            {/* Promo Code Input or Applied Badge */}
+            <div className="space-y-2 border-b border-border/80 pb-4">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-medium">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Code <strong>{appliedCoupon.code}</strong> applied ({formatINR(appliedCoupon.discountMinor)} off)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-cocoa-muted hover:text-rose-deep text-xs font-semibold ml-2 underline cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyCoupon} className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Discount code (e.g. WELCOME10)"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs uppercase placeholder:normal-case focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      size="sm"
+                      disabled={!couponInput.trim() || isValidating}
+                      className="text-xs px-3 py-1.5 h-auto rounded-lg"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                  {couponCode && !appliedCoupon && !isValidating && (
+                    <p className="text-[11px] text-rose-deep">
+                      {notices.find((n) => n.message.toLowerCase().includes("coupon"))?.message || "Invalid or inapplicable discount coupon"}
+                    </p>
+                  )}
+                </form>
+              )}
+            </div>
+
             <div className="space-y-3 text-xs border-b border-border/80 pb-4">
               <div className="flex justify-between text-cocoa-muted">
                 <span>Items Subtotal</span>
                 <span className="font-medium text-cocoa">{formatINR(subtotal)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount ({appliedCoupon?.code})</span>
+                  <span>-{formatINR(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-cocoa-muted">
                 <span>Standard Delivery (India)</span>
                 <span className="font-medium text-cocoa">
