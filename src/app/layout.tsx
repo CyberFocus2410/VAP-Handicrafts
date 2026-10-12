@@ -7,7 +7,10 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { LiveRegionProvider } from "@/components/ui/live-region";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { CookieConsentBanner } from "@/components/ui/cookie-consent";
 import "@/styles/globals.css";
+
+export const dynamic = "force-dynamic";
 
 const fontDisplay = Cormorant_Garamond({
   subsets: ["latin"],
@@ -46,6 +49,26 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     siteName: BRAND.name,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${BRAND.name} — ${BRAND.tagline}`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BRAND.name} — ${BRAND.tagline}`,
+    description: BRAND.description,
+    images: ["/og-image.png"],
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "VAP CRM",
   },
 };
 
@@ -69,6 +92,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <CartDrawer />
+          <CookieConsentBanner />
         </LiveRegionProvider>
       </body>
     </html>
