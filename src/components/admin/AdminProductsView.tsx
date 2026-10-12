@@ -41,7 +41,15 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
 
   // Edit Product Modal
   const [editingProduct, setEditingProduct] = useState<CmsProduct | null>(null);
+  const [editPriceRupees, setEditPriceRupees] = useState<string>("");
+  const [editCompareRupees, setEditCompareRupees] = useState<string>("");
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
+
+  const startEditingProduct = (p: CmsProduct) => {
+    setEditingProduct({ ...p });
+    setEditPriceRupees(String(p.priceMinor / 100));
+    setEditCompareRupees(p.compareAtPriceMinor ? String(p.compareAtPriceMinor / 100) : "");
+  };
 
   // Image Upload & Resolve State
   const [isUploadingAddImage, setIsUploadingAddImage] = useState<boolean>(false);
@@ -353,6 +361,16 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
     e.preventDefault();
     if (!editingProduct) return;
 
+    const parsedPrice = Number(editPriceRupees);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      alert("Please enter a valid price in Rupees.");
+      return;
+    }
+    const priceMinor = Math.round(parsedPrice * 100);
+    const compareAtPriceMinor = editCompareRupees.trim()
+      ? Math.round(Number(editCompareRupees) * 100)
+      : undefined;
+
     setIsSavingEdit(true);
     try {
       const activeImages =
@@ -368,8 +386,8 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
           id: editingProduct.id,
           patch: {
             name: editingProduct.name,
-            priceMinor: editingProduct.priceMinor,
-            compareAtPriceMinor: editingProduct.compareAtPriceMinor,
+            priceMinor,
+            compareAtPriceMinor,
             stockQuantity: editingProduct.stockQuantity,
             fulfilmentType: editingProduct.fulfilmentType,
             materials: editingProduct.materials,
@@ -388,8 +406,8 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
           prev.map((p) => (p.id === editingProduct.id ? data.product : p))
         );
         setEditingProduct(null);
-        setNotification("Product details updated successfully!");
-        setTimeout(() => setNotification(""), 3000);
+        setNotification(`Product "${editingProduct.name}" saved! Price set to ₹${parsedPrice}.`);
+        setTimeout(() => setNotification(""), 4000);
       } else {
         alert(data.error || "Failed to update product");
       }
@@ -524,14 +542,26 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                         </span>
                       </td>
 
-                      {/* Price */}
-                      <td className="py-3.5 px-3 font-bold font-mono text-[#2D1A16]">
-                        {formatINR(p.priceMinor)}
-                        {p.compareAtPriceMinor && (
-                          <div className="text-[10px] text-stone-400 line-through">
-                            {formatINR(p.compareAtPriceMinor)}
+                      {/* Price with Direct Quick Edit */}
+                      <td className="py-3.5 px-3">
+                        <button
+                          type="button"
+                          onClick={() => startEditingProduct(p)}
+                          title="Click to edit price and details"
+                          className="group text-left p-1 -m-1 rounded-lg hover:bg-stone-100 transition cursor-pointer"
+                        >
+                          <div className="font-bold font-mono text-[#2D1A16] group-hover:text-[#A05A44] flex items-center gap-1.5">
+                            <span>{formatINR(p.priceMinor)}</span>
+                            <span className="text-[10px] text-[#A05A44] font-sans font-medium px-1.5 py-0.2 rounded bg-amber-100/70 border border-amber-300">
+                              Edit
+                            </span>
                           </div>
-                        )}
+                          {p.compareAtPriceMinor && (
+                            <div className="text-[10px] text-stone-400 line-through">
+                              {formatINR(p.compareAtPriceMinor)}
+                            </div>
+                          )}
+                        </button>
                       </td>
 
                       {/* Stock with quick adjusters */}
@@ -590,10 +620,10 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => setEditingProduct({ ...p })}
-                            className="text-xs font-semibold text-[#A05A44] hover:underline px-2 py-1"
+                            onClick={() => startEditingProduct(p)}
+                            className="text-xs font-semibold text-[#A05A44] hover:underline px-2 py-1 bg-[#FAF5EF] rounded-lg border border-[#A05A44]/20 hover:bg-[#FAF5EF]/80"
                           >
-                            Edit
+                            Edit Price
                           </button>
                           <a
                             href={`/products/${p.slug}`}
@@ -931,46 +961,52 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                   />
                 </div>
 
+                <div className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-300 text-xs text-amber-950">
+                  <div className="font-bold flex items-center gap-1.5 mb-1">
+                    <span>⚡</span>
+                    <span>Live Storefront Price &amp; Inventory Sync</span>
+                  </div>
+                  <p className="text-[11px] text-amber-900 leading-relaxed">
+                    Changing the price below immediately updates the database and reflects across the customer storefront, catalogue listings, product pages, and cart calculations.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
-                      Price (₹ INR)
+                      Price (₹ INR) *
                     </label>
-                    <input
-                      type="number"
-                      required
-                      value={editingProduct.priceMinor / 100}
-                      onChange={(e) =>
-                        setEditingProduct({
-                          ...editingProduct,
-                          priceMinor: Math.round(Number(e.target.value) * 100),
-                        })
-                      }
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
-                    />
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">₹</span>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        step="1"
+                        value={editPriceRupees}
+                        onChange={(e) => setEditPriceRupees(e.target.value)}
+                        placeholder="199"
+                        className="w-full pl-6 pr-2 py-2 text-xs font-bold font-mono rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44] bg-white text-[#2D1A16]"
+                      />
+                    </div>
                   </div>
 
                   <div>
                     <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
                       Compare Price (₹)
                     </label>
-                    <input
-                      type="number"
-                      value={
-                        editingProduct.compareAtPriceMinor
-                          ? editingProduct.compareAtPriceMinor / 100
-                          : ""
-                      }
-                      onChange={(e) =>
-                        setEditingProduct({
-                          ...editingProduct,
-                          compareAtPriceMinor: e.target.value
-                            ? Math.round(Number(e.target.value) * 100)
-                            : undefined,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
-                    />
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={editCompareRupees}
+                        onChange={(e) => setEditCompareRupees(e.target.value)}
+                        placeholder="299"
+                        className="w-full pl-6 pr-2 py-2 text-xs font-mono rounded-xl border border-[#2D1A16]/20 focus:outline-none focus:ring-1 focus:ring-[#A05A44] bg-white text-stone-600"
+                      />
+                    </div>
                   </div>
 
                   <div>

@@ -261,13 +261,13 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
           categoryName: p.categories?.name || "Shell Jewellery",
           description: p.description || "",
           priceMinor:
-            existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
-              ? existing.priceMinor
-              : (primaryVar ? primaryVar.price_minor : (existing?.priceMinor ?? 49900)),
+            primaryVar && typeof primaryVar.price_minor === "number"
+              ? primaryVar.price_minor
+              : (existing?.priceMinor ?? 19900),
           compareAtPriceMinor:
-            existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
-              ? existing.compareAtPriceMinor
-              : (primaryVar?.compare_at_price_minor ?? existing?.compareAtPriceMinor),
+            primaryVar && primaryVar.compare_at_price_minor !== undefined
+              ? primaryVar.compare_at_price_minor
+              : existing?.compareAtPriceMinor,
           stockQuantity: primaryVar ? primaryVar.stock_quantity : (existing?.stockQuantity ?? 10),
           inStock: primaryVar ? primaryVar.stock_quantity > 0 : true,
           fulfilmentType: p.fulfilment_type === "made_to_order" ? "made_to_order" : "in_stock",
@@ -426,7 +426,11 @@ export async function updateCmsProduct(
   id: string,
   patch: Partial<Omit<CmsProduct, "id" | "createdAt">> & { images?: string[] }
 ): Promise<CmsProduct> {
-  const existing = productsStore.get(id);
+  let existing = productsStore.get(id);
+  if (!existing) {
+    await listCmsProducts();
+    existing = productsStore.get(id);
+  }
   if (!existing) {
     throw new Error(`Product with ID "${id}" not found.`);
   }

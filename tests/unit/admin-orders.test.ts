@@ -36,7 +36,7 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(order.status).toBe("payment_initiated");
 
     // 2. Mark Paid
-    const paidRes = markOrderPaid({
+    const paidRes = await markOrderPaid({
       orderReference: order.orderReference,
       providerTxnId: "TXN_SIM_TEST_123",
       amountMinor: order.totalMinor,
@@ -45,7 +45,7 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(paidRes.order?.status).toBe("paid");
 
     // 3. Mark Shipped
-    const shipRes = markOrderShipped({
+    const shipRes = await markOrderShipped({
       orderReference: order.orderReference,
       trackingNumber: "DTDC-445566",
       courierName: "DTDC Express",
@@ -57,14 +57,14 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(shipRes.order?.shippedAt).toBeDefined();
 
     // 4. Mark Fulfilled
-    const fulfillRes = markOrderFulfilled({
+    const fulfillRes = await markOrderFulfilled({
       orderReference: order.orderReference,
     });
     expect(fulfillRes.success).toBe(true);
     expect(fulfillRes.order?.status).toBe("fulfilled");
 
     // 5. Verify in list
-    const allOrders = listAllOrders();
+    const allOrders = await listAllOrders();
     const found = allOrders.find((o) => o.orderReference === order.orderReference);
     expect(found).toBeDefined();
     expect(found?.status).toBe("fulfilled");
@@ -94,7 +94,7 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     });
 
     // Attempt to ship while still payment_initiated
-    const shipRes = markOrderShipped({
+    const shipRes = await markOrderShipped({
       orderReference: order.orderReference,
       trackingNumber: "TEST-TRACK-99",
       courierName: "Blue Dart",
@@ -130,7 +130,7 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(order.status).toBe("payment_initiated");
 
     // Customer uploads screenshot & UTR
-    const proofRes = submitPaymentProof({
+    const proofRes = await submitPaymentProof({
       orderReference: order.orderReference,
       paymentProofUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       paymentUtr: "UPI-409123847291",
@@ -142,7 +142,7 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(proofRes.order?.paymentProofSubmittedAt).toBeDefined();
 
     // Admin verifies payment
-    const verifyRes = markOrderPaid({
+    const verifyRes = await markOrderPaid({
       orderReference: order.orderReference,
       providerTxnId: "UPI-409123847291",
       amountMinor: order.totalMinor,

@@ -87,7 +87,7 @@ describe("Payment Providers & Amount Integrity (PRD §18, §24 Phase 5)", () => 
     });
 
     // Attempt to mark paid with tampered amount (e.g. 1 rupee instead of totalMinor)
-    const tampered = markOrderPaid({
+    const tampered = await markOrderPaid({
       orderReference: order.orderReference,
       providerTxnId: "TXN_TAMPER_001",
       amountMinor: 100, // 100 paise = ₹1
@@ -97,7 +97,7 @@ describe("Payment Providers & Amount Integrity (PRD §18, §24 Phase 5)", () => 
     expect(tampered.error).toContain("Payment amount mismatch");
 
     // Correct amount succeeds
-    const correct = markOrderPaid({
+    const correct = await markOrderPaid({
       orderReference: order.orderReference,
       providerTxnId: "TXN_CORRECT_001",
       amountMinor: order.totalMinor,

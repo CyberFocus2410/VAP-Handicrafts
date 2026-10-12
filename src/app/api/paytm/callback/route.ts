@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     if (!verification.success) {
       if (verification.orderReference) {
-        markOrderFailed({
+        await markOrderFailed({
           orderReference: verification.orderReference,
           reason: verification.errorMessage || "Payment verification failed",
         });
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark paid with authoritative amount check
-    const paidResult = markOrderPaid({
+    const paidResult = await markOrderPaid({
       orderReference: verification.orderReference,
       providerTxnId: verification.providerTxnId,
       amountMinor: verification.amountMinor,
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
   const origin = req.nextUrl.origin;
 
   if (verification.success && verification.orderReference) {
-    markOrderPaid({
+    await markOrderPaid({
       orderReference: verification.orderReference,
       providerTxnId: verification.providerTxnId,
       amountMinor: verification.amountMinor,

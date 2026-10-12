@@ -43,8 +43,8 @@ export const SEED_PRODUCTS: Product[] = [
     category_name: "Shell Jewellery",
     description:
       "Handcrafted elastic bracelet featuring natural striped spiral cone sea shells alternating with faceted translucent pink crackle glass beads. Arranged on a durable strand for everyday seaside elegance.",
-    price_minor: 69900, // ₹699
-    compare_at_price_minor: 89900, // ₹899
+    price_minor: 19900, // ₹199
+    compare_at_price_minor: 29900, // ₹299
     is_dev_price: true,
     status: "active",
     stock_quantity: 12,
@@ -65,14 +65,14 @@ export const SEED_PRODUCTS: Product[] = [
         id: "var-001-standard",
         name: "Standard Fit (7 inch)",
         sku: "VAP-BRAC-001-STD",
-        price_minor: 69900,
+        price_minor: 19900,
         in_stock: true,
       },
       {
         id: "var-001-petite",
         name: "Petite Fit (6.25 inch)",
         sku: "VAP-BRAC-001-PET",
-        price_minor: 69900,
+        price_minor: 19900,
         in_stock: true,
       },
     ],
@@ -86,8 +86,8 @@ export const SEED_PRODUCTS: Product[] = [
     category_name: "Shell Jewellery",
     description:
       "Curated gift set pairing a fan scallop shell bracelet cradling rose crackle beads with matching gold-tone drop earrings featuring cowrie shell pendants, fan shell accents, and gold spacer beads.",
-    price_minor: 129900, // ₹1,299
-    compare_at_price_minor: 159900, // ₹1,599
+    price_minor: 29900, // ₹299
+    compare_at_price_minor: 39900, // ₹399
     is_dev_price: true,
     status: "active",
     stock_quantity: 8,
@@ -108,7 +108,7 @@ export const SEED_PRODUCTS: Product[] = [
         id: "var-002-set",
         name: "Complete Matching Set",
         sku: "VAP-SET-002-FULL",
-        price_minor: 129900,
+        price_minor: 29900,
         in_stock: true,
       },
     ],
@@ -122,8 +122,8 @@ export const SEED_PRODUCTS: Product[] = [
     category_name: "Shell Jewellery",
     description:
       "Delicate handcrafted gift set featuring a purple flower cluster beaded bracelet with gold center accents and clear quartz rondelles, accompanied by elegant drop earrings with faceted purple crystals and baroque white pearls.",
-    price_minor: 119900, // ₹1,199
-    compare_at_price_minor: 139900, // ₹1,399
+    price_minor: 19900, // ₹199
+    compare_at_price_minor: 29900, // ₹299
     is_dev_price: true,
     status: "active",
     stock_quantity: 10,
@@ -144,7 +144,7 @@ export const SEED_PRODUCTS: Product[] = [
         id: "var-003-set",
         name: "Full Set (Bracelet + Earrings)",
         sku: "VAP-SET-003-LAV",
-        price_minor: 119900,
+        price_minor: 19900,
         in_stock: true,
       },
     ],
@@ -158,8 +158,8 @@ export const SEED_PRODUCTS: Product[] = [
     category_name: "Shell Jewellery",
     description:
       "Golden link chain bracelet adorned with natural seaside treasures: alternating polished ivory cowrie shells and brown-striped spiral conch shells suspended with sturdy jump rings and secure lobster clasp.",
-    price_minor: 79900, // ₹799
-    compare_at_price_minor: 99900, // ₹999
+    price_minor: 24900, // ₹249
+    compare_at_price_minor: 34900, // ₹349
     is_dev_price: true,
     status: "active",
     stock_quantity: 15,
@@ -180,7 +180,7 @@ export const SEED_PRODUCTS: Product[] = [
         id: "var-004-gold",
         name: "Standard Link with Extender",
         sku: "VAP-BRAC-004-GLD",
-        price_minor: 79900,
+        price_minor: 24900,
         in_stock: true,
       },
     ],
@@ -194,8 +194,8 @@ export const SEED_PRODUCTS: Product[] = [
     category_name: "Personalized Cards",
     description:
       "Bespoke couples relationship licence keepsake card featuring your couple picture, partner names, anniversary date, and heartfelt personalized vows printed on 350 GSM archival cardstock with protective sleeve.",
-    price_minor: 49900, // ₹499
-    compare_at_price_minor: 69900, // ₹699
+    price_minor: 24900, // ₹249
+    compare_at_price_minor: 34900, // ₹349
     is_dev_price: true,
     status: "active",
     stock_quantity: 50,
@@ -216,7 +216,7 @@ export const SEED_PRODUCTS: Product[] = [
         id: "var-005-licence",
         name: "Standard Archival Keepsake",
         sku: "VAP-CARD-001-REL",
-        price_minor: 49900,
+        price_minor: 24900,
         in_stock: true,
       },
     ],
@@ -230,8 +230,8 @@ export const SEED_PRODUCTS: Product[] = [
     category_name: "Personalized Cards",
     description:
       "High-gloss classic polaroid keepsake card customized with your uploaded picture, handwritten date, and heartfelt dedication message.",
-    price_minor: 29900, // ₹299
-    compare_at_price_minor: 44900, // ₹449
+    price_minor: 19900, // ₹199
+    compare_at_price_minor: 29900, // ₹299
     is_dev_price: true,
     status: "active",
     stock_quantity: 40,
@@ -252,7 +252,7 @@ export const SEED_PRODUCTS: Product[] = [
         id: "var-006-polaroid",
         name: "Single Polaroid Keepsake",
         sku: "VAP-CARD-002-POL",
-        price_minor: 29900,
+        price_minor: 19900,
         in_stock: true,
       },
     ],

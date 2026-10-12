@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status") || "all";
 
-    const orders = listAllOrders({ status });
+    const orders = await listAllOrders({ status });
     return NextResponse.json({
       success: true,
       orders,
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const order = getOrderByReference(orderReference);
+    const order = await getOrderByReference(orderReference);
     if (!order) {
       return NextResponse.json(
         { success: false, error: "Order not found" },
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const res = markOrderShipped({
+      const res = await markOrderShipped({
         orderReference,
         trackingNumber,
         courierName,
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (action === "verify_payment" || action === "mark_paid") {
       const { markOrderPaid } = await import("@/server/orders/service");
       const providerTxnId = body.providerTxnId || order.paymentUtr || `UPI-VERIFIED-${Date.now()}`;
-      const res = markOrderPaid({
+      const res = await markOrderPaid({
         orderReference,
         providerTxnId,
         amountMinor: order.totalMinor,
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "reject_payment") {
       const { markOrderFailed } = await import("@/server/orders/service");
-      const res = markOrderFailed({
+      const res = await markOrderFailed({
         orderReference,
         reason: body.reason || "Payment proof verification rejected by artisan admin",
       });
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "mark_fulfilled") {
-      const res = markOrderFulfilled({ orderReference });
+      const res = await markOrderFulfilled({ orderReference });
       if (!res.success) {
         return NextResponse.json(
           { success: false, error: res.error },

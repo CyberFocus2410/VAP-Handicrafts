@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const res = submitPaymentProof({
+    const res = await submitPaymentProof({
       orderReference: parsed.data.orderReference,
       paymentProofUrl: finalProofUrl,
       paymentUtr: parsed.data.paymentUtr,

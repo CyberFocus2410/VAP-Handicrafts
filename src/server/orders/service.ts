@@ -5,7 +5,8 @@ import { CheckoutAddress } from "@/lib/checkout/validation";
 import { transitionOrder, OrderStatus } from "./state-machine";
 import { enqueueOrderPaidEmails, enqueueEmail } from "@/server/email/outbox";
 import { EmailOrderDetails } from "@/server/email/types";
-import { getSupabaseAdminClient } from "@/server/db/supabase";
+import { getSupabaseAdminClient, getSupabaseAnonClient } from "@/server/db/supabase";
+import { env } from "@/lib/env";
 
 export interface StoredOrder {
   id: string;
@@ -78,7 +79,79 @@ export async function logAdminAudit(params: {
   }
 }
 
+export async function hydrateOrdersFromSupabase(): Promise<void> {
+  try {
+    const supabase = env.server.SUPABASE_SERVICE_ROLE_KEY
+      ? getSupabaseAdminClient()
+      : getSupabaseAnonClient();
+
+    // 1. Fetch rich order metadata from site_settings (has screenshots, items, UTR)
+    const { data: row } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "order_metadata")
+      .maybeSingle();
+
+    if (row?.value && typeof row.value === "object") {
+      const metadata = row.value as Record<string, StoredOrder>;
+      for (const [ref, o] of Object.entries(metadata)) {
+        if (o && o.orderReference) {
+          memoryOrders.set(ref, o);
+        }
+      }
+    }
+
+    // 2. Also fetch orders from orders table
+    const { data: dbOrders } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (dbOrders && dbOrders.length > 0) {
+      for (const o of dbOrders) {
+        if (!memoryOrders.has(o.order_reference)) {
+          memoryOrders.set(o.order_reference, {
+            id: o.id,
+            orderReference: o.order_reference,
+            status: o.status,
+            customerName: o.customer_name,
+            customerEmail: o.customer_email,
+            customerPhone: o.customer_phone,
+            shippingAddress: {
+              fullName: o.customer_name || "",
+              email: o.customer_email || "",
+              phone: o.customer_phone || "",
+              streetAddress: o.shipping_street || "",
+              city: o.shipping_city || "",
+              state: o.shipping_state || "",
+              pincode: o.shipping_pincode || "",
+              country: (o.shipping_country || "India") as "India",
+            },
+            items: [],
+            subtotalMinor: o.subtotal_minor,
+            shippingMinor: o.shipping_minor,
+            discountMinor: o.discount_minor,
+            totalMinor: o.total_minor,
+            currency: o.currency || "INR",
+            accessToken: "",
+            accessTokenHash: o.access_token_hash || "",
+            trackingNumber: o.tracking_number,
+            courierName: o.courier_name,
+            shippedAt: o.shipped_at,
+            stockReservations: [],
+            createdAt: o.created_at || new Date().toISOString(),
+            updatedAt: o.updated_at || new Date().toISOString(),
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[OrdersService] Failed to hydrate orders from Supabase:", err);
+  }
+}
+
 export async function syncOrderToSupabase(order: StoredOrder) {
+  if (!env.server.SUPABASE_SERVICE_ROLE_KEY) return;
   try {
     const supabase = getSupabaseAdminClient();
     const mappedStatus =
@@ -225,16 +298,25 @@ export async function createOrder(params: {
   };
 }
 
-export function getOrderByReference(orderReference: string): StoredOrder | null {
-  return memoryOrders.get(orderReference) || null;
+export async function getOrderByReference(orderReference: string): Promise<StoredOrder | null> {
+  let order = memoryOrders.get(orderReference) || null;
+  if (!order) {
+    await hydrateOrdersFromSupabase();
+    order = memoryOrders.get(orderReference) || null;
+  }
+  return order;
 }
 
-export function submitPaymentProof(params: {
+export async function submitPaymentProof(params: {
   orderReference: string;
   paymentProofUrl: string;
   paymentUtr?: string;
-}): { success: boolean; error?: string; order?: StoredOrder } {
-  const order = memoryOrders.get(params.orderReference);
+}): Promise<{ success: boolean; error?: string; order?: StoredOrder }> {
+  let order = memoryOrders.get(params.orderReference);
+  if (!order) {
+    await hydrateOrdersFromSupabase();
+    order = memoryOrders.get(params.orderReference);
+  }
   if (!order) {
     return { success: false, error: "Order not found" };
   }
@@ -269,12 +351,16 @@ export function submitPaymentProof(params: {
   return { success: true, order };
 }
 
-export function markOrderPaid(params: {
+export async function markOrderPaid(params: {
   orderReference: string;
   providerTxnId: string;
   amountMinor: number;
-}): { success: boolean; error?: string; order?: StoredOrder } {
-  const order = memoryOrders.get(params.orderReference);
+}): Promise<{ success: boolean; error?: string; order?: StoredOrder }> {
+  let order = memoryOrders.get(params.orderReference);
+  if (!order) {
+    await hydrateOrdersFromSupabase();
+    order = memoryOrders.get(params.orderReference);
+  }
   if (!order) {
     return { success: false, error: "Order not found" };
   }
@@ -353,12 +439,16 @@ export function markOrderPaid(params: {
   return { success: true, order };
 }
 
-export function markOrderShipped(params: {
+export async function markOrderShipped(params: {
   orderReference: string;
   trackingNumber: string;
   courierName: string;
-}): { success: boolean; error?: string; order?: StoredOrder } {
-  const order = memoryOrders.get(params.orderReference);
+}): Promise<{ success: boolean; error?: string; order?: StoredOrder }> {
+  let order = memoryOrders.get(params.orderReference);
+  if (!order) {
+    await hydrateOrdersFromSupabase();
+    order = memoryOrders.get(params.orderReference);
+  }
   if (!order) {
     return { success: false, error: "Order not found" };
   }
@@ -433,10 +523,14 @@ export function markOrderShipped(params: {
   return { success: true, order };
 }
 
-export function markOrderFulfilled(params: {
+export async function markOrderFulfilled(params: {
   orderReference: string;
-}): { success: boolean; error?: string; order?: StoredOrder } {
-  const order = memoryOrders.get(params.orderReference);
+}): Promise<{ success: boolean; error?: string; order?: StoredOrder }> {
+  let order = memoryOrders.get(params.orderReference);
+  if (!order) {
+    await hydrateOrdersFromSupabase();
+    order = memoryOrders.get(params.orderReference);
+  }
   if (!order) {
     return { success: false, error: "Order not found" };
   }
@@ -466,11 +560,15 @@ export function markOrderFulfilled(params: {
   return { success: true, order };
 }
 
-export function markOrderFailed(params: {
+export async function markOrderFailed(params: {
   orderReference: string;
   reason?: string;
-}): { success: boolean; error?: string } {
-  const order = memoryOrders.get(params.orderReference);
+}): Promise<{ success: boolean; error?: string }> {
+  let order = memoryOrders.get(params.orderReference);
+  if (!order) {
+    await hydrateOrdersFromSupabase();
+    order = memoryOrders.get(params.orderReference);
+  }
   if (!order) {
     return { success: false, error: "Order not found" };
   }
@@ -506,7 +604,8 @@ export function markOrderFailed(params: {
   return { success: true };
 }
 
-export function listAllOrders(filter?: { status?: string }): StoredOrder[] {
+export async function listAllOrders(filter?: { status?: string }): Promise<StoredOrder[]> {
+  await hydrateOrdersFromSupabase();
   let list = Array.from(memoryOrders.values());
   if (filter?.status && filter.status !== "all") {
     list = list.filter((o) => o.status === filter.status);

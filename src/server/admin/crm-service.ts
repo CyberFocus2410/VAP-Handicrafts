@@ -91,7 +91,7 @@ export async function listAllCustomers(): Promise<CustomerProfile[]> {
     // In-memory fallback
   }
 
-  const orders = listAllOrders();
+  const orders = await listAllOrders();
   const customerMap = new Map<string, CustomerProfile>();
 
   for (const order of orders) {
