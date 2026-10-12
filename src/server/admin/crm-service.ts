@@ -16,57 +16,7 @@ const customerNotesStore: Map<string, { tags: string[]; internalNotes: string }>
 const inquiriesStore: Map<string, CustomerInquiry> =
   globalWithCRM.__vapInquiries ?? (globalWithCRM.__vapInquiries = new Map());
 
-// Seed initial authentic inquiries if store is empty
-if (inquiriesStore.size === 0) {
-  const seedInquiries: CustomerInquiry[] = [
-    {
-      id: "inq-001",
-      name: "Rhea Singhania",
-      email: "rhea.singhania@gmail.com",
-      phone: "+91 98201 44521",
-      occasion: "Destination Beach Wedding Favours",
-      message: "Hi Pulkit & Vivan! We are organizing a beach wedding in Goa this December and would love to order 45 personalized conch & cowrie bracelet pairs with customized polaroid welcome notes for the guests. Could you share timeline and bulk pricing?",
-      status: "in_discussion",
-      assignedTo: "Pulkit Garg",
-      quoteMinor: 3150000, // ₹31,500
-      internalNotes: "Discussed on WhatsApp. Sample photo sent. Follow up on Tuesday with packaging options.",
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "inq-002",
-      name: "Aakash Mehta",
-      email: "aakash.mehta@yahoo.com",
-      phone: "+91 99100 88219",
-      occasion: "1st Year Anniversary Surprise",
-      message: "Looking for an urgent custom Relationship Licence card with our couple picture and the lavender floral beaded set delivered to Gurgaon before Friday.",
-      status: "new",
-      assignedTo: "Vivan Mittal",
-      quoteMinor: 149900, // ₹1,499
-      internalNotes: "Urgent turnaround needed. Standard courier might take 3 days; use Blue Dart Express.",
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "inq-003",
-      name: "Tanvi Kapoor",
-      email: "tanvi.k@designstudio.in",
-      phone: "+91 97112 30948",
-      occasion: "Client Appreciation Gifts",
-      message: "We need 15 customized gift boxes with personalized dedications for our agency clients. Can we include our custom company sign-off on the card back?",
-      status: "quote_sent",
-      assignedTo: "Pulkit Garg",
-      quoteMinor: 1800000, // ₹18,000
-      internalNotes: "Quote email sent with high-res card mockups. Waiting for PO confirmation.",
-      createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
-
-  for (const inq of seedInquiries) {
-    inquiriesStore.set(inq.id, inq);
-  }
-}
+// Clean initial store (no fake test inquiries for production launch)
 
 /**
  * Aggregates all orders into unified customer profiles with LTV, tags, and personalization history.
@@ -328,10 +278,13 @@ export async function listAllInquiries(): Promise<CustomerInquiry[]> {
       .eq("key", "crm_inquiries")
       .maybeSingle();
 
-    if (row?.value && Array.isArray(row.value) && row.value.length > 0) {
-      for (const inq of row.value as CustomerInquiry[]) {
-        if (inq?.id) {
-          inquiriesStore.set(inq.id, inq);
+    if (row && row.value !== undefined) {
+      inquiriesStore.clear();
+      if (Array.isArray(row.value)) {
+        for (const inq of row.value as CustomerInquiry[]) {
+          if (inq?.id) {
+            inquiriesStore.set(inq.id, inq);
+          }
         }
       }
     }
@@ -419,4 +372,23 @@ export async function updateCustomerInquiry(
   }
 
   return inquiry;
+}
+
+/**
+ * Deletes a customer inquiry permanently from CRM and Supabase.
+ */
+export async function deleteCustomerInquiry(id: string): Promise<boolean> {
+  const existed = inquiriesStore.delete(id);
+  try {
+    const supabase = getSupabaseAdminClient();
+    await supabase.from("site_settings").upsert({
+      key: "crm_inquiries",
+      value: Array.from(inquiriesStore.values()),
+      is_public: false,
+      updated_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn("[CRM Error] Failed to delete inquiry from Supabase:", err);
+  }
+  return existed;
 }

@@ -3,6 +3,7 @@ import {
   listAllInquiries,
   createCustomerInquiry,
   updateCustomerInquiry,
+  deleteCustomerInquiry,
 } from "@/server/admin/crm-service";
 import { InquiryStatus } from "@/server/admin/crm-cms-types";
 
@@ -48,9 +49,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, inquiry: created });
     }
 
+    if (action === "delete" && id) {
+      await deleteCustomerInquiry(id);
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ success: false, error: "Invalid inquiry request action" }, { status: 400 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to process inquiry";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Missing inquiry id" }, { status: 400 });
+    }
+    await deleteCustomerInquiry(id);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete inquiry";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

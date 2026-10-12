@@ -101,6 +101,29 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
     }
   };
 
+  const handleDeleteInquiry = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete inquiry from "${name}"?`)) return;
+    try {
+      const res = await fetch("/api/admin/crm/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInquiries((prev) => prev.filter((i) => i.id !== id));
+        if (selectedInquiry?.id === id) {
+          setSelectedInquiry(null);
+          setMobileTab("leads");
+        }
+      } else {
+        alert(data.error || "Failed to delete inquiry");
+      }
+    } catch {
+      alert("Network error deleting inquiry");
+    }
+  };
+
   const handleCreateInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newEmail.trim() || !newMessage.trim()) {
@@ -484,13 +507,23 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
                     />
                   </div>
 
-                  <button
-                    onClick={handleUpdateInquiry}
-                    disabled={isUpdating}
-                    className="w-full py-2.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-xs font-semibold hover:bg-black transition shadow-sm"
-                  >
-                    {isUpdating ? "Updating..." : "Save Lead Updates"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleUpdateInquiry}
+                      disabled={isUpdating}
+                      className="flex-1 py-2.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-xs font-semibold hover:bg-black transition shadow-sm"
+                    >
+                      {isUpdating ? "Updating..." : "Save Lead Updates"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteInquiry(selectedInquiry.id, selectedInquiry.name)}
+                      disabled={isUpdating}
+                      className="px-3 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold hover:bg-rose-100 transition"
+                      title="Delete this lead"
+                    >
+                      Delete Lead
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
