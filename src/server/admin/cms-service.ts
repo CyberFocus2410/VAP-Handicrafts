@@ -9,6 +9,7 @@ import {
   SiteBrandStoryContent,
   SiteScrapbookItem,
 } from "./crm-cms-types";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 export interface CmsProduct {
   id: string;
@@ -25,6 +26,7 @@ export interface CmsProduct {
   materials: string;
   dimensions?: string;
   imageUrl: string;
+  images?: string[];
   imageAlt: string;
   status: "active" | "draft" | "archived";
   isBestseller?: boolean;
@@ -126,6 +128,7 @@ if (productsStore.size === 0) {
       materials: Array.isArray(p.materials) ? p.materials.join(", ") : (p.materials || ""),
       dimensions: p.dimensions,
       imageUrl: p.images[0]?.url || "/images/products/shell-cone-pink-crackle-bracelet.webp",
+      images: p.images && p.images.length > 0 ? p.images.map((img) => img.url) : [p.images[0]?.url || "/images/products/shell-cone-pink-crackle-bracelet.webp"],
       imageAlt: p.images[0]?.alt || p.name,
       status: p.status === "archived" ? "archived" : "active",
       isBestseller: true,
@@ -229,7 +232,24 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
       for (const p of dbProducts) {
         const primaryVar = p.product_variants?.[0];
         const primaryImg = p.product_images?.[0];
+        const dbImages = (p.product_images || [])
+          .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
+          .map((img: any) => img.url)
+          .filter(Boolean);
         const existing = productsStore.get(p.id);
+
+        const mappedImages =
+          existing?.images && existing.images.length > 0
+            ? existing.images
+            : dbImages.length > 0
+            ? dbImages
+            : [primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"];
+
+        const mappedImageUrl =
+          existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
+            ? existing.imageUrl
+            : (mappedImages[0] || primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp");
+
         const mapped: CmsProduct = {
           id: p.id,
           slug: p.slug,
@@ -250,10 +270,8 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
           fulfilmentType: p.fulfilment_type === "made_to_order" ? "made_to_order" : "in_stock",
           materials: Array.isArray(p.materials) ? p.materials.join(", ") : (p.materials || ""),
           dimensions: p.dimensions || undefined,
-          imageUrl:
-            existing?.updatedAt && p.updated_at && new Date(existing.updatedAt).getTime() > new Date(p.updated_at).getTime()
-              ? existing.imageUrl
-              : (primaryImg?.url || existing?.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"),
+          imageUrl: mappedImageUrl,
+          images: mappedImages,
           imageAlt: primaryImg?.alt || p.name,
           status: p.status || "active",
           isBestseller: existing?.isBestseller ?? true,
@@ -284,7 +302,8 @@ export async function createCmsProduct(input: {
   fulfilmentType: "in_stock" | "made_to_order";
   materials: string;
   dimensions?: string;
-  imageUrl: string;
+  imageUrl?: string;
+  images?: string[];
   status?: "active" | "draft" | "archived";
 }): Promise<CmsProduct> {
   const id = crypto.randomUUID();
@@ -300,6 +319,14 @@ export async function createCmsProduct(input: {
   );
   const categoryName = category ? category.name : "Shell Jewellery";
 
+  const imagesList =
+    Array.isArray(input.images) && input.images.length > 0
+      ? input.images.filter(Boolean)
+      : input.imageUrl
+      ? [input.imageUrl]
+      : ["/images/products/golden-link-cowrie-charm-bracelet.webp"];
+  const primaryImageUrl = imagesList[0] || input.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp";
+
   const newProduct: CmsProduct = {
     id,
     slug,
@@ -314,8 +341,14 @@ export async function createCmsProduct(input: {
     fulfilmentType: input.fulfilmentType,
     materials: input.materials,
     dimensions: input.dimensions,
-    imageUrl: input.imageUrl,
-    imageAlt: input.name,
+    imageUrl: primaryImageUrl,
+    images: imagesList,
+    imageAlt: generateAutoAlt({
+      context: "product",
+      name: input.name,
+      category: categoryName,
+      materials: input.materials,
+    }),
     status: input.status || "active",
     isBestseller: false,
     isNewArrival: true,
@@ -361,15 +394,23 @@ export async function createCmsProduct(input: {
       in_stock: input.stockQuantity > 0,
     });
 
-    await supabase.from("product_images").insert({
-      product_id: id,
-      url: input.imageUrl,
-      alt: input.name,
-      width: 800,
-      height: 1000,
-      display_order: 1,
-      is_primary: true,
-    });
+    for (let i = 0; i < imagesList.length; i++) {
+      await supabase.from("product_images").insert({
+        product_id: id,
+        url: imagesList[i],
+        alt: generateAutoAlt({
+          context: "product",
+          name: input.name,
+          category: categoryName,
+          index: i,
+          total: imagesList.length,
+        }),
+        width: 800,
+        height: 1000,
+        display_order: i + 1,
+        is_primary: i === 0,
+      });
+    }
   } catch {
     // Non-fatal fallback
   }
@@ -379,21 +420,52 @@ export async function createCmsProduct(input: {
 
 export async function updateCmsProduct(
   id: string,
-  patch: Partial<Omit<CmsProduct, "id" | "createdAt">>
+  patch: Partial<Omit<CmsProduct, "id" | "createdAt">> & { images?: string[] }
 ): Promise<CmsProduct> {
   const existing = productsStore.get(id);
   if (!existing) {
     throw new Error(`Product with ID "${id}" not found.`);
   }
 
+  const resolvedImages = (
+    patch.images !== undefined
+      ? patch.images.filter((img): img is string => Boolean(img))
+      : patch.imageUrl !== undefined
+      ? [patch.imageUrl]
+      : existing.images || [existing.imageUrl]
+  ).filter((img): img is string => Boolean(img));
+
+  const primaryImageUrl: string =
+    (patch.images && patch.images[0]) ||
+    patch.imageUrl ||
+    resolvedImages[0] ||
+    existing.imageUrl ||
+    "/images/products/golden-link-cowrie-charm-bracelet.webp";
+
+  const finalImages: string[] = resolvedImages.length > 0 ? resolvedImages : [primaryImageUrl];
+
+  const updatedAlt =
+    patch.imageAlt ||
+    generateAutoAlt({
+      context: "product",
+      name: patch.name || existing.name,
+      category: patch.categoryName || existing.categoryName,
+      materials: patch.materials || existing.materials,
+    });
+
   const updated: CmsProduct = {
     ...existing,
     ...patch,
+    images: finalImages,
+    imageUrl: primaryImageUrl,
+    imageAlt: updatedAlt,
     stockQuantity: patch.stockQuantity !== undefined ? patch.stockQuantity : existing.stockQuantity,
     inStock:
       patch.stockQuantity !== undefined
         ? patch.stockQuantity > 0
-        : (patch.inStock !== undefined ? patch.inStock : existing.inStock),
+        : patch.inStock !== undefined
+        ? patch.inStock
+        : existing.inStock,
     updatedAt: new Date().toISOString(),
   };
 
@@ -435,33 +507,29 @@ export async function updateCmsProduct(
         .eq("product_id", id);
     }
 
-    if (patch.imageUrl !== undefined) {
-      const { data: existingImg } = await supabase
-        .from("product_images")
-        .select("id")
-        .eq("product_id", id)
-        .order("is_primary", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (existingImg) {
-        await supabase
-          .from("product_images")
-          .update({
-            url: updated.imageUrl,
-            alt: updated.name,
-          })
-          .eq("id", existingImg.id);
-      } else {
-        await supabase.from("product_images").insert({
-          product_id: id,
-          url: updated.imageUrl,
-          alt: updated.name,
-          width: 800,
-          height: 1000,
-          display_order: 1,
-          is_primary: true,
-        });
+    if (patch.imageUrl !== undefined || patch.images !== undefined) {
+      const imagesToSync = updated.images && updated.images.length > 0 ? updated.images : [updated.imageUrl];
+      try {
+        await supabase.from("product_images").delete().eq("product_id", id);
+        for (let i = 0; i < imagesToSync.length; i++) {
+          await supabase.from("product_images").insert({
+            product_id: id,
+            url: imagesToSync[i],
+            alt: generateAutoAlt({
+              context: "product",
+              name: updated.name,
+              category: updated.categoryName,
+              index: i,
+              total: imagesToSync.length,
+            }),
+            width: 800,
+            height: 1000,
+            display_order: i + 1,
+            is_primary: i === 0,
+          });
+        }
+      } catch {
+        // Non-fatal
       }
     }
   } catch {
@@ -667,25 +735,60 @@ export async function updateCmsCategory(
 export async function getSiteContentConfig(): Promise<SiteContentConfig> {
   try {
     const supabase = getSupabaseAdminClient();
-    const { data: rows } = await supabase
-      .from("site_content_settings")
-      .select("key, value");
+    const { data: row } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "site_content")
+      .maybeSingle();
 
-    if (rows && rows.length > 0) {
-      for (const row of rows) {
-        if (row.key === "announcement") {
-          siteContentStore.announcement = row.value as SiteAnnouncementContent;
-        } else if (row.key === "hero") {
-          siteContentStore.hero = row.value as SiteHeroContent;
-        } else if (row.key === "brandStory") {
-          siteContentStore.brandStory = row.value as SiteBrandStoryContent;
-        } else if (row.key === "scrapbook") {
-          siteContentStore.scrapbook = row.value as SiteScrapbookItem[];
-        }
-      }
+    if (row?.value && typeof row.value === "object") {
+      const db = row.value as any;
+      siteContentStore = {
+        announcement: {
+          ...DEFAULT_SITE_CONTENT.announcement,
+          ...(db.announcement || {}),
+          isEnabled:
+            db.announcement?.isEnabled !== undefined
+              ? Boolean(db.announcement.isEnabled)
+              : db.announcement?.enabled !== undefined
+              ? Boolean(db.announcement.enabled)
+              : DEFAULT_SITE_CONTENT.announcement.isEnabled,
+          text: db.announcement?.text || DEFAULT_SITE_CONTENT.announcement.text,
+          linkUrl: db.announcement?.linkUrl || DEFAULT_SITE_CONTENT.announcement.linkUrl,
+          linkText: db.announcement?.linkText || DEFAULT_SITE_CONTENT.announcement.linkText,
+        },
+        hero: {
+          ...DEFAULT_SITE_CONTENT.hero,
+          ...(db.hero || {}),
+          eyebrow: db.hero?.eyebrow || DEFAULT_SITE_CONTENT.hero.eyebrow,
+          title: db.hero?.title || DEFAULT_SITE_CONTENT.hero.title,
+          italicTitlePart: db.hero?.italicTitlePart || DEFAULT_SITE_CONTENT.hero.italicTitlePart,
+          description: db.hero?.description || DEFAULT_SITE_CONTENT.hero.description,
+          primaryCtaText: db.hero?.primaryCtaText || DEFAULT_SITE_CONTENT.hero.primaryCtaText,
+          primaryCtaLink: db.hero?.primaryCtaLink || DEFAULT_SITE_CONTENT.hero.primaryCtaLink,
+          secondaryCtaText: db.hero?.secondaryCtaText || DEFAULT_SITE_CONTENT.hero.secondaryCtaText,
+          secondaryCtaLink: db.hero?.secondaryCtaLink || DEFAULT_SITE_CONTENT.hero.secondaryCtaLink,
+        },
+        brandStory: {
+          ...DEFAULT_SITE_CONTENT.brandStory,
+          ...(db.brandStory || {}),
+          eyebrow: db.brandStory?.eyebrow || DEFAULT_SITE_CONTENT.brandStory.eyebrow,
+          heading: db.brandStory?.heading || DEFAULT_SITE_CONTENT.brandStory.heading,
+          highlightPhrase: db.brandStory?.highlightPhrase || DEFAULT_SITE_CONTENT.brandStory.highlightPhrase,
+          narrativeParagraph1: db.brandStory?.narrativeParagraph1 || DEFAULT_SITE_CONTENT.brandStory.narrativeParagraph1,
+          narrativeParagraph2: db.brandStory?.narrativeParagraph2 || DEFAULT_SITE_CONTENT.brandStory.narrativeParagraph2,
+          badgeTitle: db.brandStory?.badgeTitle || DEFAULT_SITE_CONTENT.brandStory.badgeTitle,
+          badgeSubtitle: db.brandStory?.badgeSubtitle || DEFAULT_SITE_CONTENT.brandStory.badgeSubtitle,
+        },
+        scrapbook:
+          Array.isArray(db.scrapbook) && db.scrapbook.length > 0
+            ? db.scrapbook
+            : DEFAULT_SITE_CONTENT.scrapbook,
+      };
+      globalWithCMS.__vapSiteContent = siteContentStore;
     }
   } catch {
-    // Non-fatal fallback
+    // Non-fatal fallback to defaults
   }
 
   return siteContentStore;
@@ -694,24 +797,43 @@ export async function getSiteContentConfig(): Promise<SiteContentConfig> {
 export async function updateSiteContentConfig(
   patch: Partial<SiteContentConfig>
 ): Promise<SiteContentConfig> {
-  siteContentStore = {
-    ...siteContentStore,
-    ...patch,
+  const current = await getSiteContentConfig();
+
+  const merged: SiteContentConfig = {
+    announcement: patch.announcement
+      ? { ...current.announcement, ...patch.announcement }
+      : current.announcement,
+    hero: patch.hero
+      ? { ...current.hero, ...patch.hero }
+      : current.hero,
+    brandStory: patch.brandStory
+      ? { ...current.brandStory, ...patch.brandStory }
+      : current.brandStory,
+    scrapbook:
+      patch.scrapbook && patch.scrapbook.length > 0
+        ? patch.scrapbook
+        : current.scrapbook,
   };
+
+  siteContentStore = merged;
   globalWithCMS.__vapSiteContent = siteContentStore;
 
   try {
     const supabase = getSupabaseAdminClient();
-    const entries = Object.entries(patch);
-    for (const [key, value] of entries) {
-      await supabase.from("site_content_settings").upsert({
-        key,
-        value,
+    const { error } = await supabase.from("site_settings").upsert(
+      {
+        key: "site_content",
+        value: siteContentStore,
+        is_public: true,
         updated_at: new Date().toISOString(),
-      });
+      },
+      { onConflict: "key" }
+    );
+    if (error) {
+      console.error("[CMS Error] Failed to persist site_content to Supabase:", error);
     }
-  } catch {
-    // Non-fatal
+  } catch (err) {
+    console.error("[CMS Error] Supabase exception during updateSiteContentConfig:", err);
   }
 
   return siteContentStore;

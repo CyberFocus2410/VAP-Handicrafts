@@ -21,19 +21,28 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { patch } = body;
+    let patch = body.patch;
+
+    if (!patch && body.section && body.data) {
+      patch = { [body.section]: body.data };
+    } else if (!patch && (body.announcement || body.hero || body.brandStory || body.scrapbook)) {
+      patch = body;
+    }
 
     if (!patch || typeof patch !== "object") {
       return NextResponse.json(
-        { success: false, error: "Missing patch object" },
+        { success: false, error: "Missing patch object or section data" },
         { status: 400 }
       );
     }
 
     const updated = await updateSiteContentConfig(patch);
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
+      revalidatePath("/about");
+      revalidatePath("/admin/content");
     } catch {
       // Non-fatal
     }

@@ -141,6 +141,38 @@ describe("Phase 6 CRM & CMS Services", () => {
       expect(updated.status).toBe("draft");
       expect(updated.inStock).toBe(true);
     });
+
+    it("supports attaching and updating multiple product gallery images", async () => {
+      const multiImgProduct = await createCmsProduct({
+        name: "Baroque Pearl & Cowrie Duo",
+        categorySlug: "shell-jewellery",
+        description: "Handcrafted necklace featuring alternating baroque freshwater pearls and polished white cowrie shells.",
+        priceMinor: 129900, // ₹1,299
+        stockQuantity: 8,
+        fulfilmentType: "in_stock",
+        materials: "Baroque freshwater pearls, natural cowrie shells, 18k gold clasp",
+        images: [
+          "/images/products/golden-link-cowrie-charm-bracelet.webp",
+          "/images/products/shell-cone-pink-crackle-bracelet.webp",
+          "/images/products/scallop-cowrie-earring-bracelet-set.webp",
+        ],
+      });
+
+      expect(multiImgProduct.images).toBeDefined();
+      expect(multiImgProduct.images?.length).toBe(3);
+      expect(multiImgProduct.imageUrl).toBe("/images/products/golden-link-cowrie-charm-bracelet.webp");
+
+      // Update images (change order or add new image)
+      const updated = await updateCmsProduct(multiImgProduct.id, {
+        images: [
+          "/images/products/scallop-cowrie-earring-bracelet-set.webp",
+          "/images/products/golden-link-cowrie-charm-bracelet.webp",
+        ],
+      });
+
+      expect(updated.images?.length).toBe(2);
+      expect(updated.imageUrl).toBe("/images/products/scallop-cowrie-earring-bracelet-set.webp");
+    });
   });
 
   describe("CMS Categories Management", () => {
@@ -167,7 +199,7 @@ describe("Phase 6 CRM & CMS Services", () => {
   });
 
   describe("CMS Site Content Dynamic Customizer", () => {
-    it("gets and updates site content config with brand fidelity", async () => {
+    it("gets and updates site content config with brand fidelity and polaroid image change", async () => {
       const config = await getSiteContentConfig();
       expect(config.announcement).toBeDefined();
       expect(config.hero).toBeDefined();
@@ -181,9 +213,19 @@ describe("Phase 6 CRM & CMS Services", () => {
           linkText: "Explore Now",
           isEnabled: true,
         },
+        scrapbook: [
+          {
+            id: "sb-custom-1",
+            title: "Custom Seaside Conch Set",
+            subtitle: "Handcrafted ocean souvenirs",
+            imageUrl: "https://example.com/custom-polaroid-photo.jpg",
+          },
+        ],
       });
 
       expect(updated.announcement.text).toBe("✨ Exclusive Diwali Gift Hampers Now Available!");
+      expect(updated.scrapbook[0]?.imageUrl).toBe("https://example.com/custom-polaroid-photo.jpg");
+      expect(updated.scrapbook[0]?.title).toBe("Custom Seaside Conch Set");
     });
   });
 });

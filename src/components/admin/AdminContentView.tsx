@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState } from "react";
@@ -57,7 +58,11 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
       const data = await res.json();
       if (data.success && data.config) {
         setConfig(data.config);
-        setNotification(`${sectionKey.toUpperCase()} content updated successfully!`);
+        if (data.config.announcement) setAnnouncement(data.config.announcement);
+        if (data.config.hero) setHero(data.config.hero);
+        if (data.config.brandStory) setBrandStory(data.config.brandStory);
+        if (data.config.scrapbook) setScrapbook(data.config.scrapbook);
+        setNotification(`${sectionKey.toUpperCase()} saved & live on website!`);
         setTimeout(() => setNotification(""), 3500);
       } else {
         alert(data.error || "Failed to save content");
@@ -68,6 +73,8 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
       setIsSaving(false);
     }
   };
+
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   const handleUpdateScrapbookItem = (
     index: number,
@@ -81,8 +88,76 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
     setScrapbook(updated);
   };
 
+  const handleScrapbookFileUpload = async (file: File, index: number) => {
+    setUploadingIndex(index);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/cms/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        handleUpdateScrapbookItem(index, "imageUrl", data.url);
+        setNotification("Polaroid photo uploaded & changed successfully!");
+        setTimeout(() => setNotification(""), 3500);
+      } else {
+        alert(data.error || "Failed to upload image");
+      }
+    } catch {
+      alert("Network error uploading photo");
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
+  const handleResolveScrapbookUrl = async (rawUrl: string, index: number) => {
+    if (!rawUrl.trim()) return;
+    setUploadingIndex(index);
+    try {
+      const res = await fetch("/api/admin/cms/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: rawUrl.trim() }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        handleUpdateScrapbookItem(index, "imageUrl", data.url);
+        setNotification("Link converted & photo updated!");
+        setTimeout(() => setNotification(""), 3500);
+      } else {
+        alert(data.error || "Could not resolve image URL");
+      }
+    } catch {
+      alert("Failed to resolve link");
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
+  const handleAddScrapbookItem = () => {
+    const newItem: SiteScrapbookItem = {
+      id: `sb-${Date.now()}`,
+      title: "Handcrafted Keepsake",
+      subtitle: "Authentic coastal moments & handcrafted details",
+      imageUrl: "/images/products/shell-cone-pink-crackle-bracelet.webp",
+    };
+    setScrapbook([...scrapbook, newItem]);
+  };
+
+  const handleRemoveScrapbookItem = (index: number) => {
+    if (scrapbook.length <= 1) {
+      alert("Keep at least one polaroid tile in the gallery.");
+      return;
+    }
+    const updated = scrapbook.filter((_, idx) => idx !== index);
+    setScrapbook(updated);
+  };
+
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 font-sans pb-24 md:pb-12">
       <div className="max-w-6xl mx-auto">
         <AdminNav currentTab="content" />
 
@@ -517,33 +592,90 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
         {/* Tab 4: Polaroid Scrapbook Gallery */}
         {activeTab === "scrapbook" && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#2D1A16]/10 shadow-sm">
-            <h2 className="font-serif text-xl font-bold text-[#2D1A16] mb-1">
-              Polaroid Keepsake Scrapbook Gallery
-            </h2>
-            <p className="text-xs text-[#2D1A16]/60 mb-6">
-              Featured scrapbook tiles showcasing genuine shell bracelets, custom relationship licence cards, and unboxing moments.
-            </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-[#2D1A16] mb-1">
+                  Polaroid Keepsake Scrapbook Gallery
+                </h2>
+                <p className="text-xs text-[#2D1A16]/60">
+                  Featured scrapbook tiles showcasing genuine shell bracelets, custom cards, and keepsake memories.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddScrapbookItem}
+                className="px-4 py-2 rounded-xl bg-[#2D1A16]/10 hover:bg-[#2D1A16]/20 text-[#2D1A16] text-xs font-semibold transition flex items-center gap-1.5"
+              >
+                <span>+ Add Polaroid Card</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {scrapbook.map((item, index) => (
                 <div
-                  key={item.id}
-                  className="p-5 rounded-2xl bg-[#FAF5EF]/60 border border-[#2D1A16]/10 flex flex-col justify-between"
+                  key={item.id || index}
+                  className="p-5 rounded-2xl bg-[#FAF5EF]/60 border border-[#2D1A16]/10 flex flex-col justify-between relative shadow-xs"
                 >
                   <div>
-                    <div className="w-full h-44 rounded-xl overflow-hidden relative mb-4 bg-stone-200 border border-[#2D1A16]/10">
-                      <Image
-                        src={item.imageUrl}
-                        alt={item.title}
-                        fill
-                        className="object-cover"
+                    {/* Polaroid Photo Box with Live Preview and Change Button */}
+                    <div className="w-full h-48 rounded-xl overflow-hidden relative mb-4 bg-stone-200 border border-[#2D1A16]/15 group">
+                      <img
+                        src={item.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"}
+                        alt={item.title || `Polaroid ${index + 1}`}
+                        className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "/images/products/shell-cone-pink-crackle-bracelet.webp";
+                        }}
                       />
+
+                      {/* Floating Overlay with Change Photo Badge */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-[#2D1A16] text-xs font-bold shadow-md hover:bg-[#FAF5EF] transition">
+                          <span>📷 Change Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingIndex === index}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleScrapbookFileUpload(file, index);
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      {uploadingIndex === index && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-semibold">
+                          <span className="animate-pulse">Uploading new photo...</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Change Photo Buttons Bar */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
+                        <span>📷 {uploadingIndex === index ? "Uploading..." : "Upload / Change Photo"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingIndex === index}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleScrapbookFileUpload(file, index);
+                          }}
+                        />
+                      </label>
+                      <span className="text-[10px] text-[#2D1A16]/60">Select file from device</span>
                     </div>
 
                     <div className="space-y-3">
                       <div>
                         <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
-                          Tile {index + 1} Title
+                          Tile #{index + 1} Title
                         </label>
                         <input
                           type="text"
@@ -557,7 +689,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
 
                       <div>
                         <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
-                          Subtitle / Caption
+                          Subtitle / Handwritten Dedication
                         </label>
                         <input
                           type="text"
@@ -571,30 +703,60 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
 
                       <div>
                         <label className="text-[11px] font-semibold text-[#2D1A16]/70 block mb-1">
-                          Image URL
+                          Image URL (Hosted Link)
                         </label>
-                        <input
-                          type="text"
-                          value={item.imageUrl}
-                          onChange={(e) =>
-                            handleUpdateScrapbookItem(index, "imageUrl", e.target.value)
-                          }
-                          className="w-full px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
-                        />
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            value={item.imageUrl}
+                            onChange={(e) =>
+                              handleUpdateScrapbookItem(index, "imageUrl", e.target.value)
+                            }
+                            placeholder="Direct image link"
+                            className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                          />
+                          {(item.imageUrl.includes("ibb.co/") || item.imageUrl.includes("imgbb.com/")) && (
+                            <button
+                              type="button"
+                              onClick={() => handleResolveScrapbookUrl(item.imageUrl, index)}
+                              className="px-2.5 py-1.5 rounded-xl bg-amber-600 text-white text-[10px] font-bold hover:bg-amber-700 whitespace-nowrap"
+                              title="Auto-convert imgbb page to direct photo"
+                            >
+                              ⚡ Convert imgbb
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="pt-4 mt-3 border-t border-[#2D1A16]/10 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveScrapbookItem(index)}
+                      className="text-[11px] text-red-600 hover:text-red-800 font-semibold transition"
+                    >
+                      🗑️ Remove Tile
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div>
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => handleSaveSection("scrapbook")}
                 disabled={isSaving}
                 className="px-6 py-2.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-xs sm:text-sm font-semibold hover:bg-black transition shadow-sm"
               >
                 {isSaving ? "Saving..." : "Save Polaroid Gallery"}
+              </button>
+              <button
+                type="button"
+                onClick={handleAddScrapbookItem}
+                className="px-4 py-2.5 rounded-xl border border-[#2D1A16]/20 bg-white text-[#2D1A16] text-xs font-semibold hover:bg-[#FAF5EF] transition"
+              >
+                + Add Another Polaroid
               </button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState } from "react";
@@ -31,7 +32,11 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   const [formFulfilment, setFormFulfilment] = useState<"in_stock" | "made_to_order">("in_stock");
   const [formMaterials, setFormMaterials] = useState<string>("Natural Cowrie Shells, 18k Gold-tone links");
   const [formDimensions, setFormDimensions] = useState<string>("Adjustable 16cm - 21cm");
-  const [formImageUrl, setFormImageUrl] = useState<string>("/images/products/golden-link-cowrie-charm-bracelet.webp");
+  const [formImages, setFormImages] = useState<string[]>([
+    "/images/products/golden-link-cowrie-charm-bracelet.webp",
+  ]);
+  const [formImageUrlInput, setFormImageUrlInput] = useState<string>("");
+  const [editImageUrlInput, setEditImageUrlInput] = useState<string>("");
   const [formDescription, setFormDescription] = useState<string>("");
 
   // Edit Product Modal
@@ -45,30 +50,58 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   // Quick Action Notification
   const [notification, setNotification] = useState<string>("");
 
-  const handleFileUpload = async (file: File, target: "add" | "edit") => {
+  const handleFileUpload = async (files: FileList | File[], target: "add" | "edit") => {
     const isAdd = target === "add";
     if (isAdd) setIsUploadingAddImage(true);
     else setIsUploadingEditImage(true);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) {
+      if (isAdd) setIsUploadingAddImage(false);
+      else setIsUploadingEditImage(false);
+      return;
+    }
 
-      const res = await fetch("/api/admin/cms/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success && data.url) {
-        if (isAdd) {
-          setFormImageUrl(data.url);
-        } else {
-          setEditingProduct((prev) => (prev ? { ...prev, imageUrl: data.url } : null));
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of fileArray) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/admin/cms/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          uploadedUrls.push(data.url);
         }
-        setNotification("Product photo uploaded & hosted successfully!");
+      }
+
+      if (uploadedUrls.length > 0) {
+        if (isAdd) {
+          setFormImages((prev) => [...prev, ...uploadedUrls]);
+        } else {
+          setEditingProduct((prev) => {
+            if (!prev) return null;
+            const current =
+              prev.images && prev.images.length > 0
+                ? prev.images
+                : [prev.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"];
+            const updated = [...current, ...uploadedUrls];
+            return {
+              ...prev,
+              images: updated,
+              imageUrl: updated[0] || prev.imageUrl,
+            };
+          });
+        }
+        setNotification(
+          `${uploadedUrls.length} photo${uploadedUrls.length > 1 ? "s" : ""} uploaded & attached successfully!`
+        );
         setTimeout(() => setNotification(""), 3500);
       } else {
-        alert(data.error || "Failed to upload image");
+        alert("Failed to upload image(s)");
       }
     } catch {
       alert("Network error during image upload");
@@ -78,7 +111,7 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
     }
   };
 
-  const handleResolveUrl = async (rawUrl: string, target: "add" | "edit") => {
+  const handleAddUrl = async (rawUrl: string, target: "add" | "edit") => {
     if (!rawUrl.trim()) return;
     const isAdd = target === "add";
     if (isAdd) setIsUploadingAddImage(true);
@@ -91,22 +124,90 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         body: JSON.stringify({ url: rawUrl.trim() }),
       });
       const data = await res.json();
-      if (data.success && data.url) {
-        if (isAdd) {
-          setFormImageUrl(data.url);
-        } else {
-          setEditingProduct((prev) => (prev ? { ...prev, imageUrl: data.url } : null));
-        }
-        setNotification("Link resolved & direct photo imported!");
-        setTimeout(() => setNotification(""), 3500);
+      const finalUrl = data.success && data.url ? data.url : rawUrl.trim();
+
+      if (isAdd) {
+        setFormImages((prev) => [...prev, finalUrl]);
+        setFormImageUrlInput("");
       } else {
-        alert(data.error || "Could not resolve image URL");
+        setEditingProduct((prev) => {
+          if (!prev) return null;
+          const current =
+            prev.images && prev.images.length > 0
+              ? prev.images
+              : [prev.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"];
+          const updated = [...current, finalUrl];
+          return {
+            ...prev,
+            images: updated,
+            imageUrl: updated[0] || prev.imageUrl,
+          };
+        });
+        setEditImageUrlInput("");
       }
+      setNotification("Image URL added & attached!");
+      setTimeout(() => setNotification(""), 3500);
     } catch {
-      alert("Failed to resolve link");
+      alert("Failed to add image link");
     } finally {
       if (isAdd) setIsUploadingAddImage(false);
       else setIsUploadingEditImage(false);
+    }
+  };
+
+  const handleSetPrimaryImage = (index: number, target: "add" | "edit") => {
+    if (target === "add") {
+      setFormImages((prev) => {
+        const item = prev[index];
+        if (!item) return prev;
+        const rest = prev.filter((_, i) => i !== index);
+        return [item, ...rest];
+      });
+    } else {
+      setEditingProduct((prev) => {
+        if (!prev) return null;
+        const current =
+          prev.images && prev.images.length > 0
+            ? prev.images
+            : [prev.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"];
+        const item = current[index];
+        if (!item) return prev;
+        const rest = current.filter((_, i) => i !== index);
+        const updated = [item, ...rest];
+        return {
+          ...prev,
+          images: updated,
+          imageUrl: updated[0] || prev.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp",
+        };
+      });
+    }
+  };
+
+  const handleRemoveImage = (index: number, target: "add" | "edit") => {
+    if (target === "add") {
+      if (formImages.length <= 1) {
+        alert("Each product must have at least one image.");
+        return;
+      }
+      setFormImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setEditingProduct((prev) => {
+        if (!prev) return null;
+        const current =
+          prev.images && prev.images.length > 0
+            ? prev.images
+            : [prev.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"];
+        if (current.length <= 1) {
+          alert("Each product must have at least one image.");
+          return prev;
+        }
+        const updated = current.filter((_, i) => i !== index);
+        return {
+          ...prev,
+          images: updated,
+          imageUrl: updated[0] || prev.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp",
+        };
+      });
     }
   };
 
@@ -221,7 +322,8 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
             fulfilmentType: formFulfilment,
             materials: formMaterials.trim(),
             dimensions: formDimensions.trim(),
-            imageUrl: formImageUrl.trim(),
+            imageUrl: (formImages[0] || "/images/products/golden-link-cowrie-charm-bracelet.webp").trim(),
+            images: formImages.filter(Boolean),
             status: "active",
           },
         }),
@@ -233,7 +335,9 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         setShowAddModal(false);
         setFormName("");
         setFormDescription("");
-        setNotification("New product created and live in catalogue!");
+        setFormImages(["/images/products/golden-link-cowrie-charm-bracelet.webp"]);
+        setFormImageUrlInput("");
+        setNotification("New product created with gallery and live in catalogue!");
         setTimeout(() => setNotification(""), 4000);
       } else {
         alert(data.error || "Failed to create product");
@@ -251,6 +355,11 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
 
     setIsSavingEdit(true);
     try {
+      const activeImages =
+        editingProduct.images && editingProduct.images.length > 0
+          ? editingProduct.images
+          : [editingProduct.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"];
+
       const res = await fetch("/api/admin/cms/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -266,7 +375,8 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
             materials: editingProduct.materials,
             dimensions: editingProduct.dimensions,
             description: editingProduct.description,
-            imageUrl: editingProduct.imageUrl,
+            imageUrl: (activeImages[0] || editingProduct.imageUrl).trim(),
+            images: activeImages,
             status: editingProduct.status,
           },
         }),
@@ -291,7 +401,7 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 font-sans pb-24 md:pb-12">
       <div className="max-w-6xl mx-auto">
         <AdminNav currentTab="products" />
 
@@ -642,75 +752,117 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-2xl bg-[#2D1A16]/5 border border-[#2D1A16]/10">
+                <div className="space-y-3 p-4 rounded-2xl bg-[#2D1A16]/5 border border-[#2D1A16]/10">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-[#2D1A16]/80">
-                      Product Photo (Upload or Paste Link) *
-                    </label>
+                    <div>
+                      <label className="text-xs font-semibold text-[#2D1A16]/90 block">
+                        Product Photo Gallery ({formImages.length} image{formImages.length > 1 ? "s" : ""}) *
+                      </label>
+                      <span className="text-[10px] text-[#2D1A16]/60">
+                        Upload multiple photos or paste image links. #1 is the storefront cover image.
+                      </span>
+                    </div>
                     {isUploadingAddImage && (
                       <span className="text-[10px] text-amber-700 animate-pulse font-medium">
-                        Uploading &amp; Hosting Photo...
+                        Uploading Photo(s)...
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
-                    {/* Live Preview */}
-                    <div className="relative w-16 h-20 rounded-xl overflow-hidden border border-[#2D1A16]/20 bg-stone-100 flex-shrink-0 shadow-xs">
-                      <img
-                        src={formImageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = "/images/products/shell-cone-pink-crackle-bracelet.webp";
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex-1 w-full space-y-2">
-                      {/* Direct File Picker */}
-                      <div className="flex items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
-                          <span>📷 Upload Photo File</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleFileUpload(file, "add");
-                            }}
-                          />
-                        </label>
-                        <span className="text-[10px] text-[#2D1A16]/60">Upload directly from device</span>
-                      </div>
-
-                      {/* URL input and resolver */}
-                      <div className="flex gap-1.5">
-                        <input
-                          type="text"
-                          required
-                          value={formImageUrl}
-                          onChange={(e) => setFormImageUrl(e.target.value)}
-                          placeholder="Paste image link or use Upload button above"
-                          className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                  {/* Multi-Image Thumbnails Grid */}
+                  <div className="flex flex-wrap gap-2.5 items-center">
+                    {formImages.map((imgUrl, idx) => (
+                      <div
+                        key={idx}
+                        className={`relative w-20 h-24 rounded-xl overflow-hidden border shadow-xs bg-stone-100 group ${
+                          idx === 0 ? "border-[#A05A44] ring-2 ring-[#A05A44]/30" : "border-[#2D1A16]/20"
+                        }`}
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`View ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "/images/products/shell-cone-pink-crackle-bracelet.webp";
+                          }}
                         />
-                        {(formImageUrl.includes("ibb.co/") || formImageUrl.includes("imgbb.com/")) && (
+
+                        {/* Order Badge */}
+                        <div className="absolute top-1 left-1">
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
+                              idx === 0
+                                ? "bg-[#A05A44] text-white"
+                                : "bg-black/60 text-white"
+                            }`}
+                          >
+                            {idx === 0 ? "★ Cover" : `#${idx + 1}`}
+                          </span>
+                        </div>
+
+                        {/* Actions overlay */}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
+                          {idx !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetPrimaryImage(idx, "add")}
+                              className="w-full py-0.5 bg-white/90 text-[#2D1A16] rounded text-[9px] font-bold hover:bg-white"
+                              title="Make this the cover image"
+                            >
+                              ★ Set Cover
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => handleResolveUrl(formImageUrl, "add")}
-                            className="px-2.5 py-1.5 rounded-xl bg-amber-600 text-white text-[10px] font-bold hover:bg-amber-700 whitespace-nowrap"
-                            title="Auto-convert imgbb viewer page to direct photo"
+                            onClick={() => handleRemoveImage(idx, "add")}
+                            className="w-full py-0.5 bg-red-600/90 text-white rounded text-[9px] font-bold hover:bg-red-700"
+                            title="Remove photo"
                           >
-                            ⚡ Convert imgbb
+                            🗑 Remove
                           </button>
-                        )}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Add Image Actions */}
+                  <div className="space-y-2 pt-2 border-t border-[#2D1A16]/10">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
+                        <span>📷 Upload Photo(s)</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploadingAddImage}
+                          onChange={(e) => {
+                            if (e.target.files) handleFileUpload(e.target.files, "add");
+                          }}
+                        />
+                      </label>
+                      <span className="text-[10px] text-[#2D1A16]/60">Select one or multiple images from device</span>
+                    </div>
+
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={formImageUrlInput}
+                        onChange={(e) => setFormImageUrlInput(e.target.value)}
+                        placeholder="Or paste image link (e.g. hosted URL or imgbb link)"
+                        className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddUrl(formImageUrlInput, "add")}
+                        disabled={!formImageUrlInput.trim() || isUploadingAddImage}
+                        className="px-3 py-1.5 rounded-xl bg-[#2D1A16]/10 hover:bg-[#2D1A16]/20 text-[#2D1A16] text-xs font-semibold disabled:opacity-50"
+                      >
+                        + Add Image URL
+                      </button>
                     </div>
                   </div>
-                  <p className="text-[10px] text-[#2D1A16]/60 leading-normal">
-                    💡 Click <strong>&quot;Upload Photo File&quot;</strong> to upload directly to Supabase storage. If pasting an imgbb link, click <strong>&quot;Convert imgbb&quot;</strong> to fetch the raw image.
-                  </p>
                 </div>
 
                 <div>
@@ -880,76 +1032,120 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-2xl bg-[#2D1A16]/5 border border-[#2D1A16]/10">
+                <div className="space-y-3 p-4 rounded-2xl bg-[#2D1A16]/5 border border-[#2D1A16]/10">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-[#2D1A16]/80">
-                      Product Photo (Upload or Paste Link)
-                    </label>
+                    <div>
+                      <label className="text-xs font-semibold text-[#2D1A16]/90 block">
+                        Product Photo Gallery ({(editingProduct.images && editingProduct.images.length > 0 ? editingProduct.images : [editingProduct.imageUrl]).length} image{((editingProduct.images && editingProduct.images.length > 0 ? editingProduct.images : [editingProduct.imageUrl]).length) > 1 ? "s" : ""})
+                      </label>
+                      <span className="text-[10px] text-[#2D1A16]/60">
+                        Upload or attach multiple product photos. #1 is the storefront cover image.
+                      </span>
+                    </div>
                     {isUploadingEditImage && (
                       <span className="text-[10px] text-amber-700 animate-pulse font-medium">
-                        Uploading &amp; Hosting Photo...
+                        Uploading Photo(s)...
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
-                    {/* Live Preview */}
-                    <div className="relative w-16 h-20 rounded-xl overflow-hidden border border-[#2D1A16]/20 bg-stone-100 flex-shrink-0 shadow-xs">
-                      <img
-                        src={editingProduct.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = "/images/products/shell-cone-pink-crackle-bracelet.webp";
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex-1 w-full space-y-2">
-                      {/* Direct File Picker */}
-                      <div className="flex items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
-                          <span>📷 Change Photo File</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleFileUpload(file, "edit");
-                            }}
-                          />
-                        </label>
-                        <span className="text-[10px] text-[#2D1A16]/60">Upload directly from device</span>
-                      </div>
-
-                      {/* URL input and resolver */}
-                      <div className="flex gap-1.5">
-                        <input
-                          type="text"
-                          value={editingProduct.imageUrl}
-                          onChange={(e) =>
-                            setEditingProduct({ ...editingProduct, imageUrl: e.target.value })
-                          }
-                          placeholder="Paste image link or use Change Photo button above"
-                          className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                  {/* Multi-Image Thumbnails Grid */}
+                  <div className="flex flex-wrap gap-2.5 items-center">
+                    {(editingProduct.images && editingProduct.images.length > 0
+                      ? editingProduct.images
+                      : [editingProduct.imageUrl || "/images/products/golden-link-cowrie-charm-bracelet.webp"]
+                    ).map((imgUrl, idx) => (
+                      <div
+                        key={idx}
+                        className={`relative w-20 h-24 rounded-xl overflow-hidden border shadow-xs bg-stone-100 group ${
+                          idx === 0 ? "border-[#A05A44] ring-2 ring-[#A05A44]/30" : "border-[#2D1A16]/20"
+                        }`}
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`View ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "/images/products/shell-cone-pink-crackle-bracelet.webp";
+                          }}
                         />
-                        {(editingProduct.imageUrl.includes("ibb.co/") || editingProduct.imageUrl.includes("imgbb.com/")) && (
+
+                        {/* Order Badge */}
+                        <div className="absolute top-1 left-1">
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
+                              idx === 0
+                                ? "bg-[#A05A44] text-white"
+                                : "bg-black/60 text-white"
+                            }`}
+                          >
+                            {idx === 0 ? "★ Cover" : `#${idx + 1}`}
+                          </span>
+                        </div>
+
+                        {/* Actions overlay */}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
+                          {idx !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetPrimaryImage(idx, "edit")}
+                              className="w-full py-0.5 bg-white/90 text-[#2D1A16] rounded text-[9px] font-bold hover:bg-white"
+                              title="Make this the cover image"
+                            >
+                              ★ Set Cover
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => handleResolveUrl(editingProduct.imageUrl, "edit")}
-                            className="px-2.5 py-1.5 rounded-xl bg-amber-600 text-white text-[10px] font-bold hover:bg-amber-700 whitespace-nowrap"
-                            title="Auto-convert imgbb viewer page to direct photo"
+                            onClick={() => handleRemoveImage(idx, "edit")}
+                            className="w-full py-0.5 bg-red-600/90 text-white rounded text-[9px] font-bold hover:bg-red-700"
+                            title="Remove photo"
                           >
-                            ⚡ Convert imgbb
+                            🗑 Remove
                           </button>
-                        )}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Add Image Actions */}
+                  <div className="space-y-2 pt-2 border-t border-[#2D1A16]/10">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D1A16] text-[#FAF5EF] text-[11px] font-semibold hover:bg-black transition shadow-xs">
+                        <span>📷 Upload Photo(s)</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploadingEditImage}
+                          onChange={(e) => {
+                            if (e.target.files) handleFileUpload(e.target.files, "edit");
+                          }}
+                        />
+                      </label>
+                      <span className="text-[10px] text-[#2D1A16]/60">Select one or multiple photos from device</span>
+                    </div>
+
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={editImageUrlInput}
+                        onChange={(e) => setEditImageUrlInput(e.target.value)}
+                        placeholder="Or paste image link (e.g. hosted URL or imgbb link)"
+                        className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-1 focus:ring-[#A05A44]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddUrl(editImageUrlInput, "edit")}
+                        disabled={!editImageUrlInput.trim() || isUploadingEditImage}
+                        className="px-3 py-1.5 rounded-xl bg-[#2D1A16]/10 hover:bg-[#2D1A16]/20 text-[#2D1A16] text-xs font-semibold disabled:opacity-50"
+                      >
+                        + Add Image URL
+                      </button>
                     </div>
                   </div>
-                  <p className="text-[10px] text-[#2D1A16]/60 leading-normal">
-                    💡 Click <strong>&quot;Change Photo File&quot;</strong> to upload directly to Supabase storage. If pasting an imgbb link, click <strong>&quot;Convert imgbb&quot;</strong> to fetch the raw image.
-                  </p>
                 </div>
 
                 <div>

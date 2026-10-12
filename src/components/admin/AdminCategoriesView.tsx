@@ -135,7 +135,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 font-sans pb-24 md:pb-12">
       <div className="max-w-6xl mx-auto">
         <AdminNav currentTab="categories" />
 
