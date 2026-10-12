@@ -269,17 +269,20 @@ export function CheckoutPageView() {
             {/* Left Column: QR Code & Payment Amount */}
             <div className="space-y-4 text-center border-b md:border-b-0 md:border-r border-border/80 pb-6 md:pb-0 md:pr-6">
               <div className="bg-[#FAF5EF] p-4 rounded-xl border border-border/80 inline-block shadow-inner mx-auto">
-                <div className="relative w-56 h-56 mx-auto rounded-lg overflow-hidden border border-cocoa/15 bg-white p-2">
+                <div className="relative w-64 h-72 mx-auto rounded-xl overflow-hidden border border-cocoa/15 bg-black p-1 shadow-md">
                   <Image
                     src="/images/brand/upi-qr.png"
-                    alt="VAP Handicrafts Official UPI QR Code"
-                    width={224}
-                    height={224}
-                    className="w-full h-full object-contain"
+                    alt="VAP Handicrafts Official UPI QR Code - Vivan Mittal"
+                    width={256}
+                    height={288}
+                    className="w-full h-full object-contain rounded-lg"
                     priority
                   />
                 </div>
                 <div className="mt-3">
+                  <span className="text-[11px] font-semibold text-cocoa/80 bg-white/70 px-2.5 py-0.5 rounded-full inline-block border border-border mb-1">
+                    UPI Payee: <strong>Vivan Mittal</strong>
+                  </span>
                   <span className="text-xs uppercase font-bold tracking-wider text-[#A05A44] block">
                     Payable Amount
                   </span>

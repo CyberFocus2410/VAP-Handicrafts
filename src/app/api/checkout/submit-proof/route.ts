@@ -20,9 +20,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let finalProofUrl = parsed.data.paymentProofUrl;
+
+    if (finalProofUrl.startsWith("data:image/")) {
+      try {
+        const matches = finalProofUrl.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+        if (matches && matches[1] && matches[2]) {
+          const ext = matches[1] === "jpeg" ? "jpg" : matches[1];
+          const buffer = Buffer.from(matches[2], "base64");
+          const filename = `${parsed.data.orderReference}-${Date.now()}.${ext}`;
+
+          const { getSupabaseAdminClient } = await import("@/server/db/supabase");
+          const supabase = getSupabaseAdminClient();
+          const { error: uploadError } = await supabase.storage
+            .from("order-proofs")
+            .upload(filename, buffer, {
+              contentType: `image/${matches[1]}`,
+              upsert: true,
+            });
+
+          if (!uploadError) {
+            const { data: signedData } = await supabase.storage
+              .from("order-proofs")
+              .createSignedUrl(filename, 60 * 60 * 24 * 30);
+
+            if (signedData?.signedUrl) {
+              finalProofUrl = signedData.signedUrl;
+            }
+          }
+        }
+      } catch (uploadErr) {
+        console.warn("[ProofUpload] Supabase private storage upload notice:", uploadErr);
+      }
+    }
+
     const res = submitPaymentProof({
       orderReference: parsed.data.orderReference,
-      paymentProofUrl: parsed.data.paymentProofUrl,
+      paymentProofUrl: finalProofUrl,
       paymentUtr: parsed.data.paymentUtr,
     });
 

@@ -5,6 +5,7 @@ import { CheckoutAddress } from "@/lib/checkout/validation";
 import { transitionOrder, OrderStatus } from "./state-machine";
 import { enqueueOrderPaidEmails, enqueueEmail } from "@/server/email/outbox";
 import { EmailOrderDetails } from "@/server/email/types";
+import { getSupabaseAdminClient } from "@/server/db/supabase";
 
 export interface StoredOrder {
   id: string;
@@ -54,6 +55,87 @@ const globalWithOrders = globalThis as typeof globalThis & {
 };
 const memoryOrders: Map<string, StoredOrder> =
   globalWithOrders.__vapMemoryOrders ?? (globalWithOrders.__vapMemoryOrders = new Map<string, StoredOrder>());
+
+export async function logAdminAudit(params: {
+  action: string;
+  entityType: string;
+  entityId: string;
+  details: Record<string, unknown>;
+  ipAddress?: string;
+}) {
+  try {
+    const supabase = getSupabaseAdminClient();
+    await supabase.from("admin_audit_logs").insert({
+      action: params.action,
+      entity_type: params.entityType,
+      entity_id: params.entityId,
+      details: params.details,
+      ip_address: params.ipAddress || null,
+      created_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn("[AuditLog] Notice:", err);
+  }
+}
+
+export async function syncOrderToSupabase(order: StoredOrder) {
+  try {
+    const supabase = getSupabaseAdminClient();
+    const mappedStatus =
+      order.status === "payment_proof_submitted" || order.status === "shipped"
+        ? (order.status === "shipped" ? "fulfilled" : "payment_initiated")
+        : order.status;
+
+    await supabase.from("orders").upsert(
+      {
+        id: order.id,
+        order_reference: order.orderReference,
+        customer_name: order.customerName,
+        customer_email: order.customerEmail,
+        customer_phone: order.customerPhone,
+        shipping_street: order.shippingAddress.streetAddress,
+        shipping_city: order.shippingAddress.city,
+        shipping_state: order.shippingAddress.state,
+        shipping_pincode: order.shippingAddress.pincode,
+        shipping_country: order.shippingAddress.country || "India",
+        status: mappedStatus,
+        subtotal_minor: order.subtotalMinor,
+        shipping_minor: order.shippingMinor,
+        discount_minor: order.discountMinor,
+        total_minor: order.totalMinor,
+        currency: order.currency || "INR",
+        access_token_hash: order.accessTokenHash,
+        tracking_number: order.trackingNumber || null,
+        courier_name: order.courierName || null,
+        shipped_at: order.shippedAt || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+
+    // Sync full order metadata into site_settings so rich fields (screenshot, items, UTR) persist
+    const { data: row } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "order_metadata")
+      .maybeSingle();
+
+    const existing = (row?.value as Record<string, any>) || {};
+    existing[order.orderReference] = order;
+
+    await supabase.from("site_settings").upsert(
+      {
+        key: "order_metadata",
+        value: existing,
+        is_public: false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "key" }
+    );
+  } catch (err) {
+    console.warn("[OrdersService] Supabase sync notice:", err);
+  }
+}
 
 function generateOrderReference(): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -123,6 +205,19 @@ export async function createOrder(params: {
   };
 
   memoryOrders.set(orderReference, storedOrder);
+  syncOrderToSupabase(storedOrder).catch((e) => console.warn("Supabase order sync warning:", e));
+
+  // Trigger Web Push notification to owner mobile (non-blocking)
+  import("@/server/notifications/push-service")
+    .then(({ sendPushNotificationToAdmins }) => {
+      sendPushNotificationToAdmins({
+        title: `🐚 New Order! ₹${(storedOrder.totalMinor / 100).toLocaleString("en-IN")}`,
+        body: `${storedOrder.customerName} placed order ${storedOrder.orderReference}. Items: ${storedOrder.items.length}.`,
+        url: "/admin/orders",
+        tag: `order-${storedOrder.orderReference}`,
+      }).catch((e) => console.warn("[OrdersService] Push dispatch warning:", e));
+    })
+    .catch(() => {});
 
   return {
     order: storedOrder,
@@ -157,6 +252,20 @@ export function submitPaymentProof(params: {
   order.paymentProofSubmittedAt = new Date().toISOString();
   order.updatedAt = new Date().toISOString();
 
+  syncOrderToSupabase(order).catch((e) => console.warn("Supabase proof sync warning:", e));
+
+  // Trigger Web Push notification to owner mobile for payment screenshot verification
+  import("@/server/notifications/push-service")
+    .then(({ sendPushNotificationToAdmins }) => {
+      sendPushNotificationToAdmins({
+        title: `📸 Payment Proof Received!`,
+        body: `Order ${order.orderReference} (${order.customerName}): Payment screenshot uploaded. Tap to verify.`,
+        url: "/admin/orders",
+        tag: `proof-${order.orderReference}`,
+      }).catch((e) => console.warn("[OrdersService] Push dispatch warning:", e));
+    })
+    .catch(() => {});
+
   return { success: true, order };
 }
 
@@ -183,6 +292,7 @@ export function markOrderPaid(params: {
     return { success: false, error: transition.reason };
   }
 
+  const previousStatus = order.status;
   order.status = "paid";
   order.paymentVerifiedAt = new Date().toISOString();
   order.updatedAt = new Date().toISOString();
@@ -191,6 +301,21 @@ export function markOrderPaid(params: {
   for (const res of order.stockReservations) {
     res.status = "consumed";
   }
+
+  syncOrderToSupabase(order).catch((e) => console.warn("Supabase order paid sync warning:", e));
+
+  logAdminAudit({
+    action: "verify_payment",
+    entityType: "order",
+    entityId: order.orderReference,
+    details: {
+      previousStatus,
+      newStatus: "paid",
+      providerTxnId: params.providerTxnId,
+      amountMinor: params.amountMinor,
+      verifiedAt: order.paymentVerifiedAt,
+    },
+  }).catch((e) => console.warn("Audit log warning:", e));
 
   // PRD Phase 6: Transactional Outbox trigger for order confirmation + admin notification
   const emailDetails: EmailOrderDetails = {
@@ -243,11 +368,27 @@ export function markOrderShipped(params: {
     return { success: false, error: transition.reason };
   }
 
+  const previousStatus = order.status;
   order.status = "shipped";
   order.trackingNumber = params.trackingNumber.trim();
   order.courierName = params.courierName.trim();
   order.shippedAt = new Date().toISOString();
   order.updatedAt = new Date().toISOString();
+
+  syncOrderToSupabase(order).catch((e) => console.warn("Supabase ship sync warning:", e));
+
+  logAdminAudit({
+    action: "mark_shipped",
+    entityType: "order",
+    entityId: order.orderReference,
+    details: {
+      previousStatus,
+      newStatus: "shipped",
+      trackingNumber: order.trackingNumber,
+      courierName: order.courierName,
+      shippedAt: order.shippedAt,
+    },
+  }).catch((e) => console.warn("Audit log warning:", e));
 
   // PRD Phase 6: Trigger shipping confirmation email to customer
   const emailDetails: EmailOrderDetails = {
@@ -305,8 +446,22 @@ export function markOrderFulfilled(params: {
     return { success: false, error: transition.reason };
   }
 
+  const previousStatus = order.status;
   order.status = "fulfilled";
   order.updatedAt = new Date().toISOString();
+
+  syncOrderToSupabase(order).catch((e) => console.warn("Supabase fulfill sync warning:", e));
+
+  logAdminAudit({
+    action: "mark_fulfilled",
+    entityType: "order",
+    entityId: order.orderReference,
+    details: {
+      previousStatus,
+      newStatus: "fulfilled",
+      fulfilledAt: order.updatedAt,
+    },
+  }).catch((e) => console.warn("Audit log warning:", e));
 
   return { success: true, order };
 }
@@ -325,6 +480,7 @@ export function markOrderFailed(params: {
     return { success: false, error: transition.reason };
   }
 
+  const previousStatus = order.status;
   order.status = "failed";
   order.updatedAt = new Date().toISOString();
 
@@ -332,6 +488,20 @@ export function markOrderFailed(params: {
   for (const res of order.stockReservations) {
     res.status = "released";
   }
+
+  syncOrderToSupabase(order).catch((e) => console.warn("Supabase order fail sync warning:", e));
+
+  logAdminAudit({
+    action: "reject_payment",
+    entityType: "order",
+    entityId: order.orderReference,
+    details: {
+      previousStatus,
+      newStatus: "failed",
+      reason: params.reason || "Payment proof rejected",
+      updatedAt: order.updatedAt,
+    },
+  }).catch((e) => console.warn("Audit log warning:", e));
 
   return { success: true };
 }

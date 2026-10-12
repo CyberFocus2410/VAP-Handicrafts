@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { CheckCircle2, XCircle, Clock, Sparkles, ArrowRight, ShoppingBag, Phone } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { BRAND } from "@/config/brand";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { useCartStore } from "@/lib/cart/cart-store";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 interface OrderConfirmationViewProps {
   orderReference: string;
@@ -39,6 +41,17 @@ export function OrderConfirmationView({
   return (
     <Section className="py-16 md:py-24">
       <Container className="max-w-2xl text-center">
+        {/* Brand Emblem */}
+        <div className="relative w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden shadow-sm border border-gold-deep/20 bg-ivory">
+          <Image
+            src={BRAND.logo.src}
+            alt={generateAutoAlt({ context: "hero", name: `${BRAND.name} official emblem` })}
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+
         {/* Status Badge Icon */}
         <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6 shadow-md transition-transform hover:scale-105">
           {isPaid ? (

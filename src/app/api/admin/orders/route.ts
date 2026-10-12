@@ -5,9 +5,19 @@ import {
   markOrderFulfilled,
   getOrderByReference,
 } from "@/server/orders/service";
+import { verifyAdminSessionToken } from "@/server/admin/auth";
 
 export async function GET(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get("vap_admin_session")?.value;
+    const isAuthed = await verifyAdminSessionToken(sessionCookie);
+    if (!isAuthed) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status") || "all";
 
@@ -28,6 +38,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get("vap_admin_session")?.value;
+    const isAuthed = await verifyAdminSessionToken(sessionCookie);
+    if (!isAuthed) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { action, orderReference, trackingNumber, courierName } = body;
 
@@ -77,7 +96,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (action === "verify_payment") {
+    if (action === "verify_payment" || action === "mark_paid") {
       const { markOrderPaid } = await import("@/server/orders/service");
       const providerTxnId = body.providerTxnId || order.paymentUtr || `UPI-VERIFIED-${Date.now()}`;
       const res = markOrderPaid({
