@@ -7,6 +7,8 @@ import { type ProductImage } from "@/server/catalogue/types";
 import { cn } from "@/lib/utils";
 import { ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 
+import { generateAutoAlt } from "@/lib/images/auto-alt";
+
 interface ProductGalleryProps {
   images: ProductImage[];
 }
@@ -45,6 +47,13 @@ export function ProductGallery({ images }: ProductGalleryProps) {
     ? "/images/products/shell-cone-pink-crackle-bracelet.webp"
     : activeImage.url;
 
+  const mainAltText = generateAutoAlt({
+    customText: activeImage.alt,
+    index: selectedIndex,
+    total: images.length,
+    type: "product",
+  });
+
   return (
     <div
       className="flex flex-col gap-4"
@@ -56,7 +65,7 @@ export function ProductGallery({ images }: ProductGalleryProps) {
       <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-md border border-border bg-surface shadow-card">
         <Image
           src={displayUrl}
-          alt={activeImage.alt}
+          alt={mainAltText}
           fill
           priority
           onError={() => setImgError(true)}
@@ -132,7 +141,12 @@ export function ProductGallery({ images }: ProductGalleryProps) {
             >
               <Image
                 src={img.url}
-                alt={`Thumbnail ${idx + 1}`}
+                alt={generateAutoAlt({
+                  customText: img.alt,
+                  index: idx,
+                  total: images.length,
+                  type: "product",
+                })}
                 fill
                 sizes="64px"
                 className="object-cover object-center"

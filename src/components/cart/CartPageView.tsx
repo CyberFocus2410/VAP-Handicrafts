@@ -9,6 +9,7 @@ import { type ValidatedCartResponse } from "@/lib/cart/types";
 import { formatINR } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 export function CartPageView() {
   const items = useCartStore((s) => s.items);
@@ -145,7 +146,11 @@ export function CartPageView() {
                 <div className="relative aspect-[4/5] w-28 sm:w-32 flex-shrink-0 overflow-hidden rounded-md bg-sand">
                   <Image
                     src={line.imageUrl}
-                    alt={line.imageAlt}
+                    alt={generateAutoAlt({
+                      customText: line.imageAlt,
+                      name: line.productName,
+                      type: "product",
+                    })}
                     fill
                     className="object-cover"
                   />

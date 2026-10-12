@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { generateAutoAlt } from "@/lib/images/auto-alt";
+
 export interface ProductCardProps extends React.HTMLAttributes<HTMLElement> {
   product: Product;
 }
@@ -24,6 +26,13 @@ export function ProductCard({ product, className, ...props }: ProductCardProps) 
 
   const productUrl = `/shop/${product.category_slug}/${product.slug}`;
 
+  const altText = generateAutoAlt({
+    customText: primaryImage?.alt,
+    name: product.name,
+    category: product.category_name,
+    type: "product",
+  });
+
   return (
     <article
       className={cn(
@@ -36,7 +45,7 @@ export function ProductCard({ product, className, ...props }: ProductCardProps) 
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-bg">
         <Image
           src={imgSrc}
-          alt={primaryImage?.alt || product.name}
+          alt={altText}
           width={primaryImage?.width || 800}
           height={primaryImage?.height || 1000}
           onError={() => setImgSrc("/images/products/shell-cone-pink-crackle-bracelet.webp")}

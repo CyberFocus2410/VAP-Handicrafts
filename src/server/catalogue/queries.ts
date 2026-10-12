@@ -12,6 +12,7 @@ import {
   type CatalogueFilter,
   CatalogueFilterSchema,
 } from "./types";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 const STATIC_CATEGORIES: Category[] = [
   {
@@ -114,18 +115,29 @@ function mapCmsProductToDetail(p: CmsProduct): ProductDetail {
         attributes: {},
       },
     ],
-    images: [
-      {
-        id: `img-${p.id}`,
+    images: (() => {
+      const imgList =
+        Array.isArray(p.images) && p.images.length > 0
+          ? p.images.filter(Boolean)
+          : [p.imageUrl].filter(Boolean);
+      return imgList.map((url, idx) => ({
+        id: `img-${p.id}-${idx}`,
         productId: p.id,
-        url: p.imageUrl,
-        alt: p.imageAlt || p.name,
+        url,
+        alt: generateAutoAlt({
+          customText: p.imageAlt,
+          name: p.name,
+          category: p.categoryName,
+          index: idx,
+          total: imgList.length,
+          type: "product",
+        }),
         width: 800,
         height: 1000,
-        displayOrder: 1,
-        isPrimary: true,
-      },
-    ],
+        displayOrder: idx + 1,
+        isPrimary: idx === 0,
+      }));
+    })(),
     priceMinor: p.priceMinor,
     compareAtPriceMinor: p.compareAtPriceMinor || null,
     isDevPrice: false,
@@ -305,10 +317,11 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     // Non-fatal
   }
 
-  // 2. Try Supabase
-  try {
-    const supabase = getSupabaseAnonClient();
-    const { data, error } = await supabase
+  // 2. Try Supabase (skip in test runner to prevent network timeout against dummy keys)
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const supabase = getSupabaseAnonClient();
+      const { data, error } = await supabase
       .from("products")
       .select("*, categories!inner(slug, name), product_variants(*), product_images(*)")
       .eq("slug", slug)
@@ -366,6 +379,7 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
   } catch {
     // Fall back to seed data if error
   }
+}
 
   // 3. Fallback to in-memory seed products
   const seed = SEED_PRODUCTS.find((p) => p.slug === slug);

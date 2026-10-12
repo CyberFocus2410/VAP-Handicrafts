@@ -242,20 +242,20 @@ export function ProductDetailsView({ product }: ProductDetailsViewProps) {
                   </div>
                 </div>
               )}
-              <div className="flex items-start gap-2.5">
+              <Link href="/shipping-policy" className="flex items-start gap-2.5 hover:opacity-80 transition-opacity">
                 <Truck className="h-4 w-4 shrink-0 text-rose-deep" />
                 <div>
                   <span className="font-semibold text-cocoa">Pan-India Ship</span>
                   <p className="text-[11px] text-cocoa-muted">Tracked express courier</p>
                 </div>
-              </div>
-              <div className="flex items-start gap-2.5">
+              </Link>
+              <Link href="/refund-policy" className="flex items-start gap-2.5 hover:opacity-80 transition-opacity">
                 <RefreshCw className="h-4 w-4 shrink-0 text-rose-deep" />
                 <div>
                   <span className="font-semibold text-cocoa">Safe Delivery</span>
                   <p className="text-[11px] text-cocoa-muted">Insured gift packaging</p>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
