@@ -18,6 +18,7 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(
     initialCustomers[0] || null
   );
+  const [mobileTab, setMobileTab] = useState<"directory" | "profile">("directory");
 
   // Edit notes/tags state
   const [isEditingNotes, setIsEditingNotes] = useState<boolean>(false);
@@ -49,6 +50,7 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
     setCurrentTags(c.tags.join(", "));
     setIsEditingNotes(false);
     setSaveSuccess("");
+    setMobileTab("profile");
   };
 
   const handleSaveNotesAndTags = async () => {
@@ -97,12 +99,12 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 pb-24 md:pb-12 font-sans">
       <div className="max-w-6xl mx-auto">
         <AdminNav currentTab="customers" />
 
         {/* Page Title & Search */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 sm:mb-6">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2D1A16]">
@@ -117,18 +119,18 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
             <input
               type="text"
               placeholder="Search by name, email, phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 text-xs sm:text-sm rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-2 focus:ring-[#A05A44] w-full sm:w-64"
+              className="px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-2 focus:ring-[#A05A44] flex-1 sm:w-64"
             />
             <select
               value={tagFilter}
               onChange={(e) => setTagFilter(e.target.value)}
-              className="px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-2 focus:ring-[#A05A44]"
+              className="px-3 py-2 text-xs sm:text-sm rounded-xl border border-[#2D1A16]/20 bg-white focus:outline-none focus:ring-2 focus:ring-[#A05A44]"
             >
               <option value="all">All Tags ({allTags.length})</option>
               {allTags.map((tag) => (
@@ -140,10 +142,38 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
           </div>
         </div>
 
+        {/* Mobile View Toggle Bar (Only visible on screens < lg) */}
+        <div className="flex lg:hidden items-center p-1 bg-white rounded-2xl border border-[#2D1A16]/10 mb-4 shadow-sm">
+          <button
+            onClick={() => setMobileTab("directory")}
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition ${
+              mobileTab === "directory"
+                ? "bg-[#2D1A16] text-[#FAF5EF] shadow-sm"
+                : "text-[#2D1A16]/70 hover:bg-[#FAF5EF]"
+            }`}
+          >
+            👥 Directory ({filteredCustomers.length})
+          </button>
+          <button
+            onClick={() => setMobileTab("profile")}
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition ${
+              mobileTab === "profile"
+                ? "bg-[#2D1A16] text-[#FAF5EF] shadow-sm"
+                : "text-[#2D1A16]/70 hover:bg-[#FAF5EF]"
+            }`}
+          >
+            👤 Profile: {selectedCustomer ? selectedCustomer.name.split(" ")[0] : "Select Customer"}
+          </button>
+        </div>
+
         {/* 2-Column Split: Customer List & Customer Detail Drawer */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Customer Directory List (5 cols) */}
-          <div className="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-5 border border-[#2D1A16]/10 shadow-sm h-fit max-h-[820px] overflow-y-auto">
+          <div
+            className={`lg:col-span-5 bg-white rounded-3xl p-4 sm:p-5 border border-[#2D1A16]/10 shadow-sm h-fit max-h-[820px] overflow-y-auto ${
+              mobileTab === "directory" ? "block" : "hidden lg:block"
+            }`}
+          >
             <h2 className="text-xs uppercase tracking-wider font-bold text-[#2D1A16]/60 mb-3 px-2">
               Customer Directory ({filteredCustomers.length})
             </h2>
@@ -218,39 +248,66 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
           </div>
 
           {/* Customer 360° Profile Detail (7 cols) */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-[#2D1A16]/10 shadow-sm">
+          <div
+            className={`lg:col-span-7 bg-white rounded-3xl p-5 sm:p-8 border border-[#2D1A16]/10 shadow-sm ${
+              mobileTab === "profile" ? "block" : "hidden lg:block"
+            }`}
+          >
             {!selectedCustomer ? (
               <div className="p-12 text-center text-sm text-[#2D1A16]/60">
                 Select a customer profile on the left to view their 360° dossier.
               </div>
             ) : (
               <div>
+                {/* Mobile Back to Directory Button */}
+                <div className="flex lg:hidden items-center justify-between pb-3 mb-4 border-b border-[#2D1A16]/10">
+                  <button
+                    onClick={() => setMobileTab("directory")}
+                    className="text-xs font-semibold text-[#A05A44] hover:underline flex items-center gap-1"
+                  >
+                    <span>←</span>
+                    <span>Back to Directory</span>
+                  </button>
+                  <span className="text-[11px] text-[#2D1A16]/50">Customer Dossier</span>
+                </div>
+
                 {/* Header Profile Info */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#2D1A16]/10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-5 border-b border-[#2D1A16]/10">
                   <div>
-                    <h2 className="font-serif text-2xl font-bold text-[#2D1A16]">
+                    <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2D1A16]">
                       {selectedCustomer.name}
                     </h2>
-                    <div className="text-xs text-[#2D1A16]/70 mt-1 flex flex-wrap gap-2">
+                    <div className="text-xs text-[#2D1A16]/70 mt-1 flex flex-wrap items-center gap-2">
                       <span>✉️ {selectedCustomer.email || "No email"}</span>
                       <span>•</span>
                       <span>📞 {selectedCustomer.phone || "No phone"}</span>
                     </div>
                   </div>
 
-                  {selectedCustomer.phone && (
-                    <a
-                      href={`https://wa.me/${selectedCustomer.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                        `Hi ${selectedCustomer.name}! Reaching out from VAP Handicrafts regarding your handmade jewellery orders. Hope you are loving them!`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5"
-                    >
-                      <span>Direct WhatsApp</span>
-                      <span>💬</span>
-                    </a>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    {selectedCustomer.phone && (
+                      <>
+                        <a
+                          href={`https://wa.me/${selectedCustomer.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                            `Hi ${selectedCustomer.name}! Reaching out from VAP Handicrafts regarding your orders.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 sm:flex-none justify-center px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5"
+                        >
+                          <span>WhatsApp</span>
+                          <span>💬</span>
+                        </a>
+                        <a
+                          href={`tel:${selectedCustomer.phone.replace(/[^0-9+]/g, "")}`}
+                          className="px-3 py-2 rounded-xl border border-[#2D1A16]/20 text-[#2D1A16] hover:bg-[#FAF5EF] text-xs font-semibold transition flex items-center gap-1"
+                        >
+                          <span>Call</span>
+                          <span>📞</span>
+                        </a>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Key Customer Stats */}

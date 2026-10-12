@@ -68,16 +68,26 @@ export const PackingSlipModal: React.FC<PackingSlipProps> = ({ order, onClose })
         <div className="print:p-6 text-[#2D1A16]">
           {/* Header */}
           <div className="flex justify-between items-start border-b border-[#2D1A16] pb-4 mb-6">
-            <div>
-              <h1 className="font-serif text-2xl font-bold tracking-tight text-[#2D1A16]">
-                VAP HANDICRAFTS
-              </h1>
-              <p className="text-xs uppercase tracking-wider text-[#735D57]">
-                Handmade Shell Jewellery &bull; Personalized Gifts &amp; Cards
-              </p>
-              <p className="text-xs text-[#735D57] mt-1">
-                Workshop: Pulkit Varshney &amp; Vivan &bull; +91 93685 02623 / +91 87550 51423
-              </p>
+            <div className="flex items-center gap-3.5">
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-[#A05A44]/30 bg-[#FAF5EF] flex-shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/brand/logo.png"
+                  alt="VAP Handicrafts"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="font-serif text-2xl font-bold tracking-tight text-[#2D1A16]">
+                  VAP HANDICRAFTS
+                </h1>
+                <p className="text-xs uppercase tracking-wider text-[#735D57]">
+                  Handmade Shell Jewellery &bull; Personalized Gifts &amp; Cards
+                </p>
+                <p className="text-xs text-[#735D57] mt-1">
+                  Workshop: Pulkit Varshney &amp; Vivan &bull; +91 93685 02623 / +91 87550 51423
+                </p>
+              </div>
             </div>
             <div className="text-right">
               <span className="inline-block bg-[#FAF5EF] border border-[#E5DCD3] px-3 py-1 rounded text-xs font-mono font-bold">

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { formatINR } from "@/lib/money";
 import { AdminNav } from "./AdminNav";
+import { PushNotificationManager } from "./PushNotificationManager";
 import { CustomerProfile, CustomerInquiry } from "@/server/admin/crm-cms-types";
 
 interface AdminDashboardOverviewProps {
@@ -47,9 +48,12 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
   const recentInquiries = inquiries.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 font-sans pb-24 md:pb-12">
       <div className="max-w-6xl mx-auto">
         <AdminNav currentTab="overview" />
+
+        {/* Mobile Push Notification Status & Controls */}
+        <PushNotificationManager />
 
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-[#2D1A16] via-[#3E241E] to-[#A05A44] text-[#FAF5EF] rounded-3xl p-6 sm:p-8 mb-8 shadow-md relative overflow-hidden">

@@ -72,6 +72,25 @@ if (inquiriesStore.size === 0) {
  * Aggregates all orders into unified customer profiles with LTV, tags, and personalization history.
  */
 export async function listAllCustomers(): Promise<CustomerProfile[]> {
+  try {
+    const supabase = getSupabaseAdminClient();
+    const { data: row } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "crm_customer_notes")
+      .maybeSingle();
+
+    if (row?.value && typeof row.value === "object") {
+      for (const [k, v] of Object.entries(row.value)) {
+        if (v && typeof v === "object") {
+          customerNotesStore.set(k, v as { tags: string[]; internalNotes: string });
+        }
+      }
+    }
+  } catch {
+    // In-memory fallback
+  }
+
   const orders = listAllOrders();
   const customerMap = new Map<string, CustomerProfile>();
 
@@ -281,19 +300,15 @@ export async function saveCustomerNotesAndTags(
 ): Promise<{ customerKey: string; tags: string[]; internalNotes: string }> {
   customerNotesStore.set(customerKey, { internalNotes, tags });
 
-  // If Supabase is connected, optionally sync
+  // Sync to Supabase site_settings
   try {
     const supabase = getSupabaseAdminClient();
-    await supabase.from("customer_profiles").upsert(
-      {
-        customer_key: customerKey,
-        customer_name: customerKey,
-        tags,
-        internal_notes: internalNotes,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "customer_key" }
-    );
+    await supabase.from("site_settings").upsert({
+      key: "crm_customer_notes",
+      value: Object.fromEntries(customerNotesStore),
+      is_public: false,
+      updated_at: new Date().toISOString(),
+    });
   } catch {
     // In-memory fallback
   }
@@ -305,6 +320,25 @@ export async function saveCustomerNotesAndTags(
  * Lists all customer inquiries and leads.
  */
 export async function listAllInquiries(): Promise<CustomerInquiry[]> {
+  try {
+    const supabase = getSupabaseAdminClient();
+    const { data: row } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "crm_inquiries")
+      .maybeSingle();
+
+    if (row?.value && Array.isArray(row.value) && row.value.length > 0) {
+      for (const inq of row.value as CustomerInquiry[]) {
+        if (inq?.id) {
+          inquiriesStore.set(inq.id, inq);
+        }
+      }
+    }
+  } catch {
+    // In-memory fallback
+  }
+
   return Array.from(inquiriesStore.values()).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -339,18 +373,14 @@ export async function createCustomerInquiry(input: {
 
   inquiriesStore.set(id, newInquiry);
 
-  // Sync to Supabase if connected
+  // Sync to Supabase site_settings
   try {
     const supabase = getSupabaseAdminClient();
-    await supabase.from("customer_inquiries").insert({
-      id,
-      name: newInquiry.name,
-      email: newInquiry.email,
-      phone: newInquiry.phone,
-      occasion: newInquiry.occasion,
-      message: newInquiry.message,
-      status: newInquiry.status,
-      assigned_to: newInquiry.assignedTo,
+    await supabase.from("site_settings").upsert({
+      key: "crm_inquiries",
+      value: Array.from(inquiriesStore.values()),
+      is_public: false,
+      updated_at: now,
     });
   } catch {
     // In-memory fallback
@@ -375,16 +405,15 @@ export async function updateCustomerInquiry(
   if (updates.quoteMinor !== undefined) inquiry.quoteMinor = updates.quoteMinor;
   inquiry.updatedAt = new Date().toISOString();
 
-  // Sync to Supabase if connected
+  // Sync to Supabase site_settings
   try {
     const supabase = getSupabaseAdminClient();
-    await supabase.from("customer_inquiries").update({
-      status: inquiry.status,
-      assigned_to: inquiry.assignedTo,
-      internal_notes: inquiry.internalNotes,
-      quote_minor: inquiry.quoteMinor,
+    await supabase.from("site_settings").upsert({
+      key: "crm_inquiries",
+      value: Array.from(inquiriesStore.values()),
+      is_public: false,
       updated_at: inquiry.updatedAt,
-    }).eq("id", id);
+    });
   } catch {
     // In-memory fallback
   }

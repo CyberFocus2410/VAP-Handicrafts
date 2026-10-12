@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState } from "react";
@@ -6,6 +7,7 @@ import Link from "next/link";
 import { formatINR } from "@/lib/money";
 import { AdminNav } from "./AdminNav";
 import { PackingSlipModal } from "./PackingSlipModal";
+import { PushNotificationManager } from "./PushNotificationManager";
 
 interface AdminOrder {
   id: string;
@@ -249,13 +251,16 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
     .reduce((sum, o) => sum + o.totalMinor, 0);
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 pb-24 md:pb-12 font-sans">
       <div className="max-w-6xl mx-auto">
         {/* Unified Admin Navigation */}
         <AdminNav currentTab="orders" />
 
+        {/* Mobile Push Notification Status & Controls */}
+        <PushNotificationManager />
+
         {/* Stats Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="bg-white p-5 rounded-2xl border border-[#E5DCD3] shadow-sm">
             <div className="text-xs uppercase tracking-wider font-semibold text-amber-800">
               Awaiting Verification
@@ -360,7 +365,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
             {filteredOrders.map((order) => (
               <div
                 key={order.orderReference}
-                className="bg-white rounded-2xl border border-[#E5DCD3] shadow-sm p-6 hover:border-[#D4AF37] transition"
+                className="bg-white rounded-2xl border border-[#E5DCD3] shadow-sm p-4 sm:p-6 hover:border-[#D4AF37] transition"
               >
                 {/* Order Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#F0EBE6] pb-4 mb-4">
@@ -383,13 +388,13 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 justify-start sm:justify-end">
                     {order.status === "payment_proof_submitted" && (
                       <>
                         <button
                           onClick={() => handleVerifyPayment(order.orderReference)}
                           disabled={actionLoading}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition shadow-sm flex items-center gap-1.5"
+                          className="w-full sm:w-auto justify-center px-4 py-2 sm:px-3.5 sm:py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition shadow-sm flex items-center gap-1.5 min-h-[40px]"
                         >
                           <span>✓</span>
                           <span>Verify &amp; Confirm Payment</span>
@@ -398,7 +403,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                         <button
                           onClick={() => handleRejectPayment(order.orderReference)}
                           disabled={actionLoading}
-                          className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition"
+                          className="flex-1 sm:flex-none justify-center px-3.5 py-2 sm:py-1.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition min-h-[40px]"
                         >
                           Reject Proof
                         </button>
@@ -407,7 +412,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
 
                     <button
                       onClick={() => setSelectedPackingSlip(order)}
-                      className="px-3 py-1.5 rounded-lg border border-[#D5C7BC] text-xs font-semibold text-[#2D1A16] hover:bg-[#FAF5EF] transition"
+                      className="flex-1 sm:flex-none justify-center px-3.5 py-2 sm:py-1.5 rounded-xl border border-[#D5C7BC] text-xs font-semibold text-[#2D1A16] hover:bg-[#FAF5EF] transition min-h-[40px]"
                     >
                       🖨️ Packing Slip
                     </button>
@@ -415,7 +420,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                     {order.status === "paid" && (
                       <button
                         onClick={() => setShippingOrderId(order.orderReference)}
-                        className="px-3.5 py-1.5 rounded-lg bg-[#2D1A16] text-white text-xs font-semibold hover:bg-[#3D2520] transition shadow-sm"
+                        className="w-full sm:w-auto justify-center px-4 py-2 sm:px-3.5 sm:py-1.5 rounded-xl bg-[#2D1A16] text-white text-xs font-semibold hover:bg-[#3D2520] transition shadow-sm min-h-[40px]"
                       >
                         🚚 Fulfill &amp; Ship
                       </button>
@@ -425,7 +430,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                       <button
                         onClick={() => handleMarkFulfilled(order.orderReference)}
                         disabled={actionLoading}
-                        className="px-3.5 py-1.5 rounded-lg bg-emerald-800 text-white text-xs font-semibold hover:bg-emerald-900 transition shadow-sm"
+                        className="w-full sm:w-auto justify-center px-4 py-2 sm:px-3.5 sm:py-1.5 rounded-xl bg-emerald-800 text-white text-xs font-semibold hover:bg-emerald-900 transition shadow-sm min-h-[40px]"
                       >
                         ✅ Mark Delivered
                       </button>
@@ -459,7 +464,6 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                             className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-amber-400 bg-white shadow-sm hover:opacity-90 transition group shrink-0"
                             title="Click to view full screenshot"
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={order.paymentProofUrl}
                               alt="Payment proof screenshot"
@@ -567,8 +571,30 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                       {order.shippingAddress.city}, {order.shippingAddress.state} —{" "}
                       <strong>{order.shippingAddress.pincode}</strong>
                     </p>
-                    <div className="mt-2 text-[#735D57] space-y-0.5">
-                      <div>📞 {order.customerPhone}</div>
+                    <div className="mt-2 text-[#735D57] space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span>📞 {order.customerPhone}</span>
+                        {order.customerPhone && (
+                          <div className="flex items-center gap-1">
+                            <a
+                              href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                                `Hi ${order.customerName}! Reaching out from VAP Handicrafts regarding your order ${order.orderReference}.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-semibold hover:bg-emerald-200 transition"
+                            >
+                              WhatsApp
+                            </a>
+                            <a
+                              href={`tel:${order.customerPhone.replace(/[^0-9+]/g, "")}`}
+                              className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[10px] font-semibold hover:bg-stone-200 transition"
+                            >
+                              Call
+                            </a>
+                          </div>
+                        )}
+                      </div>
                       <div>✉️ {order.customerEmail}</div>
                     </div>
                   </div>
@@ -655,7 +681,6 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
               </button>
             </div>
             <div className="max-h-[75vh] overflow-auto rounded-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewScreenshotUrl}
                 alt="Full size payment proof screenshot"

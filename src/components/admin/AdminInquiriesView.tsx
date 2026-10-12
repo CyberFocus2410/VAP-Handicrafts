@@ -18,6 +18,7 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
   const [selectedInquiry, setSelectedInquiry] = useState<CustomerInquiry | null>(
     initialInquiries[0] || null
   );
+  const [mobileTab, setMobileTab] = useState<"leads" | "detail">("leads");
 
   // Edit / Update lead states
   const [editStatus, setEditStatus] = useState<InquiryStatus>("new");
@@ -55,6 +56,7 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
     setEditQuoteRupees(inq.quoteMinor ? String(inq.quoteMinor / 100) : "");
     setEditNotes(inq.internalNotes || "");
     setNotification("");
+    setMobileTab("detail");
   };
 
   const handleUpdateInquiry = async () => {
@@ -161,7 +163,7 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 font-sans pb-24 md:pb-12">
       <div className="max-w-6xl mx-auto">
         <AdminNav currentTab="inquiries" />
 
@@ -184,11 +186,35 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
           <div className="flex items-center gap-3 w-full md:w-auto">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-[#2D1A16] text-[#FAF5EF] hover:bg-black transition shadow-sm whitespace-nowrap"
+              className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-[#2D1A16] text-[#FAF5EF] hover:bg-black transition shadow-sm text-center"
             >
               + Log New Lead
             </button>
           </div>
+        </div>
+
+        {/* Mobile View Switcher */}
+        <div className="flex lg:hidden bg-white p-1 rounded-2xl border border-[#2D1A16]/10 mb-5 shadow-sm">
+          <button
+            onClick={() => setMobileTab("leads")}
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition ${
+              mobileTab === "leads"
+                ? "bg-[#2D1A16] text-[#FAF5EF] shadow-sm"
+                : "text-[#2D1A16]/70 hover:bg-[#FAF5EF]"
+            }`}
+          >
+            📋 Leads ({filtered.length})
+          </button>
+          <button
+            onClick={() => setMobileTab("detail")}
+            className={`flex-1 py-2 text-xs font-semibold rounded-xl transition ${
+              mobileTab === "detail"
+                ? "bg-[#2D1A16] text-[#FAF5EF] shadow-sm"
+                : "text-[#2D1A16]/70 hover:bg-[#FAF5EF]"
+            }`}
+          >
+            📝 Lead Details
+          </button>
         </div>
 
         {/* Filters */}
@@ -229,7 +255,11 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
         {/* 2-Column Split: Pipeline List & Lead Detail Editor */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Leads List (5 cols) */}
-          <div className="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-5 border border-[#2D1A16]/10 shadow-sm max-h-[820px] overflow-y-auto">
+          <div
+            className={`lg:col-span-5 bg-white rounded-3xl p-4 sm:p-5 border border-[#2D1A16]/10 shadow-sm max-h-[820px] overflow-y-auto ${
+              mobileTab === "leads" ? "block" : "hidden lg:block"
+            }`}
+          >
             <h2 className="text-xs uppercase tracking-wider font-bold text-[#2D1A16]/60 mb-3 px-2">
               Inquiries Pipeline ({filtered.length})
             </h2>
@@ -305,7 +335,19 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
           </div>
 
           {/* Lead Detail & Founder Actions (7 cols) */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-[#2D1A16]/10 shadow-sm">
+          <div
+            className={`lg:col-span-7 bg-white rounded-3xl p-5 sm:p-8 border border-[#2D1A16]/10 shadow-sm ${
+              mobileTab === "detail" ? "block" : "hidden lg:block"
+            }`}
+          >
+            {/* Mobile Back Button */}
+            <button
+              onClick={() => setMobileTab("leads")}
+              className="lg:hidden mb-4 text-xs font-semibold text-[#A05A44] hover:underline flex items-center gap-1.5"
+            >
+              ← Back to Pipeline Leads
+            </button>
+
             {!selectedInquiry ? (
               <div className="p-12 text-center text-sm text-[#2D1A16]/60">
                 Select an inquiry from the list to view lead details and assign actions.
@@ -316,12 +358,12 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-[#2D1A16]/10">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="font-serif text-2xl font-bold text-[#2D1A16]">
+                      <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2D1A16]">
                         {selectedInquiry.name}
                       </h2>
                       {getStatusBadge(selectedInquiry.status)}
                     </div>
-                    <div className="text-xs text-[#2D1A16]/70 mt-1 flex flex-wrap gap-2">
+                    <div className="text-xs text-[#2D1A16]/70 mt-1 flex flex-wrap items-center gap-2">
                       <span>✉️ {selectedInquiry.email}</span>
                       {selectedInquiry.phone && (
                         <>
@@ -333,17 +375,25 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
                   </div>
 
                   {selectedInquiry.phone && (
-                    <a
-                      href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                        `Hi ${selectedInquiry.name}! This is Pulkit/Vivan from VAP Handicrafts regarding your custom inquiry: "${selectedInquiry.occasion || "bespoke jewellery/cards"}". Happy to share catalogue options!`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5"
-                    >
-                      <span>WhatsApp Patron</span>
-                      <span>💬</span>
-                    </a>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <a
+                        href={`tel:${selectedInquiry.phone}`}
+                        className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-stone-100 text-[#2D1A16] text-xs font-semibold hover:bg-stone-200 transition text-center"
+                      >
+                        📞 Call
+                      </a>
+                      <a
+                        href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                          `Hi ${selectedInquiry.name}! This is Pulkit/Vivan from VAP Handicrafts regarding your custom inquiry: "${selectedInquiry.occasion || "bespoke jewellery/cards"}". Happy to share catalogue options!`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition shadow-sm flex items-center justify-center gap-1.5"
+                      >
+                        <span>WhatsApp</span>
+                        <span>💬</span>
+                      </a>
+                    </div>
                   )}
                 </div>
 
