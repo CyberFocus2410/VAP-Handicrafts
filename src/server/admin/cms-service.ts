@@ -1,7 +1,8 @@
 import "server-only";
 import crypto from "crypto";
 import { SEED_PRODUCTS, type Product as SeedProduct } from "@/data/seed-products";
-import { getSupabaseAdminClient } from "@/server/db/supabase";
+import { getSupabaseAdminClient, getSupabaseAnonClient } from "@/server/db/supabase";
+import { env } from "@/lib/env";
 import {
   SiteContentConfig,
   SiteAnnouncementContent,
@@ -220,7 +221,9 @@ export async function listCmsProducts(): Promise<CmsProduct[]> {
   }
 
   try {
-    const supabase = getSupabaseAdminClient();
+    const supabase = env.server.SUPABASE_SERVICE_ROLE_KEY
+      ? getSupabaseAdminClient()
+      : getSupabaseAnonClient();
     const { data: dbProducts } = await supabase
       .from("products")
       .select("*, categories(name, slug), product_variants(*), product_images(*)")
@@ -359,10 +362,10 @@ export async function createCmsProduct(input: {
   productsStore.set(id, newProduct);
   lastProductsFetchTime = 0;
 
-  // Attempt Supabase insert if available
-  try {
-    const supabase = getSupabaseAdminClient();
-    const { data: cat } = await supabase
+  if (env.server.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabase = getSupabaseAdminClient();
+      const { data: cat } = await supabase
       .from("categories")
       .select("id")
       .eq("slug", input.categorySlug)
@@ -414,6 +417,7 @@ export async function createCmsProduct(input: {
   } catch {
     // Non-fatal fallback
   }
+}
 
   return newProduct;
 }
@@ -473,8 +477,9 @@ export async function updateCmsProduct(
   lastProductsFetchTime = 0;
 
   // Sync to Supabase
-  try {
-    const supabase = getSupabaseAdminClient();
+  if (env.server.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabase = getSupabaseAdminClient();
     await supabase
       .from("products")
       .update({
@@ -535,6 +540,7 @@ export async function updateCmsProduct(
   } catch {
     // Non-fatal
   }
+}
 
   return updated;
 }
@@ -581,7 +587,9 @@ export async function listCmsCategories(): Promise<CmsCategory[]> {
   }
 
   try {
-    const supabase = getSupabaseAdminClient();
+    const supabase = env.server.SUPABASE_SERVICE_ROLE_KEY
+      ? getSupabaseAdminClient()
+      : getSupabaseAnonClient();
     const { data: dbCats } = await supabase
       .from("categories")
       .select("*")
@@ -734,7 +742,9 @@ export async function updateCmsCategory(
 
 export async function getSiteContentConfig(): Promise<SiteContentConfig> {
   try {
-    const supabase = getSupabaseAdminClient();
+    const supabase = env.server.SUPABASE_SERVICE_ROLE_KEY
+      ? getSupabaseAdminClient()
+      : getSupabaseAnonClient();
     const { data: row } = await supabase
       .from("site_settings")
       .select("value")
@@ -818,22 +828,26 @@ export async function updateSiteContentConfig(
   siteContentStore = merged;
   globalWithCMS.__vapSiteContent = siteContentStore;
 
-  try {
-    const supabase = getSupabaseAdminClient();
-    const { error } = await supabase.from("site_settings").upsert(
-      {
-        key: "site_content",
-        value: siteContentStore,
-        is_public: true,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "key" }
-    );
-    if (error) {
-      console.error("[CMS Error] Failed to persist site_content to Supabase:", error);
+  if (env.server.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabase = getSupabaseAdminClient();
+      const { error } = await supabase.from("site_settings").upsert(
+        {
+          key: "site_content",
+          value: siteContentStore,
+          is_public: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+      if (error) {
+        console.error("[CMS Error] Failed to persist site_content to Supabase:", error);
+      }
+    } catch (err) {
+      console.error("[CMS Error] Supabase exception during updateSiteContentConfig:", err);
     }
-  } catch (err) {
-    console.error("[CMS Error] Supabase exception during updateSiteContentConfig:", err);
+  } else {
+    console.warn("[CMS Warning] SUPABASE_SERVICE_ROLE_KEY not configured. Content updated in-memory only.");
   }
 
   return siteContentStore;
