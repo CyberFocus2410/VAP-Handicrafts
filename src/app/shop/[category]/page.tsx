@@ -8,6 +8,8 @@ import { ArrowLeft, MessageCircle } from "lucide-react";
 import { listProducts, getCategoryBySlug } from "@/server/catalogue/queries";
 import { PersonalizationRequestForm } from "@/components/catalogue/PersonalizationRequestForm";
 
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+
 export const dynamic = "force-dynamic";
 
 interface CategoryPageProps {
@@ -48,6 +50,21 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   return {
     title: `${title} | VAP Handicrafts`,
     description: description,
+    alternates: {
+      canonical: `/shop/${category}`,
+    },
+    openGraph: {
+      title: `${title} — Handcrafted Collection | VAP Handicrafts`,
+      description: description,
+      url: `/shop/${category}`,
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${title} by VAP Handicrafts` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | VAP Handicrafts`,
+      description: description,
+      images: ["/og-image.png"],
+    },
   };
 }
 
@@ -120,16 +137,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }));
 
   return (
-    <Section surface="default" className="py-12 md:py-20">
+    <Section surface="default" className="py-10 md:py-16">
       <Container>
-        <Link
-          href="/shop"
-          className="inline-flex items-center text-sm font-medium text-cocoa-muted hover:text-rose-deep mb-8 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" /> Back to All Collections
-        </Link>
+        <Breadcrumbs items={[{ label: "Shop All", href: "/shop" }, { label: categoryTitle }]} />
 
-        <div className="mb-12">
+        <div className="mb-10">
           <Heading level="h1" className="mb-3">
             {categoryTitle}
           </Heading>

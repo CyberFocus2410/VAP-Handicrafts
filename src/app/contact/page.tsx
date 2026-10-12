@@ -7,20 +7,38 @@ import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/contact/ContactForm";
 
-export const metadata = {
-  title: "Contact Us",
-  description: "Get in touch with Pulkit Garg and Vivan Mittal at VAP Handicrafts for personalized gifts and custom orders.",
+import { Metadata } from "next";
+import Link from "next/link";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
+
+export const metadata: Metadata = {
+  title: "Contact Founders | Custom Orders & Support | VAP Handicrafts",
+  description:
+    "Get in touch directly with Pulkit Garg and Vivan Mittal at VAP Handicrafts for custom shell jewellery, relationship cards, personalized gifts, or bulk party orders.",
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact Founders | Custom Orders & Support | VAP Handicrafts",
+    description:
+      "Get in touch directly with Pulkit Garg and Vivan Mittal at VAP Handicrafts for custom shell jewellery, relationship cards, and personalized gifting.",
+    url: "/contact",
+    images: [{ url: BRAND.logo.src, width: 800, height: 800, alt: "VAP Handicrafts Contact & Support" }],
+  },
 };
 
 export default function ContactPage() {
   return (
-    <Section surface="default" className="py-16 md:py-24">
+    <Section surface="default" className="py-12 md:py-20">
       <Container className="max-w-4xl">
+        <Breadcrumbs items={[{ label: "Contact Us", href: "/contact" }]} className="mb-8" />
+
         <div className="text-center mb-12">
           <div className="relative h-20 w-20 rounded-full overflow-hidden shadow-md border-2 border-gold-deep/30 bg-ivory mx-auto mb-4">
             <Image
               src={BRAND.logo.src}
-              alt={BRAND.name}
+              alt={generateAutoAlt({ context: "hero", name: `${BRAND.name} official logo` })}
               width={80}
               height={80}
               className="h-full w-full object-contain"
@@ -109,6 +127,22 @@ export default function ContactPage() {
           </p>
 
           <ContactForm />
+        </div>
+
+        {/* Helpful Internal Links */}
+        <div className="mt-12 text-center text-xs text-cocoa-muted space-x-4">
+          <span>Looking for immediate answers?</span>
+          <Link href="/shipping-policy" className="text-rose-deep font-medium hover:underline">
+            Shipping & Timelines
+          </Link>
+          <span>•</span>
+          <Link href="/refund-policy" className="text-rose-deep font-medium hover:underline">
+            Cancellation & Returns
+          </Link>
+          <span>•</span>
+          <Link href="/shop" className="text-rose-deep font-medium hover:underline">
+            Browse Store
+          </Link>
         </div>
       </Container>
     </Section>

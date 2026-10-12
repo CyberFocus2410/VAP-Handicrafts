@@ -7,13 +7,35 @@ import { Section } from "@/components/ui/section";
 import { Heading } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = {
-  title: "Search Catalogue | VAP Handicrafts",
-  description: "Search handcrafted shell jewellery, personalized gifts, and custom creations.",
-};
+import Link from "next/link";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
+  const { q } = await searchParams;
+  const query = q?.trim() || "";
+
+  if (query) {
+    return {
+      title: `Search results for "${query}" | VAP Handicrafts`,
+      description: `Browse handcrafted shell jewellery and personalized gifts matching "${query}" at VAP Handicrafts.`,
+      alternates: {
+        canonical: `/search?q=${encodeURIComponent(query)}`,
+      },
+    };
+  }
+
+  return {
+    title: "Search Shell Jewellery & Personalized Gifts | VAP Handicrafts",
+    description:
+      "Search our handcrafted shell jewellery catalogue, natural cowrie designs, and customizable keepsake cards.",
+    alternates: {
+      canonical: "/search",
+    },
+  };
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
@@ -27,6 +49,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <Section surface="default" className="py-12 md:py-20">
       <Container className="max-w-5xl">
+        <Breadcrumbs
+          items={[
+            { label: "Shop", href: "/shop" },
+            { label: query ? `Search: "${query}"` : "Search", href: "/search" },
+          ]}
+          className="mb-8"
+        />
+
         <div className="text-center mb-10">
           <Heading level="h1" className="text-3xl sm:text-4xl mb-3">
             {query ? `Search Results` : "Search Catalogue"}
