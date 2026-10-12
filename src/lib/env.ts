@@ -5,6 +5,8 @@ const serverSchema = z.object({
   APP_ENV: z.enum(["development", "test", "production"]).default("development"),
   CRON_SECRET: z.string().min(16).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
 });
 
 const clientSchema = z.object({
@@ -18,6 +20,7 @@ const clientSchema = z.object({
     .string()
     .min(1)
     .default("sb_anon_placeholder"),
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -41,6 +44,7 @@ export function validateEnv(
     NEXT_PUBLIC_BRAND_NAME: runtimeEnv.NEXT_PUBLIC_BRAND_NAME,
     NEXT_PUBLIC_SUPABASE_URL: runtimeEnv.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: runtimeEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: runtimeEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   });
 
   if (!clientResult.success) {

@@ -4,15 +4,18 @@ const isDev = process.env.NODE_ENV === "development";
 
 const contentSecurityPolicyHeaderValue = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""};
+  script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com ${isDev ? "'unsafe-eval'" : ""};
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
+  frame-src 'self' https://challenges.cloudflare.com;
   frame-ancestors 'none';
-  upgrade-insecure-requests;
+  worker-src 'self';
+  connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com;
+  ${isDev ? "" : "upgrade-insecure-requests;"}
 `
   .replace(/\s{2,}/g, " ")
   .trim();
@@ -39,13 +42,17 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
   },
   {
-    key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
-  },
-  {
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
+  ...(isDev
+    ? []
+    : [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=63072000; includeSubDomains; preload",
+        },
+      ]),
 ];
 
 const nextConfig: NextConfig = {
