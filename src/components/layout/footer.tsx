@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BRAND } from "@/config/brand";
 import { Container } from "@/components/ui/container";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -19,7 +20,7 @@ export function Footer() {
               <div className="relative h-12 w-12 rounded-full overflow-hidden shadow-sm border border-gold-deep/20 bg-ivory shrink-0">
                 <Image
                   src={BRAND.logo.src}
-                  alt={BRAND.name}
+                  alt={generateAutoAlt({ context: "hero", name: `${BRAND.name} official brand logo` })}
                   width={48}
                   height={48}
                   className="h-full w-full object-contain"

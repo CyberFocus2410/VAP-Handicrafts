@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useWebGLSupport } from "@/hooks/use-webgl-support";
 
+import { generateAutoAlt } from "@/lib/images/auto-alt";
+
 // Dynamically load R3F 3D Scene with ssr: false so 3D code is strictly code-split
 const HeroScene3D = dynamic(() => import("./HeroScene3D"), {
   ssr: false,
@@ -20,7 +22,10 @@ function HeroStaticPoster({ priority = false }: { priority?: boolean }) {
     >
       <Image
         src="/images/hero-fallback.webp"
-        alt="Artisan crafted shell jewellery and personalized gifts styled with pink linen and dried florals"
+        alt={generateAutoAlt({
+          context: "hero",
+          name: "Handcrafted shell jewellery and personalized gifts styled on aesthetic blush linen",
+        })}
         fill
         priority={priority}
         sizes="(max-width: 768px) 100vw, 50vw"

@@ -43,13 +43,20 @@ const DEFAULT_SCRAPBOOK_ITEMS = [
   },
 ];
 
+import { generateAutoAlt } from "@/lib/images/auto-alt";
+
 export function ScrapbookKeepsakes({ items }: ScrapbookKeepsakesProps) {
   const polaroids =
     items && items.length > 0
       ? items.map((it, idx) => ({
           href: "/shop",
           src: it.imageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp",
-          alt: it.title,
+          alt: generateAutoAlt({
+            customText: it.title,
+            title: it.title,
+            type: "polaroid",
+            index: idx,
+          }),
           caption: it.title,
           subcaption: it.subtitle,
           rotation: idx % 2 === 0 ? ("left" as const) : ("right" as const),

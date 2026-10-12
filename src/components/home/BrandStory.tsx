@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SiteBrandStoryContent } from "@/server/admin/crm-cms-types";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 interface BrandStoryProps {
   brandStory?: SiteBrandStoryContent;
@@ -35,7 +36,10 @@ export function BrandStory({ brandStory }: BrandStoryProps) {
               <div className="relative h-full w-full overflow-hidden rounded-sm bg-beige/30">
                 <Image
                   src="/images/products/scallop-cowrie-earring-bracelet-set.webp"
-                  alt="Artisan jewellery set with scallop shells, cowries, and pink crackle beads"
+                  alt={generateAutoAlt({
+                    context: "product",
+                    name: "Artisan jewellery set with scallop shells, cowries, and pink crackle beads",
+                  })}
                   fill
                   sizes="(max-width: 1024px) 100vw, 40vw"
                   className="object-cover object-center"

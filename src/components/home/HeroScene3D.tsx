@@ -9,12 +9,12 @@ import * as THREE from "three";
  * Modeled with alternating natural spiral shells, lustrous pink crackle crystal beads,
  * and 18K gold spacer rings on a flexible elastic torus path.
  */
-function ShellBracelet({ pointer }: { pointer: { x: number; y: number } }) {
+function ShellBracelet() {
   const groupRef = React.useRef<THREE.Group>(null);
   const beadCount = 16;
   const radius = 1.15;
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, pointer }) => {
     if (!groupRef.current) return;
     const t = clock.getElapsedTime();
 
@@ -171,15 +171,13 @@ function ShellBracelet({ pointer }: { pointer: { x: number; y: number } }) {
 function DanglingEarrings({
   position,
   delayOffset,
-  pointer,
 }: {
   position: [number, number, number];
   delayOffset: number;
-  pointer: { x: number; y: number };
 }) {
   const earringRef = React.useRef<THREE.Group>(null);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, pointer }) => {
     if (!earringRef.current) return;
     const t = clock.getElapsedTime() + delayOffset;
 
@@ -282,27 +280,19 @@ function FloatingPearl({
 }
 
 function MainJewelleryScene() {
-  const [pointer, setPointer] = React.useState({ x: 0, y: 0 });
-
-  useFrame(({ pointer: p }) => {
-    setPointer({ x: p.x, y: p.y });
-  });
-
   return (
     <group position={[0, 0.05, 0]}>
       {/* 1. Main 3D Beaded Conch Shell Bracelet */}
-      <ShellBracelet pointer={pointer} />
+      <ShellBracelet />
 
       {/* 2. Accompanying Pair of Dangling Shell & Pearl Earrings */}
       <DanglingEarrings
         position={[1.5, 0.35, 0.2]}
         delayOffset={0.5}
-        pointer={pointer}
       />
       <DanglingEarrings
         position={[-1.48, -0.2, 0.15]}
         delayOffset={1.8}
-        pointer={pointer}
       />
 
       {/* 3. Orbiting Lustrous Pearl Spheres */}

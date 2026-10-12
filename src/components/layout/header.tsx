@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/cart/cart-store";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -50,7 +51,7 @@ export function Header() {
                     <div className="relative h-12 w-12 rounded-full overflow-hidden shadow-sm border border-gold-deep/20 bg-ivory shrink-0">
                       <Image
                         src={BRAND.logo.src}
-                        alt={BRAND.name}
+                        alt={generateAutoAlt({ context: "hero", name: `${BRAND.name} official logo` })}
                         width={48}
                         height={48}
                         className="h-full w-full object-contain"
@@ -122,7 +123,7 @@ export function Header() {
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden shadow-sm border border-gold-deep/20 bg-ivory shrink-0 transition-transform group-hover:scale-105">
               <Image
                 src={BRAND.logo.src}
-                alt={BRAND.name}
+                alt={generateAutoAlt({ context: "hero", name: `${BRAND.name} official logo` })}
                 width={48}
                 height={48}
                 className="h-full w-full object-contain"

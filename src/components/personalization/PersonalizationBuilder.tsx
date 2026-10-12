@@ -616,7 +616,11 @@ export function PersonalizationBuilder({ product }: PersonalizationBuilderProps)
                       {previewUrl ? (
                         <Image
                           src={previewUrl}
-                          alt="Couple photo preview"
+                          alt={
+                            licenseHolder || recipientName
+                              ? `Personalized relationship card photo for ${licenseHolder || "Partner"} and ${recipientName || "Loved one"}`
+                              : "Uploaded couple photo for personalized relationship card"
+                          }
                           fill
                           className="object-cover rounded-xs"
                         />
@@ -759,7 +763,11 @@ export function PersonalizationBuilder({ product }: PersonalizationBuilderProps)
               {previewUrl ? (
                 <Image
                   src={previewUrl}
-                  alt="Personalized polaroid preview"
+                  alt={
+                    recipientName
+                      ? `Personalized polaroid keepsake photo dedicated to ${recipientName}`
+                      : "Uploaded custom photo for polaroid keepsake"
+                  }
                   fill
                   className="object-cover"
                 />

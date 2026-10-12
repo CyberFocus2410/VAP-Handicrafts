@@ -2,6 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
+import { generateAutoAlt } from "@/lib/images/auto-alt";
 
 interface CollectionItem {
   title: string;
@@ -93,7 +94,11 @@ export function FeaturedCollections({ categories }: FeaturedCollectionsProps) {
               <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-bg">
                 <Image
                   src={col.image}
-                  alt={col.title}
+                  alt={generateAutoAlt({
+                    title: col.title,
+                    category: col.category,
+                    type: "collection",
+                  })}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover object-center transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
