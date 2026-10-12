@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ContactForm() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [occasion, setOccasion] = useState("");
   const [message, setMessage] = useState("");
+  const [honeypot, setHoneypot] = useState(""); // Anti-spam trap
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -35,20 +38,24 @@ export function ContactForm() {
           phone: phone.trim() || undefined,
           occasion: occasion.trim() || undefined,
           message: message.trim(),
+          website: honeypot, // Spam honeypot
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg(
-          data.message ||
-            "Thank you for reaching out! Pulkit or Vivan from VAP Handicrafts will contact you shortly."
-        );
+        const submittedName = name.trim();
+        const inquiryId = data.inquiryId || "";
         setName("");
         setEmail("");
         setPhone("");
         setOccasion("");
         setMessage("");
+
+        // Smooth redirect to dedicated Thank You confirmation page
+        router.push(
+          `/thank-you?name=${encodeURIComponent(submittedName)}${inquiryId ? `&id=${encodeURIComponent(inquiryId)}` : ""}`
+        );
       } else {
         setErrorMsg(data.error || "Failed to submit inquiry. Please try again.");
       }
@@ -77,6 +84,20 @@ export function ContactForm() {
           <span>{errorMsg}</span>
         </div>
       ) : null}
+
+      {/* Anti-spam honeypot (invisible to humans, traps automated spam bots) */}
+      <div className="hidden" aria-hidden="true">
+        <label htmlFor="contact-website">Website URL (leave blank)</label>
+        <input
+          id="contact-website"
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
 
       <div>
         <label htmlFor="contact-name" className="text-xs font-semibold text-cocoa block mb-1">
