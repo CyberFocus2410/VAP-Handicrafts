@@ -1,12 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/robot.txt",
-      "destination": "/robots.txt"
-    }
-  ],
   "headers": [
     {
       "source": "/sw.js",
