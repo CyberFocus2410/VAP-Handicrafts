@@ -78,7 +78,11 @@ export const metadata: Metadata = {
     google: "googlea03686d795340eb0",
     other: {
       "google-site-verification": ["googlea03686d795340eb0", "googlea03686d795340eb0.html"],
+      "msvalidate.01": "E5581AA9ABA3AF2FE0E16A129B506495",
     },
+  },
+  other: {
+    "msvalidate.01": "E5581AA9ABA3AF2FE0E16A129B506495",
   },
 };
 
@@ -92,6 +96,9 @@ export default function RootLayout({
       lang="en"
       className={`${fontDisplay.variable} ${fontSans.variable} scroll-smooth`}
     >
+      <head>
+        <meta name="msvalidate.01" content="E5581AA9ABA3AF2FE0E16A129B506495" />
+      </head>
       <body className="min-h-screen bg-bg text-cocoa antialiased flex flex-col">
         <LiveRegionProvider>
           <SkipLink />
