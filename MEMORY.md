@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Owner Mobile Access, PWA & Web Push Notifications** |
-| Last updated | 2026-10-12 |
+| **Current phase** | **Security Hardening: CRM PWA Isolation & Payment Verification** |
+| Last updated | 2026-10-13 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
-| Deployable build? | ✅ Yes (53 routes compiled, 0 errors, 90 unit tests green) |
+| Deployable build? | ✅ Yes (56 routes compiled, 0 errors, 95 unit tests green) |
 
 ## 2. Phase Tracker
 
@@ -104,4 +104,5 @@ Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrat
 | 2026-10-12 | Phase 15 | Official Brand Logo Rollout Everywhere: Processed high-res 1024x1024 official "VAP HANDICRAFTS - CRAFTED WITH HEART" gold shell emblem into WebP (`logo.webp`), PNG (`logo.png`), favicon (`icon.png`, `apple-icon.png`), and 128x128 avatar; generated 1200x630 OpenGraph / Twitter sharing card (`/og-image.png`, `opengraph-image.png`); integrated official logo into Header, Mobile Nav Drawer, Footer, Admin Command Hub Nav, About Story hero, Custom 404 page, Order Confirmation view, and printable workshop packing slip; all 90 tests passing. |
 | 2026-10-12 | Phase 16 | Core Website, Mobile CRM, UPI Proof Verification & CMS Live Sync: Completed checkout flow with dynamic UPI QR code and payment proof receipt upload; created private Supabase Storage bucket `order-proofs` with 30-day signed URLs; built authenticated admin payment approval API logging audit entries to `admin_audit_logs`; crafted mobile-first admin layout with thumb-friendly bottom nav bar, lead/customer directory mobile toggles, and direct 1-tap WhatsApp and Call buttons; resolved CMS persistence bug ensuring deep merges and instant live storefront reflection; verified full E2E order flow from checkout to payment confirmation; 90 unit tests passing, 53 routes built with 0 errors. |
 | 2026-10-12 | Phase 18 | CRM Serverless Order Hydration & Direct Live Price Synchronization: Resolved CRM order display issue on Vercel serverless containers by adding `hydrateOrdersFromSupabase()` in `src/server/orders/service.ts` fetching from both `orders` and `order_metadata` in Supabase; converted all order lifecycle and listing functions to async and updated all callers across admin and payment routes; fixed product price discrepancy by removing startup timestamp bias in `listCmsProducts()`, updating baseline seed product prices to authentic workshop pricing (₹199, ₹249, ₹299), adding fallback hydration in `updateCmsProduct()`, and adding direct interactive 'Edit Price' button with dedicated inputs in Admin Products table and modal; all 15 test suites (90 tests) passing, 0 TypeScript errors. |
+| 2026-10-13 | Phase 19 | Security Fix: Public CRM PWA Isolation & Enhanced Payment Proof Verification: Replaced public web manifest (`src/app/manifest.ts`) and `appleWebApp` metadata with public storefront identity ("VAP Handicrafts", start_url: "/"), isolating Artisan CRM PWA behind authenticated route `/api/admin/manifest` and admin layout override; updated middleware to strictly guard both `/admin/*` and `/api/admin/*`; fixed payment proof persistence bug in `syncOrderToSupabase` and `hydrateOrdersFromSupabase` by writing/reading `payment_proof_url`, `payment_utr`, and preserving authoritative `payment_proof_submitted` status; enhanced CRM Orders tab with full screenshot preview thumbnail, click-to-zoom modal with amount/customer details, direct "Approve & Confirm Payment" and "Deny Payment" buttons in both table cards and modal, plus direct WhatsApp screenshot attachment for orders; 95 unit tests passing 100%, 0 type errors, production build green (56 routes). |
 

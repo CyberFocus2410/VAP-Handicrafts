@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
 
           const { getSupabaseAdminClient } = await import("@/server/db/supabase");
           const supabase = getSupabaseAdminClient();
+
+          let uploaded = false;
           const { error: uploadError } = await supabase.storage
             .from("order-proofs")
             .upload(filename, buffer, {
@@ -42,15 +44,36 @@ export async function POST(req: NextRequest) {
           if (!uploadError) {
             const { data: signedData } = await supabase.storage
               .from("order-proofs")
-              .createSignedUrl(filename, 60 * 60 * 24 * 30);
+              .createSignedUrl(filename, 60 * 60 * 24 * 365); // 1 year
 
             if (signedData?.signedUrl) {
               finalProofUrl = signedData.signedUrl;
+              uploaded = true;
+            }
+          }
+
+          // Fallback if order-proofs bucket is missing or unconfigured
+          if (!uploaded) {
+            const fbPath = `proofs/${filename}`;
+            const { error: fbErr } = await supabase.storage
+              .from("product-media")
+              .upload(fbPath, buffer, {
+                contentType: `image/${matches[1]}`,
+                upsert: true,
+              });
+
+            if (!fbErr) {
+              const { data: pubData } = supabase.storage
+                .from("product-media")
+                .getPublicUrl(fbPath);
+              if (pubData?.publicUrl) {
+                finalProofUrl = pubData.publicUrl;
+              }
             }
           }
         }
       } catch (uploadErr) {
-        console.warn("[ProofUpload] Supabase private storage upload notice:", uploadErr);
+        console.warn("[ProofUpload] Supabase storage upload notice:", uploadErr);
       }
     }
 

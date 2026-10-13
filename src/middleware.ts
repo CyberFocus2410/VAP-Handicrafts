@@ -5,7 +5,24 @@ import { verifyAdminSessionToken } from "@/server/admin/auth";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Admin routes protection (PRD Phase 6)
+  // Admin API routes protection
+  if (pathname.startsWith("/api/admin")) {
+    if (pathname === "/api/admin/login") {
+      return NextResponse.next();
+    }
+
+    const adminCookie = request.cookies.get("vap_admin_session");
+    const isValid = await verifyAdminSessionToken(adminCookie?.value);
+    if (!isValid) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+    return NextResponse.next();
+  }
+
+  // Admin page routes protection (PRD Phase 6)
   if (pathname.startsWith("/admin")) {
     // Allow admin login page
     if (pathname === "/admin/login") {
@@ -29,5 +46,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

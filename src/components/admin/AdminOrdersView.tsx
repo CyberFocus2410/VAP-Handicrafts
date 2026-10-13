@@ -66,6 +66,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPackingSlip, setSelectedPackingSlip] = useState<AdminOrder | null>(null);
   const [previewScreenshotUrl, setPreviewScreenshotUrl] = useState<string | null>(null);
+  const [previewOrder, setPreviewOrder] = useState<AdminOrder | null>(null);
 
   // Shipping Modal / Inputs state
   const [shippingOrderId, setShippingOrderId] = useState<string | null>(null);
@@ -74,9 +75,59 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
 
+  const handleAttachProof = async (orderReference: string, file: File) => {
+    setActionLoading(true);
+    setMessage("");
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        const utr = prompt("Enter customer UTR / Ref No (optional):") || undefined;
+
+        const res = await fetch("/api/admin/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "attach_proof",
+            orderReference,
+            paymentProofUrl: dataUrl,
+            paymentUtr: utr,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success && data.order) {
+          setOrders((prev) =>
+            prev.map((o) => (o.orderReference === orderReference ? data.order : o))
+          );
+          setMessage(`Payment screenshot attached to order ${orderReference}! You can now verify & confirm payment.`);
+        } else {
+          alert(data.error || "Failed to attach screenshot");
+        }
+        setActionLoading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      alert("Network or file reading error");
+      setActionLoading(false);
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
-    const matchesStatus =
-      statusFilter === "all" ? true : order.status === statusFilter;
+    let matchesStatus = true;
+    if (statusFilter === "all") {
+      matchesStatus = true;
+    } else if (statusFilter === "pending_verification" || statusFilter === "payment_proof_submitted") {
+      matchesStatus =
+        order.status === "payment_proof_submitted" ||
+        order.status === "payment_initiated" ||
+        order.status === "pending" ||
+        Boolean(order.paymentProofUrl && !["paid", "shipped", "fulfilled"].includes(order.status));
+    } else {
+      matchesStatus = order.status === statusFilter;
+    }
+
     const matchesSearch =
       searchQuery === ""
         ? true
@@ -235,17 +286,24 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
       case "fulfilled":
         return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Delivered</span>;
       case "payment_initiated":
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Payment Initiated</span>;
+        return (
+          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200">
+            Payment Initiated (UPI QR) ⏳
+          </span>
+        );
       case "failed":
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Payment Failed</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">Payment Rejected ✕</span>;
       default:
         return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-stone-100 text-stone-700">{status}</span>;
     }
   };
 
-  const pendingVerificationCount = orders.filter((o) => o.status === "payment_proof_submitted").length;
+  const pendingVerificationCount = orders.filter((o) =>
+    ["payment_proof_submitted", "payment_initiated", "pending"].includes(o.status)
+  ).length;
   const paidOrdersCount = orders.filter((o) => o.status === "paid").length;
   const shippedOrdersCount = orders.filter((o) => o.status === "shipped").length;
+  const failedOrdersCount = orders.filter((o) => o.status === "failed").length;
   const totalRevenuePaise = orders
     .filter((o) => ["paid", "shipped", "fulfilled"].includes(o.status))
     .reduce((sum, o) => sum + o.totalMinor, 0);
@@ -320,10 +378,11 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
             {[
               { id: "all", label: "All Orders" },
-              { id: "payment_proof_submitted", label: `Verify Proof (${pendingVerificationCount})` },
-              { id: "paid", label: "Awaiting Pack (Paid)" },
-              { id: "shipped", label: "Shipped" },
+              { id: "pending_verification", label: `Verify Payment (${pendingVerificationCount})` },
+              { id: "paid", label: `Awaiting Pack (${paidOrdersCount})` },
+              { id: "shipped", label: `Shipped (${shippedOrdersCount})` },
               { id: "fulfilled", label: "Delivered" },
+              { id: "failed", label: `Rejected (${failedOrdersCount})` },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -389,25 +448,38 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 justify-start sm:justify-end">
-                    {order.status === "payment_proof_submitted" && (
+                    {["payment_proof_submitted", "payment_initiated", "pending"].includes(order.status) && (
                       <>
                         <button
                           onClick={() => handleVerifyPayment(order.orderReference)}
                           disabled={actionLoading}
                           className="w-full sm:w-auto justify-center px-4 py-2 sm:px-3.5 sm:py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition shadow-sm flex items-center gap-1.5 min-h-[40px]"
+                          title="Verify received payment and mark order as Paid"
                         >
                           <span>✓</span>
-                          <span>Verify &amp; Confirm Payment</span>
+                          <span>Approve &amp; Confirm Payment</span>
                         </button>
 
                         <button
                           onClick={() => handleRejectPayment(order.orderReference)}
                           disabled={actionLoading}
                           className="flex-1 sm:flex-none justify-center px-3.5 py-2 sm:py-1.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition min-h-[40px]"
+                          title="Deny payment proof and mark order as failed"
                         >
-                          Reject Proof
+                          ✕ Deny Payment
                         </button>
                       </>
+                    )}
+
+                    {order.status === "failed" && (
+                      <button
+                        onClick={() => handleVerifyPayment(order.orderReference)}
+                        disabled={actionLoading}
+                        className="w-full sm:w-auto justify-center px-3.5 py-2 sm:py-1.5 rounded-xl border border-amber-400 text-amber-800 hover:bg-amber-50 text-xs font-semibold transition min-h-[40px]"
+                        title="Re-verify payment if customer provided valid proof later"
+                      >
+                        🔄 Re-verify &amp; Mark Paid
+                      </button>
                     )}
 
                     <button
@@ -439,12 +511,35 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                 </div>
 
                 {/* PAYMENT PROOF BANNER & SCREENSHOT PREVIEW */}
-                {(order.status === "payment_proof_submitted" || order.paymentProofUrl) && (
-                  <div className="mb-5 p-4 bg-amber-50/80 rounded-xl border border-amber-300 text-xs space-y-3">
+                {(order.status === "payment_proof_submitted" ||
+                  order.status === "payment_initiated" ||
+                  Boolean(order.paymentProofUrl) ||
+                  Boolean(order.paymentUtr)) && (
+                  <div
+                    className={`mb-5 p-4 rounded-xl border text-xs space-y-3 ${
+                      order.status === "paid" || order.status === "shipped" || order.status === "fulfilled"
+                        ? "bg-emerald-50/70 border-emerald-200"
+                        : order.status === "failed"
+                        ? "bg-rose-50/70 border-rose-200"
+                        : "bg-amber-50/90 border-amber-300 shadow-sm"
+                    }`}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="font-bold text-amber-950 flex items-center gap-1.5">
                         <span>📸</span>
-                        <span>Customer Uploaded UPI Payment Proof</span>
+                        <span>
+                          {order.paymentProofUrl
+                            ? "Customer Uploaded UPI Payment Screenshot"
+                            : "UPI Payment Verification"}
+                        </span>
+                        {order.paymentProofSubmittedAt && (
+                          <span className="text-[11px] font-normal text-amber-800">
+                            • {new Date(order.paymentProofSubmittedAt).toLocaleTimeString("en-IN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
                       </span>
                       {order.paymentUtr ? (
                         <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 rounded font-mono font-bold">
@@ -460,8 +555,11 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            onClick={() => setPreviewScreenshotUrl(order.paymentProofUrl || null)}
-                            className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-amber-400 bg-white shadow-sm hover:opacity-90 transition group shrink-0"
+                            onClick={() => {
+                              setPreviewScreenshotUrl(order.paymentProofUrl || null);
+                              setPreviewOrder(order);
+                            }}
+                            className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-amber-400 bg-white shadow-sm hover:opacity-90 transition group shrink-0"
                             title="Click to view full screenshot"
                           >
                             <img
@@ -474,28 +572,79 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                             </span>
                           </button>
 
-                          <div>
+                          <div className="space-y-1">
                             <button
                               type="button"
-                              onClick={() => setPreviewScreenshotUrl(order.paymentProofUrl || null)}
-                              className="text-xs text-[#A05A44] font-bold hover:underline block"
+                              onClick={() => {
+                                setPreviewScreenshotUrl(order.paymentProofUrl || null);
+                                setPreviewOrder(order);
+                              }}
+                              className="text-xs text-[#A05A44] font-bold hover:underline block text-left"
                             >
                               View Full Size Screenshot →
                             </button>
-                            <span className="text-[11px] text-amber-800">
-                              Uploaded by customer during checkout
+                            <a
+                              href={order.paymentProofUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] text-[#735D57] hover:underline block"
+                            >
+                              Open Image in New Tab ↗
+                            </a>
+                            <span className="text-[11px] text-amber-800 block">
+                              Uploaded during checkout or attached via CRM
                             </span>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-amber-800 italic">No image file attached</p>
+                        <div className="p-3 bg-amber-100/50 rounded-lg border border-dashed border-amber-300 flex-1">
+                          <p className="text-amber-900 font-semibold mb-1">
+                            No screenshot uploaded on website yet.
+                          </p>
+                          <p className="text-[11px] text-amber-800 mb-2">
+                            If customer sent payment screenshot on WhatsApp, attach it directly to this order:
+                          </p>
+                          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-amber-400 text-amber-900 text-xs font-semibold cursor-pointer hover:bg-amber-50 transition shadow-xs">
+                            <span>📎 Attach Screenshot</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={actionLoading}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleAttachProof(order.orderReference, file);
+                              }}
+                            />
+                          </label>
+                        </div>
                       )}
 
-                      <div className="flex-1 text-xs text-amber-900 bg-white/60 p-2.5 rounded-lg border border-amber-200">
+                      <div className="flex-1 text-xs text-amber-900 bg-white/70 p-3 rounded-lg border border-amber-200 space-y-2">
                         <p>
                           Verify payable amount of <strong>{formatINR(order.totalMinor)}</strong> received in your UPI account from{" "}
                           <strong>{order.customerName}</strong> ({order.customerPhone}).
                         </p>
+                        {["payment_proof_submitted", "payment_initiated", "pending"].includes(order.status) && (
+                          <div className="flex flex-wrap gap-2 pt-1 border-t border-amber-200/60">
+                            <button
+                              type="button"
+                              onClick={() => handleVerifyPayment(order.orderReference)}
+                              disabled={actionLoading}
+                              className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs shadow-xs"
+                            >
+                              ✓ Approve Payment ({formatINR(order.totalMinor)})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectPayment(order.orderReference)}
+                              disabled={actionLoading}
+                              className="px-3 py-1 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 font-semibold text-xs"
+                            >
+                              ✕ Deny Payment
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -665,27 +814,92 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
       {previewScreenshotUrl && (
         <div
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
-          onClick={() => setPreviewScreenshotUrl(null)}
+          onClick={() => {
+            setPreviewScreenshotUrl(null);
+            setPreviewOrder(null);
+          }}
         >
           <div
-            className="relative bg-white rounded-2xl max-w-2xl max-h-[90vh] overflow-hidden p-4 shadow-2xl flex flex-col items-center"
+            className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-hidden p-4 sm:p-6 shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full flex justify-between items-center pb-3 border-b border-[#E5DCD3] mb-3">
-              <h3 className="font-bold text-sm text-[#2D1A16]">Payment Proof Screenshot</h3>
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-[#2D1A16]">
+                  Payment Proof Screenshot
+                </h3>
+                {previewOrder && (
+                  <p className="text-xs text-[#735D57] mt-0.5">
+                    Order <strong className="font-mono text-[#2D1A16]">{previewOrder.orderReference}</strong> • {previewOrder.customerName} ({previewOrder.customerPhone}) • <strong>{formatINR(previewOrder.totalMinor)}</strong>
+                  </p>
+                )}
+              </div>
               <button
-                onClick={() => setPreviewScreenshotUrl(null)}
+                onClick={() => {
+                  setPreviewScreenshotUrl(null);
+                  setPreviewOrder(null);
+                }}
                 className="px-2.5 py-1 text-xs font-bold text-[#2D1A16] bg-[#FAF5EF] rounded-lg hover:bg-[#EBE4DD]"
               >
                 ✕ Close
               </button>
             </div>
-            <div className="max-h-[75vh] overflow-auto rounded-lg">
+
+            <div className="flex-1 max-h-[65vh] overflow-auto rounded-lg bg-stone-100 flex items-center justify-center p-2">
               <img
                 src={previewScreenshotUrl}
                 alt="Full size payment proof screenshot"
-                className="max-w-full h-auto object-contain"
+                className="max-w-full max-h-[60vh] object-contain rounded"
               />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 mt-3 border-t border-[#E5DCD3]">
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewScreenshotUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg border border-[#D5C7BC] text-xs font-semibold text-[#2D1A16] hover:bg-[#FAF5EF]"
+                >
+                  Open in New Tab ↗
+                </a>
+                <a
+                  href={previewScreenshotUrl}
+                  download={`payment-proof-${previewOrder?.orderReference || "order"}.jpg`}
+                  className="px-3 py-1.5 rounded-lg border border-[#D5C7BC] text-xs font-semibold text-[#2D1A16] hover:bg-[#FAF5EF]"
+                >
+                  Download 📥
+                </a>
+              </div>
+
+              {previewOrder && ["payment_proof_submitted", "payment_initiated", "pending"].includes(previewOrder.status) && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const ref = previewOrder.orderReference;
+                      setPreviewScreenshotUrl(null);
+                      setPreviewOrder(null);
+                      handleVerifyPayment(ref);
+                    }}
+                    disabled={actionLoading}
+                    className="px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-sm"
+                  >
+                    ✓ Approve Payment
+                  </button>
+                  <button
+                    onClick={() => {
+                      const ref = previewOrder.orderReference;
+                      setPreviewScreenshotUrl(null);
+                      setPreviewOrder(null);
+                      handleRejectPayment(ref);
+                    }}
+                    disabled={actionLoading}
+                    className="px-3.5 py-1.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold"
+                  >
+                    ✕ Deny Payment
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

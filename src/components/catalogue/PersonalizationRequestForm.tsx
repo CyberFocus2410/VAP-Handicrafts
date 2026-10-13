@@ -60,7 +60,7 @@ export function PersonalizationRequestForm() {
       <div className="max-w-2xl mx-auto text-center mb-8">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#A05A44]/10 text-[#A05A44] mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          Handmade With Heart • CRM Connected
+          Handmade With Heart • Custom Crafted
         </span>
         <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#2D1A16]">
           Request a Custom Card or Bulk Order

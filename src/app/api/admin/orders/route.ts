@@ -139,6 +139,34 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === "attach_proof") {
+      const { submitPaymentProof } = await import("@/server/orders/service");
+      if (!body.paymentProofUrl) {
+        return NextResponse.json(
+          { success: false, error: "paymentProofUrl is required" },
+          { status: 400 }
+        );
+      }
+      const res = await submitPaymentProof({
+        orderReference,
+        paymentProofUrl: body.paymentProofUrl,
+        paymentUtr: body.paymentUtr,
+      });
+
+      if (!res.success) {
+        return NextResponse.json(
+          { success: false, error: res.error },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        order: res.order,
+        message: "Payment proof attached to order successfully.",
+      });
+    }
+
     if (action === "mark_fulfilled") {
       const res = await markOrderFulfilled({ orderReference });
       if (!res.success) {

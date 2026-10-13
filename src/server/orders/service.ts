@@ -110,7 +110,18 @@ export async function hydrateOrdersFromSupabase(): Promise<void> {
 
     if (dbOrders && dbOrders.length > 0) {
       for (const o of dbOrders) {
-        if (!memoryOrders.has(o.order_reference)) {
+        const existing = memoryOrders.get(o.order_reference);
+        if (existing) {
+          // Authoritative DB fields take precedence over cached metadata
+          existing.status = o.status;
+          if (o.payment_proof_url) existing.paymentProofUrl = o.payment_proof_url;
+          if (o.payment_utr) existing.paymentUtr = o.payment_utr;
+          if (o.payment_proof_submitted_at) existing.paymentProofSubmittedAt = o.payment_proof_submitted_at;
+          if (o.payment_verified_at) existing.paymentVerifiedAt = o.payment_verified_at;
+          if (o.tracking_number) existing.trackingNumber = o.tracking_number;
+          if (o.courier_name) existing.courierName = o.courier_name;
+          if (o.shipped_at) existing.shippedAt = o.shipped_at;
+        } else {
           memoryOrders.set(o.order_reference, {
             id: o.id,
             orderReference: o.order_reference,
@@ -139,6 +150,10 @@ export async function hydrateOrdersFromSupabase(): Promise<void> {
             trackingNumber: o.tracking_number,
             courierName: o.courier_name,
             shippedAt: o.shipped_at,
+            paymentProofUrl: o.payment_proof_url,
+            paymentUtr: o.payment_utr,
+            paymentProofSubmittedAt: o.payment_proof_submitted_at,
+            paymentVerifiedAt: o.payment_verified_at,
             stockReservations: [],
             createdAt: o.created_at || new Date().toISOString(),
             updatedAt: o.updated_at || new Date().toISOString(),
@@ -155,10 +170,6 @@ export async function syncOrderToSupabase(order: StoredOrder) {
   if (!env.server.SUPABASE_SERVICE_ROLE_KEY) return;
   try {
     const supabase = getSupabaseAdminClient();
-    const mappedStatus =
-      order.status === "payment_proof_submitted" || order.status === "shipped"
-        ? (order.status === "shipped" ? "fulfilled" : "payment_initiated")
-        : order.status;
 
     await supabase.from("orders").upsert(
       {
@@ -172,7 +183,7 @@ export async function syncOrderToSupabase(order: StoredOrder) {
         shipping_state: order.shippingAddress.state,
         shipping_pincode: order.shippingAddress.pincode,
         shipping_country: order.shippingAddress.country || "India",
-        status: mappedStatus,
+        status: order.status,
         subtotal_minor: order.subtotalMinor,
         shipping_minor: order.shippingMinor,
         discount_minor: order.discountMinor,
@@ -182,12 +193,24 @@ export async function syncOrderToSupabase(order: StoredOrder) {
         tracking_number: order.trackingNumber || null,
         courier_name: order.courierName || null,
         shipped_at: order.shippedAt || null,
+        payment_proof_url: order.paymentProofUrl || null,
+        payment_utr: order.paymentUtr || null,
+        payment_proof_submitted_at: order.paymentProofSubmittedAt || null,
+        payment_verified_at: order.paymentVerifiedAt || null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
     );
 
-    // Sync full order metadata into site_settings so rich fields (screenshot, items, UTR) persist
+    // Sync full order metadata into site_settings so rich fields (items, customizations) persist
+    // Prevent giant Base64 strings from bloating or failing the JSONB setting upsert
+    const safeOrderForMetadata = {
+      ...order,
+      paymentProofUrl: order.paymentProofUrl?.startsWith("data:")
+        ? "[BASE64_STORED_IN_ORDERS_TABLE]"
+        : order.paymentProofUrl,
+    };
+
     const { data: row } = await supabase
       .from("site_settings")
       .select("value")
@@ -195,7 +218,7 @@ export async function syncOrderToSupabase(order: StoredOrder) {
       .maybeSingle();
 
     const existing = (row?.value as Record<string, any>) || {};
-    existing[order.orderReference] = order;
+    existing[order.orderReference] = safeOrderForMetadata;
 
     await supabase.from("site_settings").upsert(
       {

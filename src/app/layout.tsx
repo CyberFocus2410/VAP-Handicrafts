@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "VAP CRM",
+    title: "VAP Handicrafts",
   },
 };
 

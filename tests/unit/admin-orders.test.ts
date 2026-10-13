@@ -152,4 +152,56 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(verifyRes.order?.status).toBe("paid");
     expect(verifyRes.order?.paymentVerifiedAt).toBeDefined();
   });
+
+  it("handles admin payment proof rejection and direct approval", async () => {
+    const { order } = await createOrder({
+      items: [
+        {
+          lineId: "line-test-reject",
+          productId: "prod-bracelet-spiral-conch",
+          productSlug: "spiral-conch-pink-crackle-bracelet",
+          variantId: "var-spiral-conch-pink",
+          quantity: 1,
+        },
+      ],
+      address: {
+        fullName: "Rohan Verma",
+        phone: "9811001122",
+        email: "rohan@example.com",
+        streetAddress: "12 Civil Lines",
+        city: "Jaipur",
+        state: "Rajasthan",
+        pincode: "302001",
+        country: "India",
+      },
+    });
+
+    expect(order.status).toBe("payment_initiated");
+
+    // Admin rejects payment
+    const { markOrderFailed } = await import("@/server/orders/service");
+    const rejectRes = await markOrderFailed({
+      orderReference: order.orderReference,
+      reason: "Invalid UTR screenshot mismatch",
+    });
+
+    expect(rejectRes.success).toBe(true);
+
+    // Customer re-submits or admin attaches proof and marks paid
+    const proofRes = await submitPaymentProof({
+      orderReference: order.orderReference,
+      paymentProofUrl: "https://example.com/verified-receipt.jpg",
+      paymentUtr: "UPI-998877665544",
+    });
+    expect(proofRes.success).toBe(true);
+    expect(proofRes.order?.status).toBe("payment_proof_submitted");
+
+    const reVerifyRes = await markOrderPaid({
+      orderReference: order.orderReference,
+      providerTxnId: "UPI-998877665544",
+      amountMinor: order.totalMinor,
+    });
+    expect(reVerifyRes.success).toBe(true);
+    expect(reVerifyRes.order?.status).toBe("paid");
+  });
 });
