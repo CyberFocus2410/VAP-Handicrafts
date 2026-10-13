@@ -32,7 +32,7 @@ const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   payment_proof_submitted: ["paid", "failed", "cancelled"],
   paid: ["shipped", "fulfilled"], // can transition to shipped, or directly fulfilled
   shipped: ["fulfilled"],
-  failed: ["payment_initiated", "payment_proof_submitted", "cancelled"], // allowed to retry with a new payment attempt
+  failed: ["payment_initiated", "payment_proof_submitted", "paid", "cancelled"], // allowed to retry or be approved on admin re-verification
   cancelled: [], // terminal
   expired: [], // terminal
   fulfilled: [], // terminal

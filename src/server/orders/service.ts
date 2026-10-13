@@ -113,11 +113,10 @@ export async function hydrateOrdersFromSupabase(): Promise<void> {
         const existing = memoryOrders.get(o.order_reference);
         if (existing) {
           // Authoritative DB fields take precedence over cached metadata
-          existing.status = o.status;
-          if (o.payment_proof_url) existing.paymentProofUrl = o.payment_proof_url;
-          if (o.payment_utr) existing.paymentUtr = o.payment_utr;
-          if (o.payment_proof_submitted_at) existing.paymentProofSubmittedAt = o.payment_proof_submitted_at;
-          if (o.payment_verified_at) existing.paymentVerifiedAt = o.payment_verified_at;
+          // Do not downgrade a payment_proof_submitted status to payment_initiated
+          if (o.status !== "payment_initiated" || existing.status === "payment_initiated") {
+            existing.status = o.status;
+          }
           if (o.tracking_number) existing.trackingNumber = o.tracking_number;
           if (o.courier_name) existing.courierName = o.courier_name;
           if (o.shipped_at) existing.shippedAt = o.shipped_at;
@@ -150,16 +149,59 @@ export async function hydrateOrdersFromSupabase(): Promise<void> {
             trackingNumber: o.tracking_number,
             courierName: o.courier_name,
             shippedAt: o.shipped_at,
-            paymentProofUrl: o.payment_proof_url,
-            paymentUtr: o.payment_utr,
-            paymentProofSubmittedAt: o.payment_proof_submitted_at,
-            paymentVerifiedAt: o.payment_verified_at,
             stockReservations: [],
             createdAt: o.created_at || new Date().toISOString(),
             updatedAt: o.updated_at || new Date().toISOString(),
           });
         }
       }
+    }
+
+    // 3. Auto-resolve payment screenshots directly from Supabase Storage 'order-proofs' bucket
+    try {
+      const { data: proofFiles } = await supabase.storage.from("order-proofs").list();
+      if (proofFiles && proofFiles.length > 0) {
+        let updatedAny = false;
+        for (const file of proofFiles) {
+          const match = file.name.match(/^(VAP-\d{8}-[A-Za-z0-9]+)/);
+          if (!match || !match[1]) continue;
+          const ref = match[1];
+          const order = memoryOrders.get(ref);
+          if (!order) continue;
+
+          // If order does not have paymentProofUrl or it's not a fresh URL
+          if (!order.paymentProofUrl || !order.paymentProofUrl.startsWith("http")) {
+            const { data: signed } = await supabase.storage
+              .from("order-proofs")
+              .createSignedUrl(file.name, 60 * 60 * 24 * 365); // 1 year duration
+            if (signed?.signedUrl) {
+              order.paymentProofUrl = signed.signedUrl;
+              if (order.status === "payment_initiated" || order.status === "pending") {
+                order.status = "payment_proof_submitted";
+              }
+              if (!order.paymentProofSubmittedAt) {
+                order.paymentProofSubmittedAt = file.created_at || new Date().toISOString();
+              }
+              updatedAny = true;
+            }
+          }
+        }
+
+        if (updatedAny) {
+          const allOrders = Object.fromEntries(memoryOrders.entries());
+          await supabase.from("site_settings").upsert(
+            {
+              key: "order_metadata",
+              value: allOrders,
+              is_public: false,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "key" }
+          );
+        }
+      }
+    } catch (storageErr) {
+      console.warn("[OrdersService] Storage proof auto-resolution notice:", storageErr);
     }
   } catch (err) {
     console.warn("[OrdersService] Failed to hydrate orders from Supabase:", err);
@@ -171,46 +213,39 @@ export async function syncOrderToSupabase(order: StoredOrder) {
   try {
     const supabase = getSupabaseAdminClient();
 
-    await supabase.from("orders").upsert(
-      {
-        id: order.id,
-        order_reference: order.orderReference,
-        customer_name: order.customerName,
-        customer_email: order.customerEmail,
-        customer_phone: order.customerPhone,
-        shipping_street: order.shippingAddress.streetAddress,
-        shipping_city: order.shippingAddress.city,
-        shipping_state: order.shippingAddress.state,
-        shipping_pincode: order.shippingAddress.pincode,
-        shipping_country: order.shippingAddress.country || "India",
-        status: order.status,
-        subtotal_minor: order.subtotalMinor,
-        shipping_minor: order.shippingMinor,
-        discount_minor: order.discountMinor,
-        total_minor: order.totalMinor,
-        currency: order.currency || "INR",
-        access_token_hash: order.accessTokenHash,
-        tracking_number: order.trackingNumber || null,
-        courier_name: order.courierName || null,
-        shipped_at: order.shippedAt || null,
-        payment_proof_url: order.paymentProofUrl || null,
-        payment_utr: order.paymentUtr || null,
-        payment_proof_submitted_at: order.paymentProofSubmittedAt || null,
-        payment_verified_at: order.paymentVerifiedAt || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" }
-    );
+    // 1. Upsert into orders table (safe against unmigrated columns)
+    try {
+      await supabase.from("orders").upsert(
+        {
+          id: order.id,
+          order_reference: order.orderReference,
+          customer_name: order.customerName,
+          customer_email: order.customerEmail,
+          customer_phone: order.customerPhone,
+          shipping_street: order.shippingAddress.streetAddress,
+          shipping_city: order.shippingAddress.city,
+          shipping_state: order.shippingAddress.state,
+          shipping_pincode: order.shippingAddress.pincode,
+          shipping_country: order.shippingAddress.country || "India",
+          status: order.status,
+          subtotal_minor: order.subtotalMinor,
+          shipping_minor: order.shippingMinor,
+          discount_minor: order.discountMinor,
+          total_minor: order.totalMinor,
+          currency: order.currency || "INR",
+          access_token_hash: order.accessTokenHash,
+          tracking_number: order.trackingNumber || null,
+          courier_name: order.courierName || null,
+          shipped_at: order.shippedAt || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+    } catch (dbErr) {
+      console.warn("[OrdersService] DB orders upsert notice:", dbErr);
+    }
 
-    // Sync full order metadata into site_settings so rich fields (items, customizations) persist
-    // Prevent giant Base64 strings from bloating or failing the JSONB setting upsert
-    const safeOrderForMetadata = {
-      ...order,
-      paymentProofUrl: order.paymentProofUrl?.startsWith("data:")
-        ? "[BASE64_STORED_IN_ORDERS_TABLE]"
-        : order.paymentProofUrl,
-    };
-
+    // 2. Sync full rich order metadata into site_settings (ensures paymentProofUrl, items, UTR persist reliably)
     const { data: row } = await supabase
       .from("site_settings")
       .select("value")
@@ -218,7 +253,7 @@ export async function syncOrderToSupabase(order: StoredOrder) {
       .maybeSingle();
 
     const existing = (row?.value as Record<string, any>) || {};
-    existing[order.orderReference] = safeOrderForMetadata;
+    existing[order.orderReference] = order;
 
     await supabase.from("site_settings").upsert(
       {
@@ -366,7 +401,7 @@ export async function submitPaymentProof(params: {
   order.paymentProofSubmittedAt = new Date().toISOString();
   order.updatedAt = new Date().toISOString();
 
-  syncOrderToSupabase(order).catch((e) => console.warn("Supabase proof sync warning:", e));
+  await syncOrderToSupabase(order);
 
   // Trigger Web Push notification to owner mobile for payment screenshot verification
   import("@/server/notifications/push-service")
@@ -420,7 +455,7 @@ export async function markOrderPaid(params: {
     res.status = "consumed";
   }
 
-  syncOrderToSupabase(order).catch((e) => console.warn("Supabase order paid sync warning:", e));
+  await syncOrderToSupabase(order);
 
   logAdminAudit({
     action: "verify_payment",
@@ -497,7 +532,7 @@ export async function markOrderShipped(params: {
   order.shippedAt = new Date().toISOString();
   order.updatedAt = new Date().toISOString();
 
-  syncOrderToSupabase(order).catch((e) => console.warn("Supabase ship sync warning:", e));
+  await syncOrderToSupabase(order);
 
   logAdminAudit({
     action: "mark_shipped",
@@ -576,7 +611,7 @@ export async function markOrderFulfilled(params: {
   order.status = "fulfilled";
   order.updatedAt = new Date().toISOString();
 
-  syncOrderToSupabase(order).catch((e) => console.warn("Supabase fulfill sync warning:", e));
+  await syncOrderToSupabase(order);
 
   logAdminAudit({
     action: "mark_fulfilled",
@@ -595,7 +630,7 @@ export async function markOrderFulfilled(params: {
 export async function markOrderFailed(params: {
   orderReference: string;
   reason?: string;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; error?: string; order?: StoredOrder }> {
   let order = memoryOrders.get(params.orderReference);
   if (!order) {
     await hydrateOrdersFromSupabase();
@@ -619,7 +654,7 @@ export async function markOrderFailed(params: {
     res.status = "released";
   }
 
-  syncOrderToSupabase(order).catch((e) => console.warn("Supabase order fail sync warning:", e));
+  await syncOrderToSupabase(order);
 
   logAdminAudit({
     action: "reject_payment",
@@ -633,7 +668,7 @@ export async function markOrderFailed(params: {
     },
   }).catch((e) => console.warn("Audit log warning:", e));
 
-  return { success: true };
+  return { success: true, order };
 }
 
 export async function listAllOrders(filter?: { status?: string }): Promise<StoredOrder[]> {

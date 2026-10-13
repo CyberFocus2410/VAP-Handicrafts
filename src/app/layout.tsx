@@ -70,6 +70,12 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "VAP Handicrafts",
   },
+  verification: {
+    google: "googlea03686d795340eb0",
+    other: {
+      "google-site-verification": ["googlea03686d795340eb0", "googlea03686d795340eb0.html"],
+    },
+  },
 };
 
 export default function RootLayout({

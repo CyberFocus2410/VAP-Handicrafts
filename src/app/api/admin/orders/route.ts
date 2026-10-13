@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
+        order: res.order,
         message: "Payment proof rejected and order marked as failed.",
       });
     }
