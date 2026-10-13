@@ -14,7 +14,7 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 19 Complete: Payment Proof Auto-Resolution & Google Search Console Verification** |
+| **Current phase** | **Phase 20 Complete: Google Search Console Sitemap & Robots Optimization** |
 | Last updated | 2026-10-13 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
 | Deployable build? | ✅ Yes (56 routes compiled, 0 errors, 95 unit tests green) |
@@ -43,6 +43,7 @@
 | 17 Dynamic Shipping Schemes, Coupon Engine & CMS Image Fix | ✅ Done | Fixed CMS product images where in-memory seed shadowed Supabase `product_images`; added touch-friendly cover/remove buttons for mobile screens; added auto-persistence on scrapbook polaroid upload; built dynamic Shipping Schemes manager (`/admin/promotions`) with standard delivery fee and free shipping threshold; implemented authoritative discount coupon engine (percentage or flat rupees, minimum order threshold, active toggle, usage counter); added promo code input and discount calculations to Cart Drawer, Cart page, and Checkout; 94 unit tests passing, 54 routes built with 0 errors. |
 | 18 Security: VAPID Key Rotation & GitGuardian Fix | ✅ Done | Completely removed hardcoded fallback VAPID keypair in `src/server/notifications/push-service.ts`; rotated with brand-new secure keypair; keys strictly injected from environment variables (`NEXT_PUBLIC_VAPID_PUBLIC_KEY` & `VAPID_PRIVATE_KEY`); 94 unit tests and production build 100% green; pushed commit `0efbb76` to `origin/main`. |
 | 19 Storage Proof Auto-Resolution & Google Search Console Verification | ✅ Done | Auto-resolved customer screenshots directly from Supabase Storage `order-proofs` bucket (1-year signed URLs); resolved unmigrated columns in `orders` table by storing rich order metadata in `site_settings.order_metadata`; updated order state machine to allow admin re-verification; added `public/googlea03686d795340eb0.html` and root layout verification metadata for Google Search Console; 95 unit tests passing, Next.js build green. |
+| 20 Sitemap & Robots Search Console Indexing Optimization | ✅ Done | Enhanced `sitemap.ts` with canonical `https://vaphandicrafts.com`, dynamic collections, image indexing metadata for Google Images, deduplication; updated `robots.ts` with dedicated Googlebot-Image directives and disallows for admin/cart/checkout; added static `public/robot.txt` plus Next.js and Vercel `/robot.txt` -> `/robots.txt` rewrites; 95 unit tests and production build 100% green. |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 

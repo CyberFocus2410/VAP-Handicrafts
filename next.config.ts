@@ -76,6 +76,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/robot.txt",
+        destination: "/robots.txt",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

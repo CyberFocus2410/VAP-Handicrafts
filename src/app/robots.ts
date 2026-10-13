@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://vaphandicrafts.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+      ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+      : "https://vaphandicrafts.com";
 
   return {
     rules: [
@@ -11,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/admin",
           "/admin/*",
+          "/api/*",
           "/checkout",
           "/checkout/*",
           "/cart",
@@ -21,7 +25,6 @@ export default function robots(): MetadataRoute.Robots {
           "/payment/*",
           "/account",
           "/account/*",
-          "/api/*",
           "/thank-you",
         ],
       },
@@ -29,12 +32,23 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Googlebot",
         allow: "/",
         disallow: [
+          "/admin",
           "/admin/*",
-          "/checkout",
-          "/cart",
           "/api/*",
+          "/checkout",
+          "/checkout/*",
+          "/cart",
+          "/order/*",
+          "/order-status/*",
+          "/payment/*",
+          "/account/*",
           "/thank-you",
         ],
+      },
+      {
+        userAgent: "Googlebot-Image",
+        allow: ["/", "/images/*", "/_next/image*", "/og-image.png"],
+        disallow: ["/admin/*", "/api/*"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

@@ -2,7 +2,11 @@ import type { MetadataRoute } from "next";
 import { listProducts, listCategories } from "@/server/catalogue/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://vaphandicrafts.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+      ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+      : "https://vaphandicrafts.com";
+
   const now = new Date();
 
   // 1. Static Core Storefront Routes
@@ -23,58 +27,78 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/about`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/contact`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/search`,
       lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.6,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/personalize/polaroid-keepsake-cards`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/shipping-policy`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.5,
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/refund-policy`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.5,
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/privacy`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.5,
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/terms`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.5,
+      priority: 0.6,
     },
   ];
 
-  // 2. Dynamic Categories
+  // 2. Dynamic Category & Collection Routes
   let categoryRoutes: MetadataRoute.Sitemap = [];
   try {
     const categories = await listCategories();
-    categoryRoutes = categories.map((cat) => ({
-      url: `${baseUrl}/shop/${cat.slug}`,
-      lastModified: now,
-      changeFrequency: "daily" as const,
-      priority: 0.85,
-    }));
+    for (const cat of categories) {
+      categoryRoutes.push({
+        url: `${baseUrl}/shop/${cat.slug}`,
+        lastModified: now,
+        changeFrequency: "daily" as const,
+        priority: 0.85,
+      });
+      categoryRoutes.push({
+        url: `${baseUrl}/collections/${cat.slug}`,
+        lastModified: now,
+        changeFrequency: "daily" as const,
+        priority: 0.85,
+      });
+    }
   } catch {
     categoryRoutes = [
+      {
+        url: `${baseUrl}/shop/jewellery`,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.85,
+      },
       {
         url: `${baseUrl}/shop/shell-jewellery`,
         lastModified: now,
@@ -87,22 +111,65 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "daily",
         priority: 0.85,
       },
+      {
+        url: `${baseUrl}/collections/shell-jewellery`,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.85,
+      },
+      {
+        url: `${baseUrl}/collections/personalized-cards`,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.85,
+      },
     ];
   }
 
-  // 3. Dynamic Products
+  // 3. Dynamic Products with Image Search Metadata
   let productRoutes: MetadataRoute.Sitemap = [];
   try {
     const { products } = await listProducts({ limit: 100 });
-    productRoutes = products.map((prod) => ({
-      url: `${baseUrl}/products/${prod.slug}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }));
+    for (const prod of products) {
+      const imageUrls = (prod.images || [])
+        .map((img) => (img.url.startsWith("http") ? img.url : `${baseUrl}${img.url}`))
+        .filter(Boolean);
+
+      // Primary canonical product page
+      productRoutes.push({
+        url: `${baseUrl}/products/${prod.slug}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.85,
+        images: imageUrls.length > 0 ? imageUrls : undefined,
+      });
+
+      // Category-scoped product page
+      if (prod.categorySlug) {
+        productRoutes.push({
+          url: `${baseUrl}/shop/${prod.categorySlug}/${prod.slug}`,
+          lastModified: now,
+          changeFrequency: "weekly" as const,
+          priority: 0.8,
+          images: imageUrls.length > 0 ? imageUrls : undefined,
+        });
+      }
+    }
   } catch {
-    // Graceful fallback
+    // Graceful fallback if database unavailable during static evaluation
   }
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  // Deduplicate URLs
+  const seen = new Set<string>();
+  const combined = [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  const uniqueRoutes: MetadataRoute.Sitemap = [];
+
+  for (const item of combined) {
+    if (!seen.has(item.url)) {
+      seen.add(item.url);
+      uniqueRoutes.push(item);
+    }
+  }
+
+  return uniqueRoutes;
 }

@@ -1,0 +1,36 @@
+# VAP Handicrafts — Search Engine Directives
+# https://vaphandicrafts.com
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /order/
+Disallow: /order-status/
+Disallow: /payment/
+Disallow: /account/
+Disallow: /thank-you
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /order/
+Disallow: /order-status/
+Disallow: /payment/
+Disallow: /account/
+Disallow: /thank-you
+
+User-agent: Googlebot-Image
+Allow: /
+Allow: /images/
+Allow: /_next/image
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://vaphandicrafts.com/sitemap.xml
+Host: https://vaphandicrafts.com
