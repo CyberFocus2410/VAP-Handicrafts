@@ -32,7 +32,11 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND.name}`,
   },
   description: BRAND.description,
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://vaphandicrafts.com"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : "https://vap-handicrafts.vercel.app"
+  ),
   keywords: [
     "shell jewellery",
     "personalized gifts",

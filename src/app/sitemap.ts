@@ -5,7 +5,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
       ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
-      : "https://vaphandicrafts.com";
+      : "https://vap-handicrafts.vercel.app";
 
   const now = new Date();
 

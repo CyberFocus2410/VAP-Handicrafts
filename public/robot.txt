@@ -1,5 +1,5 @@
 # VAP Handicrafts — Search Engine Directives
-# https://vaphandicrafts.com
+# https://vap-handicrafts.vercel.app
 
 User-agent: *
 Allow: /
@@ -32,5 +32,5 @@ Allow: /_next/image
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://vaphandicrafts.com/sitemap.xml
-Host: https://vaphandicrafts.com
+Sitemap: https://vap-handicrafts.vercel.app/sitemap.xml
+Host: https://vap-handicrafts.vercel.app
