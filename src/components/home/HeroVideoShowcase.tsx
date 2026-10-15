@@ -122,7 +122,8 @@ export function HeroVideoShowcase() {
         <div className="relative aspect-[9/16] sm:aspect-[4/5] w-full overflow-hidden rounded-[23px] bg-stone-900 border border-white/25 [transform-style:preserve-3d]">
           <video
             ref={videoRef}
-            src="/videos/hero-showcase-v2.mp4"
+            poster="/images/hero-fallback.webp"
+            preload="metadata"
             autoPlay
             loop
             muted
@@ -131,7 +132,10 @@ export function HeroVideoShowcase() {
             style={{
               transform: isHovered ? "scale(1.02)" : "scale(1)",
             }}
-          />
+          >
+            <source src="/videos/hero-showcase-mobile.mp4" media="(max-width: 768px)" type="video/mp4" />
+            <source src="/videos/hero-showcase-v2.mp4" type="video/mp4" />
+          </video>
 
           {/* Dynamic 3D Specular Light Sheen / Holographic Glare */}
           <div
