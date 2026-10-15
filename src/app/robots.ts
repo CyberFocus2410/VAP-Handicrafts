@@ -47,7 +47,17 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: "Googlebot-Image",
-        allow: ["/", "/images/*", "/_next/image*", "/og-image.png"],
+        allow: [
+          "/",
+          "/images/*",
+          "/icons/*",
+          "/_next/image*",
+          "/og-image.png",
+          "/og-image-square.png",
+          "/favicon.ico",
+          "/apple-icon.png",
+          "/icon.png",
+        ],
         disallow: ["/admin/*", "/api/*"],
       },
     ],

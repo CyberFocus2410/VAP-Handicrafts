@@ -14,8 +14,8 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 20 Complete: Google Search Console Sitemap & Robots Optimization** |
-| Last updated | 2026-10-13 |
+| **Current phase** | **Phase 22 Complete: Brand Logo Google Search Appearance & Social Link Preview Optimization** |
+| Last updated | 2026-10-15 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
 | Deployable build? | ✅ Yes (56 routes compiled, 0 errors, 95 unit tests green) |
 
@@ -45,6 +45,7 @@
 | 19 Storage Proof Auto-Resolution & Google Search Console Verification | ✅ Done | Auto-resolved customer screenshots directly from Supabase Storage `order-proofs` bucket (1-year signed URLs); resolved unmigrated columns in `orders` table by storing rich order metadata in `site_settings.order_metadata`; updated order state machine to allow admin re-verification; added `public/googlea03686d795340eb0.html` and root layout verification metadata for Google Search Console; 95 unit tests passing, Next.js build green. |
 | 20 Sitemap & Robots Search Console Indexing Optimization | ✅ Done | Enhanced `sitemap.ts`, `robots.ts`, and `public/robot.txt` configured to live production domain `https://vap-handicrafts.vercel.app`; image indexing metadata for Google Images, deduplication; disallows for private endpoints; rewrites `/robot.txt` -> `/robots.txt`; 95 unit tests and production build 100% green. |
 | 21 Bing Webmaster Tools Site Verification & Deployment Stabilization | ✅ Done | Deployed `public/BingSiteAuth.xml` to site root; configured `<meta name="msvalidate.01" content="E5581AA9ABA3AF2FE0E16A129B506495" />` cleanly via Next.js Metadata API in `metadata.verification.other`; eliminated invalid `<head>` element from JSX root layout and purged redundant vercel.json rewrites; 95 unit tests and production build 100% green. |
+| 22 Brand Logo Google Search Appearance & Social Link Preview Optimization | ✅ Done | Embedded official 3D embossed logo across Google Search Favicons (multi-size ICO, 180x180 Apple, 192x192 & 512x512 Google Search Central multiple-of-48px requirements); generated bespoke 1200x630 Open Graph preview card with gold double borders and centered logo for WhatsApp, iMessage, Twitter/X, Facebook, LinkedIn; added Schema.org Organization and WebSite structured data with logo and image URLs; enabled max-image-preview:large in robots metadata; build passed 100% clean (27 pages). |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 
