@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listProducts, listCategories } from "@/server/catalogue/queries";
+import { SEED_PRODUCTS } from "@/data/seed-products";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
@@ -12,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Static Core Storefront Routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${baseUrl}`,
+      url: `${baseUrl}/`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 1.0,
@@ -130,9 +131,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let productRoutes: MetadataRoute.Sitemap = [];
   try {
     const { products } = await listProducts({ limit: 100 });
-    for (const prod of products) {
+    const productList = products && products.length > 0 ? products : SEED_PRODUCTS;
+    for (const prod of productList) {
       const imageUrls = (prod.images || [])
-        .map((img) => (img.url.startsWith("http") ? img.url : `${baseUrl}${img.url}`))
+        .map((img: { url: string }) => (img.url.startsWith("http") ? img.url : `${baseUrl}${img.url}`))
         .filter(Boolean);
 
       // Primary canonical product page
@@ -145,9 +147,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
 
       // Category-scoped product page
-      if (prod.categorySlug) {
+      const catSlug = (prod as any).categorySlug || (prod as any).category_slug;
+      if (catSlug) {
         productRoutes.push({
-          url: `${baseUrl}/shop/${prod.categorySlug}/${prod.slug}`,
+          url: `${baseUrl}/shop/${catSlug}/${prod.slug}`,
           lastModified: now,
           changeFrequency: "weekly" as const,
           priority: 0.8,
@@ -156,7 +159,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
   } catch {
-    // Graceful fallback if database unavailable during static evaluation
+    for (const prod of SEED_PRODUCTS) {
+      const imageUrls = (prod.images || [])
+        .map((img) => (img.url.startsWith("http") ? img.url : `${baseUrl}${img.url}`))
+        .filter(Boolean);
+
+      productRoutes.push({
+        url: `${baseUrl}/products/${prod.slug}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.85,
+        images: imageUrls.length > 0 ? imageUrls : undefined,
+      });
+
+      if (prod.category_slug) {
+        productRoutes.push({
+          url: `${baseUrl}/shop/${prod.category_slug}/${prod.slug}`,
+          lastModified: now,
+          changeFrequency: "weekly" as const,
+          priority: 0.8,
+          images: imageUrls.length > 0 ? imageUrls : undefined,
+        });
+      }
+    }
   }
 
   // Deduplicate URLs

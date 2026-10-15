@@ -25,7 +25,7 @@ export const metadata = {
     "VAP Handicrafts",
   ],
   alternates: {
-    canonical: "/",
+    canonical: "https://vap-handicrafts.vercel.app/",
   },
   openGraph: {
     title: "VAP Handicrafts | Handcrafted Shell Jewellery & Custom Keepsakes",
