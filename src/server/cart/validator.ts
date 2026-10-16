@@ -7,7 +7,11 @@ import {
   type CartNotice,
 } from "@/lib/cart/types";
 import { assertValidPaise } from "@/lib/money";
-import { getShippingConfig, validateCoupon } from "@/server/admin/promotions-service";
+import {
+  getShippingConfig,
+  validateCoupon,
+  listPublicStorefrontCoupons,
+} from "@/server/admin/promotions-service";
 
 export const FREE_SHIPPING_THRESHOLD_PAISE = 99900; // ₹999 in paise (default fallback)
 export const STANDARD_SHIPPING_PAISE = 9900; // ₹99 in paise (default fallback)
@@ -164,6 +168,23 @@ export async function validateAndPriceCart(
     shippingConfig.freeShippingThresholdPaise - subtotalMinor
   );
 
+  let availableOffers: ValidatedCartResponse["availableOffers"] = undefined;
+  try {
+    const publicCoupons = await listPublicStorefrontCoupons();
+    if (publicCoupons.length > 0) {
+      availableOffers = publicCoupons.map((c) => ({
+        code: c.code,
+        type: c.type,
+        value: c.value,
+        discountDisplay: c.type === "percentage" ? `${c.value}% OFF` : `₹${c.value} OFF`,
+        minOrderMinor: c.minOrderMinor,
+        description: c.description,
+      }));
+    }
+  } catch {
+    // Non-fatal
+  }
+
   return {
     valid: validatedLines.length > 0 || intents.length === 0,
     lines: validatedLines,
@@ -176,5 +197,6 @@ export async function validateAndPriceCart(
     amountNeededForFreeShippingMinor,
     notices,
     appliedCoupon,
+    availableOffers,
   };
 }

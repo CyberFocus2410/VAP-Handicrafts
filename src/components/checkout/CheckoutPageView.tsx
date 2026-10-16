@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Phone,
   FileCheck,
+  Tag,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cart/cart-store";
 import { type ValidatedCartResponse } from "@/lib/cart/types";
@@ -78,6 +79,7 @@ export function CheckoutPageView() {
     totalMinor: validatedCart?.totalMinor ?? ((validatedCart?.subtotalMinor ?? 0) + 9900),
     appliedCoupon: validatedCart?.appliedCoupon,
     notices: validatedCart?.notices ?? [],
+    availableOffers: validatedCart?.availableOffers,
   };
 
   // Re-fetch authoritative price calculation
@@ -739,35 +741,67 @@ export function CheckoutPageView() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
-                    <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Discount code (e.g. WELCOME10)"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                        className="text-xs uppercase placeholder:normal-case h-9"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!couponInput.trim()}
-                        onClick={() => {
-                          if (couponInput.trim()) {
-                            applyCoupon(couponInput.trim());
-                          }
-                        }}
-                        className="text-xs px-3 h-9"
-                      >
-                        Apply
-                      </Button>
+                  <div className="space-y-2">
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Discount code or secret code"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          className="text-xs uppercase placeholder:normal-case h-9"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!couponInput.trim()}
+                          onClick={() => {
+                            if (couponInput.trim()) {
+                              applyCoupon(couponInput.trim());
+                            }
+                          }}
+                          className="text-xs px-3 h-9"
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                      {couponCode && !validatedData.appliedCoupon && (
+                        <p className="text-[11px] text-rose-deep">
+                          {validatedData.notices.find((n) => n.message.toLowerCase().includes("coupon"))?.message || "Invalid or inapplicable discount coupon"}
+                        </p>
+                      )}
                     </div>
-                    {couponCode && !validatedData.appliedCoupon && (
-                      <p className="text-[11px] text-rose-deep">
-                        {validatedData.notices.find((n) => n.message.toLowerCase().includes("coupon"))?.message || "Invalid or inapplicable discount coupon"}
-                      </p>
-                    )}
+
+                    {/* Active Public Storefront Offers Chips (Secret codes excluded) */}
+                    {validatedData?.availableOffers &&
+                      validatedData.availableOffers.length > 0 &&
+                      !validatedData.appliedCoupon && (
+                        <div className="space-y-1 pt-0.5">
+                          <p className="text-[10px] uppercase font-semibold text-cocoa-muted tracking-wider flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                            <span>Available Store Offers:</span>
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {validatedData.availableOffers.map((offer) => (
+                              <button
+                                key={offer.code}
+                                type="button"
+                                onClick={() => {
+                                  setCouponInput(offer.code);
+                                  applyCoupon(offer.code);
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-amber-500/10 text-amber-900 dark:text-amber-200 border border-amber-500/25 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                                title={offer.description || `Click to apply ${offer.code}`}
+                              >
+                                <Tag className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                                <span className="font-mono font-bold">{offer.code}</span>
+                                <span className="text-[10px] opacity-80">({offer.discountDisplay})</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
               </div>

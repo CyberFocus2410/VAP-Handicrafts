@@ -60,6 +60,10 @@ export async function POST(req: NextRequest) {
         value: Number(coupon.value),
         minOrderMinor: Number(coupon.minOrderMinor || 0),
         isActive: coupon.isActive !== undefined ? Boolean(coupon.isActive) : true,
+        isVisibleOnStorefront:
+          coupon.isVisibleOnStorefront !== undefined
+            ? Boolean(coupon.isVisibleOnStorefront)
+            : false,
       });
 
       revalidatePath("/cart");

@@ -15,6 +15,7 @@ export interface DiscountCoupon {
   value: number; // percentage (e.g. 10) or rupees (e.g. 50)
   minOrderMinor?: number; // minimum subtotal in paise required
   isActive: boolean;
+  isVisibleOnStorefront: boolean; // true = displayed on storefront for all users, false = secret / VIP code
   usageCount: number;
   createdAt: string;
   description?: string;
@@ -34,6 +35,7 @@ export const DEFAULT_COUPONS: DiscountCoupon[] = [
     value: 10,
     minOrderMinor: 0,
     isActive: true,
+    isVisibleOnStorefront: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),
     description: "10% off welcome discount for all new customers",
@@ -45,6 +47,7 @@ export const DEFAULT_COUPONS: DiscountCoupon[] = [
     value: 50,
     minOrderMinor: 49900, // min ₹499
     isActive: true,
+    isVisibleOnStorefront: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),
     description: "Flat ₹50 off on orders above ₹499",
@@ -166,7 +169,14 @@ export async function listDiscountCoupons(): Promise<DiscountCoupon[]> {
     if (row?.value && Array.isArray(row.value)) {
       couponsStore.clear();
       for (const item of row.value as DiscountCoupon[]) {
-        couponsStore.set(item.id, item);
+        const couponWithDefaults: DiscountCoupon = {
+          ...item,
+          isVisibleOnStorefront:
+            item.isVisibleOnStorefront !== undefined
+              ? Boolean(item.isVisibleOnStorefront)
+              : true,
+        };
+        couponsStore.set(item.id, couponWithDefaults);
       }
     }
   } catch {
@@ -176,6 +186,15 @@ export async function listDiscountCoupons(): Promise<DiscountCoupon[]> {
   return Array.from(couponsStore.values()).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+}
+
+/**
+ * Returns only coupons marked for public storefront display that are currently active.
+ * Secret / VIP coupons (isVisibleOnStorefront: false) are strictly excluded from public display.
+ */
+export async function listPublicStorefrontCoupons(): Promise<DiscountCoupon[]> {
+  const all = await listDiscountCoupons();
+  return all.filter((c) => c.isActive && c.isVisibleOnStorefront === true);
 }
 
 async function persistCoupons(): Promise<void> {
@@ -204,6 +223,7 @@ export async function createDiscountCoupon(input: {
   value: number;
   minOrderMinor?: number;
   isActive?: boolean;
+  isVisibleOnStorefront?: boolean;
   description?: string;
 }): Promise<DiscountCoupon> {
   await listDiscountCoupons(); // Ensure sync
@@ -228,6 +248,7 @@ export async function createDiscountCoupon(input: {
     value: Math.max(0, input.value),
     minOrderMinor: input.minOrderMinor ? Math.max(0, input.minOrderMinor) : 0,
     isActive: input.isActive ?? true,
+    isVisibleOnStorefront: input.isVisibleOnStorefront ?? false,
     usageCount: 0,
     createdAt: new Date().toISOString(),
     description: input.description?.trim() || undefined,

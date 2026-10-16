@@ -95,6 +95,15 @@ export interface CartNotice {
   message: string;
 }
 
+export interface PublicCouponOffer {
+  code: string;
+  type: "percentage" | "flat";
+  value: number;
+  discountDisplay: string;
+  minOrderMinor?: number;
+  description?: string;
+}
+
 export interface ValidatedCartResponse {
   valid: boolean;
   lines: ValidatedCartLine[];
@@ -111,4 +120,5 @@ export interface ValidatedCartResponse {
     discountMinor: number;
     message?: string;
   };
+  availableOffers?: PublicCouponOffer[];
 }

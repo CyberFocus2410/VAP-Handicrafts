@@ -18,6 +18,8 @@ import {
   ToggleLeft,
   ToggleRight,
   RefreshCw,
+  Lock,
+  Globe,
 } from "lucide-react";
 
 export const AdminPromotionsView: React.FC = () => {
@@ -40,6 +42,8 @@ export const AdminPromotionsView: React.FC = () => {
   const [newValue, setNewValue] = useState<number>(10);
   const [newMinOrderRupees, setNewMinOrderRupees] = useState<number>(499);
   const [newIsActive, setNewIsActive] = useState(true);
+  const [newIsVisibleOnStorefront, setNewIsVisibleOnStorefront] = useState(false); // default to Secret VIP
+  const [filterTab, setFilterTab] = useState<"all" | "secret" | "public" | "paused">("all");
   const [formError, setFormError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -141,6 +145,7 @@ export const AdminPromotionsView: React.FC = () => {
           value: newType === "flat" ? Math.round(newValue * 100) : newValue,
           minOrderMinor: Math.max(0, Math.round(newMinOrderRupees * 100)),
           isActive: newIsActive,
+          isVisibleOnStorefront: newIsVisibleOnStorefront,
         },
       };
 
@@ -158,6 +163,8 @@ export const AdminPromotionsView: React.FC = () => {
         setNewDescription("");
         setNewValue(10);
         setNewMinOrderRupees(499);
+        setNewIsVisibleOnStorefront(false);
+        setNewIsActive(true);
       } else {
         setFormError(data.error || "Failed to create coupon");
       }
@@ -167,6 +174,7 @@ export const AdminPromotionsView: React.FC = () => {
   };
 
   const handleToggleActive = async (coupon: DiscountCoupon) => {
+    const nextActive = !coupon.isActive;
     try {
       const res = await fetch("/api/admin/promotions", {
         method: "POST",
@@ -174,18 +182,42 @@ export const AdminPromotionsView: React.FC = () => {
         body: JSON.stringify({
           action: "update_coupon",
           id: coupon.id,
-          patch: { isActive: !coupon.isActive },
+          patch: { isActive: nextActive },
         }),
       });
 
       const data = await res.json();
       if (data.success) {
         setCoupons((prev) =>
-          prev.map((c) => (c.id === coupon.id ? { ...c, isActive: !coupon.isActive } : c))
+          prev.map((c) => (c.id === coupon.id ? { ...c, isActive: nextActive } : c))
         );
       }
     } catch {
       alert("Failed to toggle coupon status");
+    }
+  };
+
+  const handleToggleVisibility = async (coupon: DiscountCoupon) => {
+    const nextVisibility = !coupon.isVisibleOnStorefront;
+    try {
+      const res = await fetch("/api/admin/promotions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_coupon",
+          id: coupon.id,
+          patch: { isVisibleOnStorefront: nextVisibility },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setCoupons((prev) =>
+          prev.map((c) => (c.id === coupon.id ? { ...c, isVisibleOnStorefront: nextVisibility } : c))
+        );
+      }
+    } catch {
+      alert("Failed to toggle coupon visibility");
     }
   };
 
@@ -491,11 +523,75 @@ export const AdminPromotionsView: React.FC = () => {
                   <label className="text-xs font-semibold text-[#2D1A16]">Note / Description</label>
                   <input
                     type="text"
-                    placeholder="e.g. Special festival 20% discount on orders above ₹499"
+                    placeholder="e.g. Special VIP discount for loyal customer inquiry"
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-[#2D1A16]/15 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-[#A05A44]/30"
                   />
+                </div>
+
+                {/* Target Audience & Visibility Option */}
+                <div className="space-y-2 pt-1 border-t border-[#2D1A16]/10">
+                  <label className="text-xs font-semibold text-[#2D1A16] block">
+                    Coupon Visibility &amp; Target Audience *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setNewIsVisibleOnStorefront(false)}
+                      className={`text-left p-3 rounded-xl border transition-all ${
+                        !newIsVisibleOnStorefront
+                          ? "bg-purple-50/80 border-purple-500/40 ring-1 ring-purple-500/30"
+                          : "bg-white border-[#2D1A16]/15 hover:bg-[#FAF5EF]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div
+                          className={`p-1 rounded-md ${
+                            !newIsVisibleOnStorefront
+                              ? "bg-purple-600 text-white"
+                              : "bg-[#2D1A16]/10 text-[#2D1A16]"
+                          }`}
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="font-semibold text-xs text-[#2D1A16]">
+                          Secret VIP Code (Hidden)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#2D1A16]/65 leading-snug">
+                        Hidden from all site visitors. Give this code directly to selected customers (via WhatsApp/Email). Applies only when entered.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setNewIsVisibleOnStorefront(true)}
+                      className={`text-left p-3 rounded-xl border transition-all ${
+                        newIsVisibleOnStorefront
+                          ? "bg-blue-50/80 border-blue-500/40 ring-1 ring-blue-500/30"
+                          : "bg-white border-[#2D1A16]/15 hover:bg-[#FAF5EF]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div
+                          className={`p-1 rounded-md ${
+                            newIsVisibleOnStorefront
+                              ? "bg-blue-600 text-white"
+                              : "bg-[#2D1A16]/10 text-[#2D1A16]"
+                          }`}
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="font-semibold text-xs text-[#2D1A16]">
+                          Public Coupon (Visible on Site)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#2D1A16]/65 leading-snug">
+                        Visible to all visitors in the cart drawer &amp; checkout as an available offer for everyone to use.
+                      </p>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
@@ -519,6 +615,59 @@ export const AdminPromotionsView: React.FC = () => {
               </form>
             )}
 
+            {/* Filter Tabs */}
+            {coupons.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("all")}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                    filterTab === "all"
+                      ? "bg-[#2D1A16] text-white"
+                      : "bg-[#FAF5EF] text-[#2D1A16]/70 hover:bg-[#2D1A16]/10"
+                  }`}
+                >
+                  All ({coupons.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("secret")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                    filterTab === "secret"
+                      ? "bg-purple-700 text-white"
+                      : "bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100"
+                  }`}
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Secret VIP ({coupons.filter((c) => !c.isVisibleOnStorefront).length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("public")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                    filterTab === "public"
+                      ? "bg-blue-700 text-white"
+                      : "bg-blue-50 text-blue-900 border border-blue-200 hover:bg-blue-100"
+                  }`}
+                >
+                  <Globe className="w-3 h-3" />
+                  <span>Public on Site ({coupons.filter((c) => c.isVisibleOnStorefront).length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("paused")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                    filterTab === "paused"
+                      ? "bg-amber-700 text-white"
+                      : "bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100"
+                  }`}
+                >
+                  <ToggleLeft className="w-3 h-3" />
+                  <span>Paused ({coupons.filter((c) => !c.isActive).length})</span>
+                </button>
+              </div>
+            )}
+
             {/* Coupons List */}
             {coupons.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-[#2D1A16]/15 rounded-xl bg-[#FAF5EF]/40 space-y-3">
@@ -529,103 +678,170 @@ export const AdminPromotionsView: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {coupons.map((coupon) => {
-                  const discountDisplay =
-                    coupon.type === "percentage"
-                      ? `${coupon.value}% OFF`
-                      : `${formatINR(coupon.value)} OFF`;
+                {coupons
+                  .filter((coupon) => {
+                    if (filterTab === "secret") return !coupon.isVisibleOnStorefront;
+                    if (filterTab === "public") return coupon.isVisibleOnStorefront;
+                    if (filterTab === "paused") return !coupon.isActive;
+                    return true;
+                  })
+                  .map((coupon) => {
+                    const discountDisplay =
+                      coupon.type === "percentage"
+                        ? `${coupon.value}% OFF`
+                        : `${formatINR(coupon.value)} OFF`;
 
-                  return (
-                    <div
-                      key={coupon.id}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-colors ${
-                        coupon.isActive
-                          ? "bg-white border-[#2D1A16]/15 hover:border-[#A05A44]/40"
-                          : "bg-[#FAF5EF]/60 border-[#2D1A16]/10 opacity-70"
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm font-bold tracking-wider text-[#2D1A16] bg-[#FAF5EF] px-2.5 py-1 rounded-md border border-[#2D1A16]/10">
-                            {coupon.code}
-                          </span>
+                    return (
+                      <div
+                        key={coupon.id}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-colors ${
+                          coupon.isActive
+                            ? "bg-white border-[#2D1A16]/15 hover:border-[#A05A44]/40"
+                            : "bg-[#FAF5EF]/60 border-[#2D1A16]/10 opacity-70"
+                        }`}
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-sm font-bold tracking-wider text-[#2D1A16] bg-[#FAF5EF] px-2.5 py-1 rounded-md border border-[#2D1A16]/10">
+                              {coupon.code}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(coupon.code)}
+                              className="text-[#2D1A16]/50 hover:text-[#A05A44] p-1 transition-colors"
+                              title="Copy code to share with customer"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            {copiedCode === coupon.code && (
+                              <span className="text-[10px] text-emerald-700 font-semibold animate-pulse">
+                                Copied to clipboard!
+                              </span>
+                            )}
+
+                            {/* Status badge */}
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                                coupon.isActive
+                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-500/20"
+                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                              }`}
+                            >
+                              {coupon.isActive ? "Active" : "Paused"}
+                            </span>
+
+                            {/* Visibility badge */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
+                                coupon.isVisibleOnStorefront
+                                  ? "bg-blue-50 text-blue-800 border border-blue-200"
+                                  : "bg-purple-50 text-purple-800 border border-purple-200"
+                              }`}
+                            >
+                              {coupon.isVisibleOnStorefront ? (
+                                <>
+                                  <Globe className="w-3 h-3 text-blue-600" />
+                                  <span>Public (On Site)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Lock className="w-3 h-3 text-purple-600" />
+                                  <span>Secret VIP (Hidden)</span>
+                                </>
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-[#2D1A16]/70 pt-0.5">
+                            <span className="font-semibold text-[#A05A44]">{discountDisplay}</span>
+                            <span>•</span>
+                            <span>
+                              {(coupon.minOrderMinor ?? 0) > 0
+                                ? `Min order ${formatINR(coupon.minOrderMinor!)}`
+                                : "No minimum"}
+                            </span>
+                            <span>•</span>
+                            <span>{coupon.usageCount ?? 0} orders used</span>
+                          </div>
+
+                          {coupon.description && (
+                            <p className="text-[11px] text-[#2D1A16]/60 italic">
+                              {coupon.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex flex-wrap items-center gap-2 mt-3 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#2D1A16]/10">
+                          {/* Visibility Toggle */}
                           <button
                             type="button"
-                            onClick={() => copyToClipboard(coupon.code)}
-                            className="text-[#2D1A16]/50 hover:text-[#A05A44] p-1"
-                            title="Copy code"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                          {copiedCode === coupon.code && (
-                            <span className="text-[10px] text-emerald-700 font-semibold">Copied!</span>
-                          )}
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                              coupon.isActive
-                                ? "bg-emerald-50 text-emerald-800 border border-emerald-500/20"
-                                : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                            onClick={() => handleToggleVisibility(coupon)}
+                            title={
+                              coupon.isVisibleOnStorefront
+                                ? "Hide from storefront (make secret VIP code)"
+                                : "Make visible to all users on storefront"
+                            }
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              coupon.isVisibleOnStorefront
+                                ? "bg-purple-50 hover:bg-purple-100 text-purple-800 border-purple-200"
+                                : "bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200"
                             }`}
                           >
-                            {coupon.isActive ? "Active" : "Paused"}
-                          </span>
+                            {coupon.isVisibleOnStorefront ? (
+                              <>
+                                <Lock className="w-3.5 h-3.5" />
+                                <span>Make Secret</span>
+                              </>
+                            ) : (
+                              <>
+                                <Globe className="w-3.5 h-3.5" />
+                                <span>Make Public</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Pause / Activate Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(coupon)}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                              coupon.isActive
+                                ? "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300"
+                                : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300"
+                            }`}
+                            title={
+                              coupon.isActive
+                                ? "Pause coupon (stop customer use)"
+                                : "Activate coupon (allow customer use)"
+                            }
+                          >
+                            {coupon.isActive ? (
+                              <>
+                                <ToggleRight className="w-4 h-4" />
+                                <span>Pause</span>
+                              </>
+                            ) : (
+                              <>
+                                <ToggleLeft className="w-4 h-4" />
+                                <span>Activate</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCoupon(coupon.id, coupon.code)}
+                            className="p-1.5 rounded-lg hover:bg-rose-50 text-[#2D1A16]/50 hover:text-rose-600 transition-colors"
+                            title={`Permanently delete coupon "${coupon.code}"`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-
-                        <div className="flex items-center gap-3 text-xs text-[#2D1A16]/70 pt-0.5">
-                          <span className="font-semibold text-[#A05A44]">{discountDisplay}</span>
-                          <span>•</span>
-                          <span>
-                            {(coupon.minOrderMinor ?? 0) > 0
-                              ? `Min order ${formatINR(coupon.minOrderMinor!)}`
-                              : "No minimum"}
-                          </span>
-                          <span>•</span>
-                          <span>{coupon.usageCount ?? 0} orders used</span>
-                        </div>
-
-                        {coupon.description && (
-                          <p className="text-[11px] text-[#2D1A16]/50 italic">
-                            {coupon.description}
-                          </p>
-                        )}
                       </div>
-
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-2 mt-3 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#2D1A16]/10">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(coupon)}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                            coupon.isActive
-                              ? "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300"
-                              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300"
-                          }`}
-                        >
-                          {coupon.isActive ? (
-                            <>
-                              <ToggleRight className="w-4 h-4" />
-                              <span>Pause</span>
-                            </>
-                          ) : (
-                            <>
-                              <ToggleLeft className="w-4 h-4" />
-                              <span>Activate</span>
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCoupon(coupon.id, coupon.code)}
-                          className="p-1.5 rounded-lg hover:bg-rose-50 text-[#2D1A16]/50 hover:text-rose-600 transition-colors"
-                          title="Delete coupon"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </div>

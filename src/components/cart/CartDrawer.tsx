@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Sparkles } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Sparkles, Tag } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCartStore } from "@/lib/cart/cart-store";
 import { type ValidatedCartResponse } from "@/lib/cart/types";
@@ -330,24 +330,56 @@ export function CartDrawer() {
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Discount code (e.g. WELCOME10)"
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                      className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs uppercase placeholder:normal-case focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                    <Button
-                      type="submit"
-                      variant="outline"
-                      size="sm"
-                      disabled={!couponInput.trim() || isValidating}
-                      className="text-xs px-3 py-1.5 h-auto rounded-lg"
-                    >
-                      Apply
-                    </Button>
-                  </form>
+                  <div className="space-y-2">
+                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Discount code or secret code"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs uppercase placeholder:normal-case focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        size="sm"
+                        disabled={!couponInput.trim() || isValidating}
+                        className="text-xs px-3 py-1.5 h-auto rounded-lg"
+                      >
+                        Apply
+                      </Button>
+                    </form>
+
+                    {/* Active Public Storefront Offers Chips (Secret codes excluded) */}
+                    {validatedCart?.availableOffers &&
+                      validatedCart.availableOffers.length > 0 &&
+                      !appliedCoupon && (
+                        <div className="space-y-1 pt-0.5">
+                          <p className="text-[10px] uppercase font-semibold text-cocoa-muted tracking-wider flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                            <span>Available Store Offers:</span>
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {validatedCart.availableOffers.map((offer) => (
+                              <button
+                                key={offer.code}
+                                type="button"
+                                onClick={() => {
+                                  setCouponInput(offer.code);
+                                  applyCoupon(offer.code);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-900 dark:text-amber-200 border border-amber-500/25 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                                title={offer.description || `Click to apply ${offer.code}`}
+                              >
+                                <Tag className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                                <span className="font-mono font-bold">{offer.code}</span>
+                                <span className="text-[10px] opacity-80">({offer.discountDisplay})</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </div>
                 )}
                 {/* Notice message if invalid coupon */}
                 {couponCode && !appliedCoupon && !isValidating && (
