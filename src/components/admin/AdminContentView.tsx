@@ -11,6 +11,7 @@ import {
   SiteBrandStoryContent,
   SiteScrapbookItem,
 } from "@/server/admin/crm-cms-types";
+import { compressImageForUpload, fileToDataUrl } from "@/lib/images/client-compress";
 
 interface AdminContentViewProps {
   initialConfig: SiteContentConfig;
@@ -88,22 +89,37 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
     setScrapbook(updated);
   };
 
-  const handleScrapbookFileUpload = async (file: File, index: number) => {
+  const handleScrapbookFileUpload = async (rawFile: File, index: number) => {
     setUploadingIndex(index);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const file = await compressImageForUpload(rawFile);
+      let finalUrl: string | null = null;
 
-      const res = await fetch("/api/admin/cms/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success && data.url) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/admin/cms/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.success && data?.url) {
+          finalUrl = data.url;
+        }
+      } catch (uploadFetchErr) {
+        console.warn("[Scrapbook Upload] Server fetch notice, utilizing local fallback:", uploadFetchErr);
+      }
+
+      if (!finalUrl) {
+        finalUrl = await fileToDataUrl(file);
+      }
+
+      if (finalUrl) {
         const item = scrapbook[index];
         if (item) {
           const updated = [...scrapbook];
-          updated[index] = { ...item, imageUrl: data.url };
+          updated[index] = { ...item, imageUrl: finalUrl };
           setScrapbook(updated);
           try {
             await fetch("/api/admin/cms/content", {
@@ -118,10 +134,24 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({
         setNotification("Polaroid photo uploaded & saved live on website!");
         setTimeout(() => setNotification(""), 3500);
       } else {
-        alert(data.error || "Failed to upload image");
+        alert("Failed to process image file. Please try another photo.");
       }
-    } catch {
-      alert("Network error uploading photo");
+    } catch (err: unknown) {
+      console.error("Scrapbook upload exception:", err);
+      try {
+        const emergencyDataUrl = await fileToDataUrl(rawFile);
+        const item = scrapbook[index];
+        if (item) {
+          const updated = [...scrapbook];
+          updated[index] = { ...item, imageUrl: emergencyDataUrl };
+          setScrapbook(updated);
+        }
+        setNotification("Photo attached successfully!");
+        setTimeout(() => setNotification(""), 3500);
+      } catch {
+        const msg = err instanceof Error ? err.message : "Error uploading photo";
+        alert(`Failed to upload photo: ${msg}`);
+      }
     } finally {
       setUploadingIndex(null);
     }

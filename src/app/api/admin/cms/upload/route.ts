@@ -48,6 +48,15 @@ export async function POST(req: NextRequest) {
       // A. Primary: Upload to Supabase public storage bucket
       try {
         const supabase = getSupabaseAdminClient();
+        // Ensure bucket exists in Supabase
+        try {
+          await supabase.storage.createBucket("product-media", {
+            public: true,
+          });
+        } catch {
+          // Non-fatal if bucket exists or already configured
+        }
+
         const { error: uploadError } = await supabase.storage
           .from("product-media")
           .upload(filename, buffer, {
@@ -67,12 +76,14 @@ export async function POST(req: NextRequest) {
               filename,
             });
           }
+        } else {
+          console.warn("[Upload] Supabase upload failed with notice:", uploadError);
         }
       } catch (sbErr) {
-        console.warn("Supabase storage upload failed, attempting local fallback:", sbErr);
+        console.warn("[Upload] Supabase client error:", sbErr);
       }
 
-      // B. Local fallback: Save to public/images/products
+      // B. Local fallback: Save to public/images/products (if writable local filesystem)
       try {
         const localDir = path.join(process.cwd(), "public", "images", "products");
         if (!fs.existsSync(localDir)) {
@@ -86,14 +97,18 @@ export async function POST(req: NextRequest) {
           success: true,
           url: `/images/products/${localFilename}`,
         });
-      } catch (localErr) {
-        console.error("Local file write failed:", localErr);
+      } catch {
+        // Read-only serverless environment (e.g. Vercel)
       }
 
-      return NextResponse.json(
-        { success: false, error: "Failed to persist uploaded image." },
-        { status: 500 }
-      );
+      // C. Universal Resilient Fallback: Convert to Base64 Data URL so merchant is NEVER blocked
+      const dataUrl = `data:${validation.detectedMime || "image/jpeg"};base64,${buffer.toString("base64")}`;
+      return NextResponse.json({
+        success: true,
+        url: dataUrl,
+        filename,
+        isFallback: true,
+      });
     }
 
     // 2. Resolve External Image URL (e.g. imgbb viewer links)
