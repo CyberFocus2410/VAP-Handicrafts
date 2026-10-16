@@ -4,6 +4,7 @@ import {
   markOrderShipped,
   markOrderFulfilled,
   getOrderByReference,
+  deleteOrder,
 } from "@/server/orders/service";
 import { verifyAdminSessionToken } from "@/server/admin/auth";
 
@@ -168,6 +169,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === "delete_order" || action === "delete") {
+      const res = await deleteOrder(orderReference);
+      if (!res.success) {
+        return NextResponse.json(
+          { success: false, error: res.error },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Order ${orderReference} permanently deleted from database and CRM.`,
+      });
+    }
+
     if (action === "mark_fulfilled") {
       const res = await markOrderFulfilled({ orderReference });
       if (!res.success) {
@@ -196,3 +212,45 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const sessionCookie = request.cookies.get("vap_admin_session")?.value;
+    const isAuthed = await verifyAdminSessionToken(sessionCookie);
+    if (!isAuthed) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const orderReference = searchParams.get("orderReference") || searchParams.get("ref");
+    if (!orderReference) {
+      return NextResponse.json(
+        { success: false, error: "orderReference is required" },
+        { status: 400 }
+      );
+    }
+
+    const res = await deleteOrder(orderReference);
+    if (!res.success) {
+      return NextResponse.json(
+        { success: false, error: res.error },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Order ${orderReference} permanently deleted from database and CRM.`,
+    });
+  } catch (error) {
+    console.error("[AdminOrdersAPI] Delete order error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+

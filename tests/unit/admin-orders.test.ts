@@ -204,4 +204,38 @@ describe("Phase 6 Admin Order Processing & Fulfillment Transitions", () => {
     expect(reVerifyRes.success).toBe(true);
     expect(reVerifyRes.order?.status).toBe("paid");
   });
+
+  it("permanently deletes an order from orders service and memory", async () => {
+    const { deleteOrder, getOrderByReference } = await import("@/server/orders/service");
+    const { order } = await createOrder({
+      items: [
+        {
+          lineId: "line-del-test",
+          productId: "prod-bracelet-spiral-conch",
+          productSlug: "spiral-conch-pink-crackle-bracelet",
+          variantId: "var-spiral-conch-pink",
+          quantity: 1,
+        },
+      ],
+      address: {
+        fullName: "Fake Order Customer",
+        phone: "9999999999",
+        email: "fake@example.com",
+        streetAddress: "Fake Street 99",
+        city: "Delhi",
+        state: "Delhi",
+        pincode: "110001",
+        country: "India",
+      },
+    });
+
+    expect(order.orderReference).toBeDefined();
+
+    const delRes = await deleteOrder(order.orderReference);
+    expect(delRes.success).toBe(true);
+
+    const check = await getOrderByReference(order.orderReference);
+    expect(check).toBeNull();
+  });
 });
+

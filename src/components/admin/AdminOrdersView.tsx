@@ -271,6 +271,46 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
     }
   };
 
+  const handleDeleteOrder = async (orderReference: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete order "${orderReference}"?\n\nThis will completely remove it from the database and CRM.`
+      )
+    ) {
+      return;
+    }
+
+    setActionLoading(true);
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete_order",
+          orderReference,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setOrders((prev) => prev.filter((o) => o.orderReference !== orderReference));
+        if (previewOrder?.orderReference === orderReference) {
+          setPreviewScreenshotUrl(null);
+          setPreviewOrder(null);
+        }
+        setMessage(`Order ${orderReference} was permanently deleted.`);
+      } else {
+        alert(data.error || "Failed to delete order");
+      }
+    } catch {
+      alert("Network error deleting order");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: AdminOrder["status"]) => {
     switch (status) {
       case "payment_proof_submitted":
@@ -507,6 +547,16 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                         ✅ Mark Delivered
                       </button>
                     )}
+
+                    <button
+                      onClick={() => handleDeleteOrder(order.orderReference)}
+                      disabled={actionLoading}
+                      className="flex-1 sm:flex-none justify-center px-3.5 py-2 sm:py-1.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition min-h-[40px] flex items-center gap-1.5"
+                      title="Permanently delete this order from database"
+                    >
+                      <span>🗑️</span>
+                      <span>Delete Order</span>
+                    </button>
                   </div>
                 </div>
 
@@ -870,6 +920,19 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ initialOrders 
                 >
                   Download 📥
                 </a>
+                {previewOrder && (
+                  <button
+                    onClick={() => {
+                      const ref = previewOrder.orderReference;
+                      handleDeleteOrder(ref);
+                    }}
+                    disabled={actionLoading}
+                    className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold"
+                    title="Permanently delete this order"
+                  >
+                    🗑️ Delete Order
+                  </button>
+                )}
               </div>
 
               {previewOrder && ["payment_proof_submitted", "payment_initiated", "pending"].includes(previewOrder.status) && (

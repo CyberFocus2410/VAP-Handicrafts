@@ -682,3 +682,81 @@ export async function listAllOrders(filter?: { status?: string }): Promise<Store
   );
 }
 
+/**
+ * Permanently deletes an order from Supabase (orders table, order_metadata) and memory.
+ */
+export async function deleteOrder(
+  orderReference: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await hydrateOrdersFromSupabase();
+    const order = memoryOrders.get(orderReference);
+    if (!order) {
+      return { success: false, error: "Order not found" };
+    }
+
+    memoryOrders.delete(orderReference);
+
+    if (env.server.SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = getSupabaseAdminClient();
+
+      // 1. Delete from orders table (foreign keys cascade to order_items, payments, stock_reservations, payment_events)
+      const { error: dbErr } = await supabase
+        .from("orders")
+        .delete()
+        .eq("order_reference", orderReference);
+
+      if (dbErr) {
+        console.warn("[OrdersService] Database order delete error:", dbErr);
+      }
+
+      // 2. Remove from site_settings.order_metadata
+      const allOrders = Object.fromEntries(memoryOrders.entries());
+      await supabase.from("site_settings").upsert(
+        {
+          key: "order_metadata",
+          value: allOrders,
+          is_public: false,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+
+      // 3. Delete uploaded screenshot file if any
+      if (order.paymentProofUrl) {
+        try {
+          const urlParts = order.paymentProofUrl.split("/");
+          const lastPart = urlParts[urlParts.length - 1];
+          const fileName = lastPart?.split("?")[0];
+          if (fileName) {
+            await supabase.storage.from("order-proofs").remove([fileName]);
+          }
+        } catch (storageErr) {
+          console.warn("[OrdersService] Failed to clean up screenshot:", storageErr);
+        }
+      }
+    }
+
+    // 4. Log admin audit
+    logAdminAudit({
+      action: "delete_order",
+      entityType: "order",
+      entityId: orderReference,
+      details: {
+        orderReference,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail,
+        totalMinor: order.totalMinor,
+        status: order.status,
+      },
+    }).catch((e) => console.warn("Audit log warning:", e));
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete order";
+    console.error("[OrdersService] Delete order error:", err);
+    return { success: false, error: message };
+  }
+}
+
+

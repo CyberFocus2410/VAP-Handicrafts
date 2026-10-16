@@ -6,9 +6,16 @@ import {
   deleteCustomerInquiry,
 } from "@/server/admin/crm-service";
 import { InquiryStatus } from "@/server/admin/crm-cms-types";
+import { verifyAdminSessionToken } from "@/server/admin/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("vap_admin_session")?.value;
+    const isAuthed = await verifyAdminSessionToken(sessionCookie);
+    if (!isAuthed) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Admin session required." }, { status: 401 });
+    }
+
     const inquiries = await listAllInquiries();
     return NextResponse.json({
       success: true,
@@ -22,6 +29,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("vap_admin_session")?.value;
+    const isAuthed = await verifyAdminSessionToken(sessionCookie);
+    if (!isAuthed) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Admin session required." }, { status: 401 });
+    }
     const body = await req.json();
     const { action, id, patch, newInquiry } = body;
 
@@ -63,6 +75,12 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("vap_admin_session")?.value;
+    const isAuthed = await verifyAdminSessionToken(sessionCookie);
+    if (!isAuthed) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Admin session required." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) {

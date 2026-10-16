@@ -98,6 +98,36 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
     }
   };
 
+  const handleDeleteCustomer = async (customerKey: string, name: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete profile & CRM notes for "${name}"?\n\nIf this customer has orders, you can also delete them from the Orders tab.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/crm/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", customerKey }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCustomers((prev) => prev.filter((c) => c.customerKey !== customerKey));
+        if (selectedCustomer?.customerKey === customerKey) {
+          setSelectedCustomer(null);
+          setMobileTab("directory");
+        }
+      } else {
+        alert(data.error || "Failed to delete customer profile");
+      }
+    } catch {
+      alert("Network error deleting customer profile");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF5EF] text-[#2D1A16] p-4 sm:p-6 lg:p-10 pb-24 md:pb-12 font-sans">
       <div className="max-w-6xl mx-auto">
@@ -307,6 +337,16 @@ export const AdminCustomersView: React.FC<AdminCustomersViewProps> = ({
                         </a>
                       </>
                     )}
+                    <button
+                      onClick={() =>
+                        handleDeleteCustomer(selectedCustomer.customerKey, selectedCustomer.name)
+                      }
+                      className="px-3 py-2 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition flex items-center gap-1"
+                      title="Delete profile & notes for this customer"
+                    >
+                      <span>🗑️</span>
+                      <span>Delete Profile</span>
+                    </button>
                   </div>
                 </div>
 

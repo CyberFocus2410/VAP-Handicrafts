@@ -19,11 +19,63 @@ const inquiriesStore: Map<string, CustomerInquiry> =
 // Clean initial store (no fake test inquiries for production launch)
 
 /**
+ * Normalizes an email address for case-insensitive matching.
+ */
+export function normalizeEmail(email?: string | null): string {
+  if (!email) return "";
+  return email.toLowerCase().trim();
+}
+
+/**
+ * Normalizes an Indian or international phone number to core digits.
+ * Strips formatting, spaces, +91, and leading 0s.
+ */
+export function normalizePhone(phone?: string | null): string {
+  if (!phone) return "";
+  let digits = phone.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    digits = digits.slice(2);
+  } else if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+  return digits;
+}
+
+/**
+ * Formats a customer name into clean Title Case regardless of whether they typed
+ * in all-caps (e.g. "PULKIT GARG") or all-lowercase (e.g. "pulkit garg").
+ */
+export function formatCustomerName(name?: string | null): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+
+  const isAllUpper = trimmed === trimmed.toUpperCase();
+  const isAllLower = trimmed === trimmed.toLowerCase();
+
+  if (isAllUpper || isAllLower) {
+    return trimmed
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
+  return trimmed
+    .split(/\s+/)
+    .map((word) => (word.length > 0 ? word.charAt(0).toUpperCase() + word.slice(1) : ""))
+    .join(" ");
+}
+
+/**
  * Aggregates all orders into unified customer profiles with LTV, tags, and personalization history.
+ * Unifies multiple orders into a single customer profile when mobile number OR email matches,
+ * properly formatting customer names regardless of upper/lower case.
  */
 export async function listAllCustomers(): Promise<CustomerProfile[]> {
+  let supabase: ReturnType<typeof getSupabaseAdminClient> | null = null;
   try {
-    const supabase = getSupabaseAdminClient();
+    supabase = getSupabaseAdminClient();
     const { data: row } = await supabase
       .from("site_settings")
       .select("value")
@@ -44,96 +96,209 @@ export async function listAllCustomers(): Promise<CustomerProfile[]> {
   const orders = await listAllOrders();
   const customerMap = new Map<string, CustomerProfile>();
 
-  for (const order of orders) {
-    const emailKey = order.customerEmail.toLowerCase().trim();
-    const phoneKey = order.customerPhone.trim();
-    const customerKey = emailKey || phoneKey || order.orderReference;
+  // Disjoint set (Union-Find) to merge orders matching on normalized email OR phone
+  const n = orders.length;
+  const parent = Array.from({ length: n }, (_, i) => i);
 
-    const existing = customerMap.get(customerKey);
+  function findRoot(i: number): number {
+    let root = i;
+    while (root !== parent[root]) {
+      root = parent[root]!;
+    }
+    let curr = i;
+    while (curr !== root) {
+      const nxt = parent[curr]!;
+      parent[curr] = root;
+      curr = nxt;
+    }
+    return root;
+  }
 
-    const itemsSummary = order.items.map((i) => `${i.productTitle} (${i.quantity})`).join(", ");
-    const orderSummary = {
-      orderReference: order.orderReference,
-      date: order.createdAt,
-      status: order.status,
-      amountMinor: order.totalMinor,
-      itemCount: order.items.reduce((s, i) => s + i.quantity, 0),
-      itemsSummary,
-    };
+  function unionRoots(i: number, j: number) {
+    const rootI = findRoot(i);
+    const rootJ = findRoot(j);
+    if (rootI !== rootJ) {
+      parent[rootI] = rootJ;
+    }
+  }
 
-    const personalizations = order.items
-      .filter((i) => i.customization)
-      .map((i) => {
-        const c = i.customization as Record<string, string>;
-        return {
-          orderReference: order.orderReference,
-          templateType: c.templateId || "custom_card",
-          recipientName: c.recipientName,
-          licenseHolder: c.licenseHolder,
-          message: c.message,
-          date: c.validFrom,
-        };
-      });
+  const emailToOrderIdx = new Map<string, number>();
+  const phoneToOrderIdx = new Map<string, number>();
 
-    const address = {
-      fullName: order.shippingAddress.fullName,
-      streetAddress: order.shippingAddress.streetAddress,
-      city: order.shippingAddress.city,
-      state: order.shippingAddress.state,
-      pincode: order.shippingAddress.pincode,
-    };
+  for (let i = 0; i < n; i++) {
+    const order = orders[i]!;
+    const normEmail = normalizeEmail(order.customerEmail);
+    const normPhone = normalizePhone(order.customerPhone);
 
-    if (!existing) {
-      const storedNote = customerNotesStore.get(customerKey) || { tags: [], internalNotes: "" };
-
-      // Compute initial tags based on behaviour
-      const computedTags = [...storedNote.tags];
-      if (order.totalMinor >= 200000 && !computedTags.includes("VIP Buyer")) {
-        computedTags.push("VIP Buyer");
+    if (normEmail) {
+      if (emailToOrderIdx.has(normEmail)) {
+        unionRoots(i, emailToOrderIdx.get(normEmail)!);
+      } else {
+        emailToOrderIdx.set(normEmail, i);
       }
-      if (personalizations.length > 0 && !computedTags.includes("Personalization Lover")) {
-        computedTags.push("Personalization Lover");
-      }
+    }
 
-      customerMap.set(customerKey, {
-        id: crypto.createHash("md5").update(customerKey).digest("hex").slice(0, 12),
-        customerKey,
-        name: order.customerName,
-        email: order.customerEmail,
-        phone: order.customerPhone,
-        tags: computedTags,
-        internalNotes: storedNote.internalNotes,
-        totalOrders: 1,
-        totalSpendMinor: order.totalMinor,
-        firstOrderDate: order.createdAt,
-        lastOrderDate: order.createdAt,
-        orders: [orderSummary],
-        addresses: [address],
-        personalizations,
-      });
-    } else {
-      existing.totalOrders += 1;
-      existing.totalSpendMinor += order.totalMinor;
-      if (new Date(order.createdAt) > new Date(existing.lastOrderDate)) {
-        existing.lastOrderDate = order.createdAt;
+    if (normPhone) {
+      if (phoneToOrderIdx.has(normPhone)) {
+        unionRoots(i, phoneToOrderIdx.get(normPhone)!);
+      } else {
+        phoneToOrderIdx.set(normPhone, i);
       }
-      if (new Date(order.createdAt) < new Date(existing.firstOrderDate)) {
-        existing.firstOrderDate = order.createdAt;
-      }
-      existing.orders.push(orderSummary);
-      existing.personalizations.push(...personalizations);
+    }
+  }
 
-      // Check if address already exists
-      const hasAddr = existing.addresses.some(
-        (a) => a.streetAddress === address.streetAddress && a.pincode === address.pincode
+  // Group orders by their disjoint set root
+  const groups = new Map<number, (typeof orders)[0][]>();
+  for (let i = 0; i < n; i++) {
+    const root = findRoot(i);
+    const existingGroup = groups.get(root) ?? [];
+    existingGroup.push(orders[i]!);
+    groups.set(root, existingGroup);
+  }
+
+  for (const groupOrders of groups.values()) {
+    // Sort orders by createdAt descending (most recent first)
+    groupOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const latestOrder = groupOrders[0]!;
+
+    // Find best name: prefer longest cleanly formatted name among orders
+    const allNames = groupOrders
+      .map((o) => formatCustomerName(o.customerName))
+      .filter(Boolean);
+    const customerName =
+      allNames.sort((a, b) => b.length - a.length)[0] ||
+      formatCustomerName(latestOrder.customerName) ||
+      "Valued Patron";
+
+    // Best email & phone
+    const bestEmail = groupOrders.map((o) => o.customerEmail?.trim()).find(Boolean) || "";
+    const bestPhone = groupOrders.map((o) => o.customerPhone?.trim()).find(Boolean) || "";
+
+    const normEmail = normalizeEmail(bestEmail);
+    const normPhone = normalizePhone(bestPhone);
+
+    // Primary unique customer key
+    const customerKey = normEmail || (normPhone ? `phone:${normPhone}` : latestOrder.orderReference);
+
+    // Retrieve stored founder notes & tags if present
+    const storedNote =
+      customerNotesStore.get(customerKey) ||
+      (normEmail ? customerNotesStore.get(normEmail) : undefined) ||
+      (normPhone ? customerNotesStore.get(`phone:${normPhone}`) : undefined) ||
+      { tags: [], internalNotes: "" };
+
+    const totalOrders = groupOrders.length;
+    const totalSpendMinor = groupOrders.reduce((sum, o) => sum + o.totalMinor, 0);
+
+    const dates = groupOrders.map((o) => new Date(o.createdAt).getTime());
+    const firstOrderDate = new Date(Math.min(...dates)).toISOString();
+    const lastOrderDate = new Date(Math.max(...dates)).toISOString();
+
+    // Map order summaries
+    const ordersList = groupOrders.map((order) => {
+      const itemsSummary = order.items.map((i) => `${i.productTitle} (${i.quantity})`).join(", ");
+      return {
+        orderReference: order.orderReference,
+        date: order.createdAt,
+        status: order.status,
+        amountMinor: order.totalMinor,
+        itemCount: order.items.reduce((s, i) => s + i.quantity, 0),
+        itemsSummary,
+      };
+    });
+
+    // Map personalizations
+    const personalizations = groupOrders.flatMap((order) =>
+      order.items
+        .filter((i) => i.customization)
+        .map((i) => {
+          const c = i.customization as Record<string, string>;
+          return {
+            orderReference: order.orderReference,
+            templateType: c.templateId || "custom_card",
+            recipientName: c.recipientName,
+            licenseHolder: c.licenseHolder,
+            message: c.message,
+            date: c.validFrom,
+          };
+        })
+    );
+
+    // Collect distinct addresses
+    const addresses: CustomerProfile["addresses"] = [];
+    for (const order of groupOrders) {
+      const addr = {
+        fullName: formatCustomerName(order.shippingAddress.fullName || order.customerName),
+        streetAddress: order.shippingAddress.streetAddress,
+        city: order.shippingAddress.city,
+        state: order.shippingAddress.state,
+        pincode: order.shippingAddress.pincode,
+      };
+      const alreadyPresent = addresses.some(
+        (a) =>
+          a.streetAddress.toLowerCase().trim() === addr.streetAddress.toLowerCase().trim() &&
+          a.pincode.trim() === addr.pincode.trim()
       );
-      if (!hasAddr) {
-        existing.addresses.push(address);
+      if (!alreadyPresent) {
+        addresses.push(addr);
       }
+    }
 
-      // Add repeat customer tag if >= 2 orders
-      if (existing.totalOrders >= 2 && !existing.tags.includes("Repeat Customer")) {
-        existing.tags.push("Repeat Customer");
+    // Dynamic customer behavior tags
+    const computedTags = [...storedNote.tags];
+    if (totalOrders >= 2 && !computedTags.includes("Repeat Customer")) {
+      computedTags.push("Repeat Customer");
+    }
+    if (totalSpendMinor >= 200000 && !computedTags.includes("VIP Buyer")) {
+      computedTags.push("VIP Buyer");
+    }
+    if (personalizations.length > 0 && !computedTags.includes("Personalization Lover")) {
+      computedTags.push("Personalization Lover");
+    }
+
+    const profileId = crypto.createHash("md5").update(customerKey).digest("hex").slice(0, 12);
+
+    const profile: CustomerProfile = {
+      id: profileId,
+      customerKey,
+      name: customerName,
+      email: bestEmail,
+      phone: bestPhone,
+      tags: computedTags,
+      internalNotes: storedNote.internalNotes,
+      totalOrders,
+      totalSpendMinor,
+      firstOrderDate,
+      lastOrderDate,
+      orders: ordersList,
+      addresses,
+      personalizations,
+    };
+
+    customerMap.set(customerKey, profile);
+
+    // Sync to Supabase customer_profiles table if database is connected
+    if (supabase) {
+      try {
+        await supabase
+          .from("customer_profiles")
+          .upsert(
+            {
+              customer_key: customerKey,
+              customer_name: customerName,
+              customer_email: bestEmail || null,
+              customer_phone: bestPhone || null,
+              tags: computedTags,
+              internal_notes: storedNote.internalNotes || "",
+              total_spend_minor: totalSpendMinor,
+              total_orders: totalOrders,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "customer_key" }
+          );
+      } catch (e) {
+        console.warn("[CRM Notice] customer_profiles upsert notice:", e);
       }
     }
   }
@@ -375,20 +540,87 @@ export async function updateCustomerInquiry(
 }
 
 /**
- * Deletes a customer inquiry permanently from CRM and Supabase.
+ * Deletes a customer inquiry permanently from CRM, Supabase site_settings, and database table.
  */
 export async function deleteCustomerInquiry(id: string): Promise<boolean> {
+  // Ensure we have latest data from database before deleting
+  await listAllInquiries();
   const existed = inquiriesStore.delete(id);
+
   try {
     const supabase = getSupabaseAdminClient();
+
+    // 1. Sync updated inquiries list to site_settings
     await supabase.from("site_settings").upsert({
       key: "crm_inquiries",
       value: Array.from(inquiriesStore.values()),
       is_public: false,
       updated_at: new Date().toISOString(),
     });
+
+    // 2. Also delete from customer_inquiries table in Supabase
+    try {
+      await supabase.from("customer_inquiries").delete().eq("id", id);
+    } catch (tblErr) {
+      console.warn("[CRM Notice] customer_inquiries table delete notice:", tblErr);
+    }
+
+    // 3. Log to admin audit log
+    try {
+      await supabase.from("admin_audit_logs").insert({
+        action: "delete_inquiry",
+        entity_type: "inquiry",
+        entity_id: id,
+        details: { id },
+        created_at: new Date().toISOString(),
+      });
+    } catch {
+      // audit log fallback
+    }
   } catch (err) {
     console.warn("[CRM Error] Failed to delete inquiry from Supabase:", err);
   }
   return existed;
 }
+
+/**
+ * Permanently deletes a customer profile's custom notes and tags from CRM and Supabase.
+ */
+export async function deleteCustomerProfile(customerKey: string): Promise<boolean> {
+  const existed = customerNotesStore.delete(customerKey);
+  try {
+    const supabase = getSupabaseAdminClient();
+
+    // 1. Update site_settings crm_customer_notes
+    await supabase.from("site_settings").upsert({
+      key: "crm_customer_notes",
+      value: Object.fromEntries(customerNotesStore),
+      is_public: false,
+      updated_at: new Date().toISOString(),
+    });
+
+    // 2. Delete from customer_profiles table if present
+    try {
+      await supabase.from("customer_profiles").delete().eq("customer_key", customerKey);
+    } catch (tblErr) {
+      console.warn("[CRM Notice] customer_profiles table delete notice:", tblErr);
+    }
+
+    // 3. Log to admin audit log
+    try {
+      await supabase.from("admin_audit_logs").insert({
+        action: "delete_customer_profile",
+        entity_type: "customer",
+        entity_id: customerKey,
+        details: { customerKey },
+        created_at: new Date().toISOString(),
+      });
+    } catch {
+      // audit log fallback
+    }
+  } catch (err) {
+    console.warn("[CRM Error] Failed to delete customer profile from Supabase:", err);
+  }
+  return existed;
+}
+

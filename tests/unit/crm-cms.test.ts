@@ -5,6 +5,10 @@ import {
   listAllInquiries,
   createCustomerInquiry,
   updateCustomerInquiry,
+  deleteCustomerInquiry,
+  normalizeEmail,
+  normalizePhone,
+  formatCustomerName,
 } from "@/server/admin/crm-service";
 import {
   listCmsProducts,
@@ -54,6 +58,24 @@ describe("Phase 6 CRM & CMS Services", () => {
       expect(refreshedFirst?.internalNotes).toBe(testNotes);
       expect(refreshedFirst?.tags).toEqual(testTags);
     });
+
+    it("normalizes customer names and matches multiple orders into a single profile across upper and lower case", () => {
+      // Name casing normalization
+      expect(formatCustomerName("pulkit garg")).toBe("Pulkit Garg");
+      expect(formatCustomerName("PULKIT GARG")).toBe("Pulkit Garg");
+      expect(formatCustomerName("vivan mittal")).toBe("Vivan Mittal");
+      expect(formatCustomerName("VIVAN MITTAL")).toBe("Vivan Mittal");
+
+      // Email normalization
+      expect(normalizeEmail("Pulkit@Gmail.COM ")).toBe("pulkit@gmail.com");
+      expect(normalizeEmail("Vivan.Mittal@Company.IN")).toBe("vivan.mittal@company.in");
+
+      // Phone number normalization
+      expect(normalizePhone("+91 93115 16813")).toBe("9311516813");
+      expect(normalizePhone("09311516813")).toBe("9311516813");
+      expect(normalizePhone("+919310039258")).toBe("9310039258");
+      expect(normalizePhone("93100-39258")).toBe("9310039258");
+    });
   });
 
   describe("CRM Inquiries & Custom Gifting Pipeline", () => {
@@ -95,6 +117,23 @@ describe("Phase 6 CRM & CMS Services", () => {
       expect(updated?.assignedTo).toBe("Pulkit Garg");
       expect(updated?.quoteMinor).toBe(1500000);
       expect(updated?.internalNotes).toContain("Sent catalog");
+    });
+
+    it("deletes a customer inquiry permanently from CRM pipeline and database", async () => {
+      const created = await createCustomerInquiry({
+        name: "Spam Inquiry Test",
+        email: "spam@fakebot.org",
+        message: "Delete this fake test inquiry.",
+      });
+
+      const allBefore = await listAllInquiries();
+      expect(allBefore.some((i) => i.id === created.id)).toBe(true);
+
+      const deleted = await deleteCustomerInquiry(created.id);
+      expect(deleted).toBe(true);
+
+      const allAfter = await listAllInquiries();
+      expect(allAfter.some((i) => i.id === created.id)).toBe(false);
     });
   });
 

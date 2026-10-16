@@ -340,15 +340,32 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
                         <span className={isSelected ? "text-white/60" : "text-[#2D1A16]/50"}>
                           Assigned: {inq.assignedTo || "None"}
                         </span>
-                        {inq.quoteMinor && (
+                        <div className="flex items-center gap-2">
+                          {inq.quoteMinor && (
+                            <span
+                              className={`font-mono font-bold ${
+                                isSelected ? "text-emerald-300" : "text-emerald-800"
+                              }`}
+                            >
+                              {formatINR(inq.quoteMinor)}
+                            </span>
+                          )}
                           <span
-                            className={`font-mono font-bold ${
-                              isSelected ? "text-emerald-300" : "text-emerald-800"
+                            role="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteInquiry(inq.id, inq.name);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                              isSelected
+                                ? "bg-rose-500/20 text-rose-200 hover:bg-rose-500 hover:text-white"
+                                : "bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white"
                             }`}
+                            title="Delete this inquiry from database"
                           >
-                            {formatINR(inq.quoteMinor)}
+                            🗑️ Delete
                           </span>
-                        )}
+                        </div>
                       </div>
                     </button>
                   );
