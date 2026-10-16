@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 23 Complete: Quick Add to Cart, CRM Deletion (Orders, Queries, Leads) & Customer Profile Unification** |
+| **Current phase** | **Phase 24 Complete: Secret & Public Coupons Engine, Resilient CMS Image Upload with Client-Side Compression** |
 | Last updated | 2026-10-16 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
-| Deployable build? | ✅ Yes (27 pages/routes compiled, 0 errors, 101 unit tests green) |
+| Deployable build? | ✅ Yes (27 pages/routes compiled, 0 errors, 103 unit tests green) |
 
 ## 2. Phase Tracker
 
@@ -47,6 +47,7 @@
 | 21 Bing Webmaster Tools Site Verification & Deployment Stabilization | ✅ Done | Deployed `public/BingSiteAuth.xml` to site root; configured `<meta name="msvalidate.01" content="E5581AA9ABA3AF2FE0E16A129B506495" />` cleanly via Next.js Metadata API in `metadata.verification.other`; eliminated invalid `<head>` element from JSX root layout and purged redundant vercel.json rewrites; 95 unit tests and production build 100% green. |
 | 22 Brand Logo Google Search Appearance & Social Link Preview Optimization | ✅ Done | Embedded official 3D embossed logo across Google Search Favicons (multi-size ICO, 180x180 Apple, 192x192 & 512x512 Google Search Central multiple-of-48px requirements); generated bespoke 1200x630 Open Graph preview card with gold double borders and centered logo for WhatsApp, iMessage, Twitter/X, Facebook, LinkedIn; added Schema.org Organization and WebSite structured data with logo and image URLs; enabled max-image-preview:large in robots metadata; build passed 100% clean (27 pages). |
 | 23 Quick Add to Cart, CRM Deletion & Single Customer Profile Unification | ✅ Done | Quick Add to Cart button on ProductCard with instant drawer slide-out & visual checkmark feedback across all shop/category grids; Permanent deletion of fake/unneeded orders, inquiries, leads, and customer profiles with cascading DB deletion and storage screenshot cleanup; Disjoint-set customer profile aggregation unifying multiple orders into single profiles via case-insensitive email & normalized mobile number matching with automatic Title Case name formatting; 101 unit tests passing, production build 100% green. |
+| 24 Secret/Public Coupons & Resilient CMS Image Upload | ✅ Done | Secret code system enabling private discounts not shown publicly; public coupon visibility toggle with live storefront banner; pause/resume and permanent deletion of coupons in CMS; client-side image compression resizing raw phone photos (down from 10MB+ to ~250KB WebP) before upload to prevent Vercel 4.5MB payload limit errors; automated Supabase bucket creation and zero-downtime base64 Data URL fallback; 103 unit tests passing, production build 100% green. |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 
