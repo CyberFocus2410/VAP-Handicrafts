@@ -14,7 +14,7 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 24 Complete: Secret & Public Coupons Engine, Resilient CMS Image Upload with Client-Side Compression** |
+| **Current phase** | **Phase 25 Complete: Storefront Categories CMS Image Upload & 1-Click Card Photo Modification** |
 | Last updated | 2026-10-16 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
 | Deployable build? | ✅ Yes (27 pages/routes compiled, 0 errors, 103 unit tests green) |
@@ -48,6 +48,7 @@
 | 22 Brand Logo Google Search Appearance & Social Link Preview Optimization | ✅ Done | Embedded official 3D embossed logo across Google Search Favicons (multi-size ICO, 180x180 Apple, 192x192 & 512x512 Google Search Central multiple-of-48px requirements); generated bespoke 1200x630 Open Graph preview card with gold double borders and centered logo for WhatsApp, iMessage, Twitter/X, Facebook, LinkedIn; added Schema.org Organization and WebSite structured data with logo and image URLs; enabled max-image-preview:large in robots metadata; build passed 100% clean (27 pages). |
 | 23 Quick Add to Cart, CRM Deletion & Single Customer Profile Unification | ✅ Done | Quick Add to Cart button on ProductCard with instant drawer slide-out & visual checkmark feedback across all shop/category grids; Permanent deletion of fake/unneeded orders, inquiries, leads, and customer profiles with cascading DB deletion and storage screenshot cleanup; Disjoint-set customer profile aggregation unifying multiple orders into single profiles via case-insensitive email & normalized mobile number matching with automatic Title Case name formatting; 101 unit tests passing, production build 100% green. |
 | 24 Secret/Public Coupons & Resilient CMS Image Upload | ✅ Done | Secret code system enabling private discounts not shown publicly; public coupon visibility toggle with live storefront banner; pause/resume and permanent deletion of coupons in CMS; client-side image compression resizing raw phone photos (down from 10MB+ to ~250KB WebP) before upload to prevent Vercel 4.5MB payload limit errors; automated Supabase bucket creation and zero-downtime base64 Data URL fallback; 103 unit tests passing, production build 100% green. |
+| 25 Categories CMS Image Upload & 1-Click Card Photo Modification | ✅ Done | Added direct photo upload to Storefront Categories CMS (`/admin/categories`); 1-click "📷 Change Photo" button on category cards in grid for immediate live update; Add & Edit Collection modals equipped with visual image previews, camera/device file picker, client compression, and ImgBB/URL resolver; 103 unit tests passing, production build 100% green. |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 

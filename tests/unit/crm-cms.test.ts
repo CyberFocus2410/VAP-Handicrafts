@@ -232,8 +232,10 @@ describe("Phase 6 CRM & CMS Services", () => {
 
       const updated = await updateCmsCategory(newCat.id, {
         description: "Updated description for festive patrons.",
+        imageUrl: "/images/products/golden-link-cowrie-charm-bracelet.webp",
       });
       expect(updated.description).toBe("Updated description for festive patrons.");
+      expect(updated.imageUrl).toBe("/images/products/golden-link-cowrie-charm-bracelet.webp");
     });
   });
 
