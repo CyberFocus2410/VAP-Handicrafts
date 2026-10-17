@@ -21,6 +21,25 @@ export interface DiscountCoupon {
   description?: string;
 }
 
+export interface FreebieScheme {
+  id: string;
+  title: string;
+  minOrderMinor: number; // e.g. 29900 (₹299)
+  freebieProductId: string;
+  freebieProductSlug: string;
+  freebieProductName: string;
+  freebieVariantId: string;
+  freebieVariantName: string;
+  freebiePriceMinor: number; // original value in paise, e.g. 14900 (₹149)
+  freebieImageUrl: string;
+  maxCustomersLimit: number; // e.g. 11 customers
+  claimedCount: number;
+  isActive: boolean;
+  isBannerVisible: boolean;
+  bannerText: string;
+  createdAt: string;
+}
+
 export const DEFAULT_SHIPPING_CONFIG: ShippingConfig = {
   standardShippingPaise: 9900, // ₹99
   freeShippingThresholdPaise: 99900, // ₹999
@@ -54,10 +73,32 @@ export const DEFAULT_COUPONS: DiscountCoupon[] = [
   },
 ];
 
+export const DEFAULT_FREEBIE_SCHEMES: FreebieScheme[] = [
+  {
+    id: "scheme-freebie-149",
+    title: "First 11 Customers Special: Free Gift worth ₹149 on orders above ₹299",
+    minOrderMinor: 29900, // ₹299
+    freebieProductId: "00000000-0000-4000-8000-000000000001",
+    freebieProductSlug: "spiral-conch-pink-crackle-bracelet",
+    freebieProductName: "Handcrafted Seaside Shell Charm Keepsake",
+    freebieVariantId: "var-freebie-001",
+    freebieVariantName: "Complimentary Freebie Gift (Worth ₹149)",
+    freebiePriceMinor: 14900, // ₹149 worth
+    freebieImageUrl: "/images/products/shell-cone-pink-crackle-bracelet.webp",
+    maxCustomersLimit: 11,
+    claimedCount: 0,
+    isActive: true,
+    isBannerVisible: true,
+    bannerText: "A freebie worth rupees 149 will be gifted free on minimum order of 299 for the first 11 customers.",
+    createdAt: new Date().toISOString(),
+  },
+];
+
 // In-memory cache
 const globalWithPromos = globalThis as typeof globalThis & {
   __vapShippingConfig?: ShippingConfig;
   __vapDiscountCoupons?: Map<string, DiscountCoupon>;
+  __vapFreebieSchemes?: Map<string, FreebieScheme>;
 };
 
 let memoryShipping: ShippingConfig =
@@ -66,6 +107,10 @@ let memoryShipping: ShippingConfig =
 const couponsStore: Map<string, DiscountCoupon> =
   globalWithPromos.__vapDiscountCoupons ??
   (globalWithPromos.__vapDiscountCoupons = new Map(DEFAULT_COUPONS.map((c) => [c.id, c])));
+
+const freebieStore: Map<string, FreebieScheme> =
+  globalWithPromos.__vapFreebieSchemes ??
+  (globalWithPromos.__vapFreebieSchemes = new Map(DEFAULT_FREEBIE_SCHEMES.map((f) => [f.id, f])));
 
 /* -------------------------------------------------------------------------- */
 /*                            Shipping Management                             */
@@ -383,3 +428,155 @@ export async function validateCoupon(
     description: coupon.description,
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/*                            Freebie Gift Schemes                            */
+/* -------------------------------------------------------------------------- */
+
+export async function listFreebieSchemes(): Promise<FreebieScheme[]> {
+  try {
+    const supabase = env.server.SUPABASE_SERVICE_ROLE_KEY
+      ? getSupabaseAdminClient()
+      : getSupabaseAnonClient();
+
+    const { data: row } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "freebie_schemes")
+      .maybeSingle();
+
+    if (row?.value && Array.isArray(row.value) && row.value.length > 0) {
+      freebieStore.clear();
+      for (const item of row.value as FreebieScheme[]) {
+        freebieStore.set(item.id, item);
+      }
+    }
+  } catch {
+    // Non-fatal fallback
+  }
+
+  return Array.from(freebieStore.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export async function getActiveFreebieScheme(): Promise<FreebieScheme | null> {
+  const schemes = await listFreebieSchemes();
+  return (
+    schemes.find(
+      (s) => s.isActive && (s.maxCustomersLimit <= 0 || s.claimedCount < s.maxCustomersLimit)
+    ) || null
+  );
+}
+
+async function persistFreebieSchemes(): Promise<void> {
+  if (env.server.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabase = getSupabaseAdminClient();
+      const list = Array.from(freebieStore.values());
+      await supabase.from("site_settings").upsert(
+        {
+          key: "freebie_schemes",
+          value: list,
+          is_public: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+    } catch (err) {
+      console.error("[Promotions] Failed to persist freebie_schemes to Supabase:", err);
+    }
+  }
+}
+
+export async function createFreebieScheme(input: {
+  title: string;
+  minOrderMinor: number;
+  freebieProductId?: string;
+  freebieProductSlug?: string;
+  freebieProductName: string;
+  freebieVariantId?: string;
+  freebieVariantName?: string;
+  freebiePriceMinor: number;
+  freebieImageUrl?: string;
+  maxCustomersLimit?: number;
+  isActive?: boolean;
+  isBannerVisible?: boolean;
+  bannerText?: string;
+}): Promise<FreebieScheme> {
+  await listFreebieSchemes();
+
+  const id = `scheme-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const minOrderRupees = Math.round(input.minOrderMinor / 100);
+  const freebieWorthRupees = Math.round(input.freebiePriceMinor / 100);
+  const maxLimit = input.maxCustomersLimit !== undefined ? Math.max(0, input.maxCustomersLimit) : 11;
+
+  const newScheme: FreebieScheme = {
+    id,
+    title: input.title.trim(),
+    minOrderMinor: Math.max(0, input.minOrderMinor),
+    freebieProductId: input.freebieProductId || "00000000-0000-4000-8000-000000000001",
+    freebieProductSlug: input.freebieProductSlug || "spiral-conch-pink-crackle-bracelet",
+    freebieProductName: input.freebieProductName.trim() || "Handcrafted Seaside Shell Charm Keepsake",
+    freebieVariantId: input.freebieVariantId || `var-${id}`,
+    freebieVariantName: input.freebieVariantName || "Complimentary Freebie Gift",
+    freebiePriceMinor: Math.max(0, input.freebiePriceMinor),
+    freebieImageUrl: input.freebieImageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp",
+    maxCustomersLimit: maxLimit,
+    claimedCount: 0,
+    isActive: input.isActive ?? true,
+    isBannerVisible: input.isBannerVisible ?? true,
+    bannerText:
+      input.bannerText?.trim() ||
+      `A freebie worth rupees ${freebieWorthRupees} will be gifted free on minimum order of ${minOrderRupees} for the first ${maxLimit} customers.`,
+    createdAt: new Date().toISOString(),
+  };
+
+  freebieStore.set(id, newScheme);
+  await persistFreebieSchemes();
+  return newScheme;
+}
+
+export async function updateFreebieScheme(
+  id: string,
+  patch: Partial<Omit<FreebieScheme, "id" | "createdAt">>
+): Promise<FreebieScheme> {
+  await listFreebieSchemes();
+  const existing = freebieStore.get(id);
+  if (!existing) {
+    throw new Error(`Freebie scheme "${id}" not found.`);
+  }
+
+  const updated: FreebieScheme = {
+    ...existing,
+    ...patch,
+  };
+
+  freebieStore.set(id, updated);
+  await persistFreebieSchemes();
+  return updated;
+}
+
+export async function deleteFreebieScheme(id: string): Promise<boolean> {
+  await listFreebieSchemes();
+  const deleted = freebieStore.delete(id);
+  if (deleted) {
+    await persistFreebieSchemes();
+  }
+  return deleted;
+}
+
+export async function incrementFreebieClaim(schemeId: string): Promise<void> {
+  try {
+    await listFreebieSchemes();
+    const scheme = freebieStore.get(schemeId);
+    if (scheme) {
+      scheme.claimedCount = (scheme.claimedCount || 0) + 1;
+      freebieStore.set(schemeId, scheme);
+      await persistFreebieSchemes();
+    }
+  } catch {
+    // Non-fatal
+  }
+}
+

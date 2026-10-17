@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Minus, Trash2, ShoppingBag, ArrowRight, ShieldCheck, Sparkles, Tag } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingBag, ArrowRight, ShieldCheck, Sparkles, Tag, Gift } from "lucide-react";
 import { useCartStore } from "@/lib/cart/cart-store";
 import { type ValidatedCartResponse } from "@/lib/cart/types";
 import { formatINR } from "@/lib/money";
@@ -109,6 +109,7 @@ export function CartPageView() {
   const neededForFreeShipping = validatedCart?.amountNeededForFreeShippingMinor ?? 99900;
   const freeShippingThreshold = validatedCart?.freeShippingThresholdMinor ?? 99900;
   const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
+  const freebie = validatedCart?.freebie;
 
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,21 +136,54 @@ export function CartPageView() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Left Column: Line Items (8 cols) */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Free Shipping Alert Banner */}
-          <div className="rounded-lg bg-sand/40 border border-border p-4">
-            <div className="flex items-center justify-between text-xs text-cocoa font-medium mb-2">
-              <span>
-                {neededForFreeShipping > 0
-                  ? `Add ${formatINR(neededForFreeShipping)} more for FREE delivery across India!`
-                  : "You qualify for FREE standard shipping! 🎉"}
-              </span>
-              <span className="font-semibold text-rose-deep">{progressPercent}%</span>
-            </div>
-            <div className="w-full bg-sand rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-rose-deep h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
+          {/* Promotional Progress Banners */}
+          <div className="space-y-3">
+            {/* Freebie Gift Banner */}
+            {freebie && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
+                <div className="flex items-center justify-between text-xs text-cocoa font-medium mb-2">
+                  <span className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-200">
+                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      {freebie.isUnlocked
+                        ? `🎉 FREE GIFT worth ₹${Math.round(freebie.freebieWorthMinor / 100)} unlocked and auto-added to your cart at ₹0!`
+                        : `Add ₹${Math.round(freebie.amountNeededMinor / 100)} more to unlock a FREE GIFT worth ₹${Math.round(freebie.freebieWorthMinor / 100)}!`}
+                    </span>
+                  </span>
+                  <span className="font-bold text-amber-700">{freebie.percentage}%</span>
+                </div>
+                <div className="w-full bg-amber-500/20 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      freebie.isUnlocked ? "bg-emerald-600" : "bg-amber-600"
+                    }`}
+                    style={{ width: `${freebie.percentage}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-cocoa-muted mt-1.5">
+                  {freebie.isUnlocked
+                    ? "Complimentary gift added below at ₹0! Limited offer for early customers."
+                    : `Minimum qualifying order: ₹${Math.round(freebie.minOrderMinor / 100)} • First ${freebie.maxCustomers} customers (${freebie.remainingSpots} spots remaining)`}
+                </p>
+              </div>
+            )}
+
+            {/* Free Shipping Alert Banner */}
+            <div className="rounded-lg bg-sand/40 border border-border p-4">
+              <div className="flex items-center justify-between text-xs text-cocoa font-medium mb-2">
+                <span>
+                  {neededForFreeShipping > 0
+                    ? `Add ${formatINR(neededForFreeShipping)} more for FREE delivery across India!`
+                    : "You qualify for FREE standard shipping! 🎉"}
+                </span>
+                <span className="font-semibold text-rose-deep">{progressPercent}%</span>
+              </div>
+              <div className="w-full bg-sand rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-rose-deep h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
           </div>
 
@@ -185,23 +219,40 @@ export function CartPageView() {
                         >
                           {line.productName}
                         </Link>
-                        <p className="text-xs text-cocoa-muted mt-0.5">
-                          Option: <span className="font-medium text-cocoa">{line.variantName}</span> • SKU: {line.sku}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                          <p className="text-xs text-cocoa-muted">
+                            Option: <span className="font-medium text-cocoa">{line.variantName}</span> • SKU: {line.sku}
+                          </p>
+                          {line.isFreebie && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30">
+                              <Sparkles className="w-3 h-3 text-amber-600" />
+                              <span>FREE GIFT (Worth ₹{Math.round((line.originalValueMinor || 14900) / 100)})</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => removeItem(line.lineId)}
-                        className="text-cocoa-muted hover:text-error transition-colors p-1"
-                        aria-label={`Remove ${line.productName} from cart`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {line.isFreebie ? (
+                        <span
+                          className="text-amber-600 p-1 cursor-default"
+                          title="Complimentary gift unlocked with your order"
+                        >
+                          <Gift className="w-5 h-5" />
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(line.lineId)}
+                          className="text-cocoa-muted hover:text-error transition-colors p-1"
+                          aria-label={`Remove ${line.productName} from cart`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
 
                     {/* Customization Details */}
-                    {line.customization && (
+                    {line.customization && !line.isFreebie && (
                       <div className="mt-3 rounded-md bg-sand/60 p-3 text-xs text-cocoa space-y-1 border border-cocoa/5">
                         <div className="flex items-center gap-1.5 font-semibold text-rose-deep">
                           <Sparkles className="w-3.5 h-3.5" />
@@ -235,36 +286,53 @@ export function CartPageView() {
 
                   {/* Quantity and Price */}
                   <div className="flex items-center justify-between pt-4 border-t border-border/60 mt-4">
-                    <div className="flex items-center gap-3 border border-border rounded-full px-3 py-1 bg-surface">
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(line.lineId, line.quantity - 1)}
-                        className="text-cocoa hover:text-rose-deep transition-colors p-0.5"
-                        aria-label={`Decrease quantity of ${line.productName}`}
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="text-xs font-semibold text-cocoa min-w-5 text-center">
-                        {line.quantity}
+                    {line.isFreebie ? (
+                      <span className="text-xs font-medium text-cocoa-muted italic bg-sand/60 px-3 py-1.5 rounded-full border border-border/60">
+                        1 complimentary gift unlocked
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(line.lineId, line.quantity + 1)}
-                        className="text-cocoa hover:text-rose-deep transition-colors p-0.5"
-                        aria-label={`Increase quantity of ${line.productName}`}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    ) : (
+                      <div className="flex items-center gap-3 border border-border rounded-full px-3 py-1 bg-surface">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(line.lineId, line.quantity - 1)}
+                          className="text-cocoa hover:text-rose-deep transition-colors p-0.5"
+                          aria-label={`Decrease quantity of ${line.productName}`}
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-xs font-semibold text-cocoa min-w-5 text-center">
+                          {line.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(line.lineId, line.quantity + 1)}
+                          className="text-cocoa hover:text-rose-deep transition-colors p-0.5"
+                          aria-label={`Increase quantity of ${line.productName}`}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     <div className="text-right">
-                      <span className="text-base font-semibold text-cocoa">
-                        {formatINR(line.subtotalMinor)}
-                      </span>
-                      {line.quantity > 1 && (
-                        <p className="text-[11px] text-cocoa-muted">
-                          {formatINR(line.priceMinor)} each
-                        </p>
+                      {line.isFreebie ? (
+                        <div className="flex flex-col items-end">
+                          <span className="text-base font-bold text-emerald-600">FREE</span>
+                          <span className="text-xs text-cocoa-muted line-through">
+                            {formatINR(line.originalValueMinor || 14900)}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-base font-semibold text-cocoa">
+                            {formatINR(line.subtotalMinor)}
+                          </span>
+                          {line.quantity > 1 && (
+                            <p className="text-[11px] text-cocoa-muted">
+                              {formatINR(line.priceMinor)} each
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

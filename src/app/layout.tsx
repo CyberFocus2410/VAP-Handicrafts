@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { LiveRegionProvider } from "@/components/ui/live-region";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { FreebieUnlockSlidingBar } from "@/components/cart/FreebieUnlockSlidingBar";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent";
 import "@/styles/globals.css";
 
@@ -186,6 +187,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <CartDrawer />
+          <FreebieUnlockSlidingBar />
           <CookieConsentBanner />
         </LiveRegionProvider>
       </body>

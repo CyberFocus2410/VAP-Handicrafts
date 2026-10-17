@@ -104,4 +104,58 @@ describe("Phase 4 Server Authoritative Cart Pricing & Validation", () => {
     expect(result.notices.length).toBeGreaterThan(0);
     expect(result.notices[0]?.type).toBe("OUT_OF_STOCK");
   });
+
+  it("calculates freebie unlock progress when subtotal is below minimum order threshold", async () => {
+    // 1 item worth ₹199 (19900 paise < 29900 paise min order)
+    const cart = [
+      {
+        lineId: "line-01",
+        productId: "00000000-0000-4000-8000-000000000001",
+        productSlug: "spiral-conch-pink-crackle-bracelet",
+        variantId: "var-001-standard",
+        quantity: 1,
+      },
+    ];
+
+    const result = await validateAndPriceCart(cart);
+
+    expect(result.freebie).toBeDefined();
+    if (result.freebie) {
+      expect(result.freebie.isUnlocked).toBe(false);
+      expect(result.freebie.minOrderMinor).toBe(29900);
+      expect(result.freebie.amountNeededMinor).toBe(10000); // ₹100 more to unlock ₹149 gift
+      expect(result.freebie.percentage).toBeLessThan(100);
+    }
+    // Cart should only have 1 regular line, no freebie injected yet
+    expect(result.lines.some((l) => l.isFreebie)).toBe(false);
+  });
+
+  it("automatically injects ₹0 freebie item when cart reaches minimum order threshold of ₹299", async () => {
+    // 2 items worth ₹199 = ₹398 (39800 paise >= 29900 paise)
+    const cart = [
+      {
+        lineId: "line-01",
+        productId: "00000000-0000-4000-8000-000000000001",
+        productSlug: "spiral-conch-pink-crackle-bracelet",
+        variantId: "var-001-standard",
+        quantity: 2,
+      },
+    ];
+
+    const result = await validateAndPriceCart(cart);
+
+    expect(result.freebie).toBeDefined();
+    expect(result.freebie?.isUnlocked).toBe(true);
+    expect(result.freebie?.amountNeededMinor).toBe(0);
+    expect(result.freebie?.percentage).toBe(100);
+
+    // Freebie item must be auto-injected with ₹0 price and ₹149 compareAt value
+    const freebieLine = result.lines.find((l) => l.isFreebie);
+    expect(freebieLine).toBeDefined();
+    expect(freebieLine?.priceMinor).toBe(0);
+    expect(freebieLine?.productName).toContain("Shell Charm Keepsake");
+
+    // Total must only reflect the real items + shipping, zero charge for freebie
+    expect(result.subtotalMinor).toBe(39800);
+  });
 });

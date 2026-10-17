@@ -11,6 +11,7 @@ import {
   getShippingConfig,
   validateCoupon,
   listPublicStorefrontCoupons,
+  getActiveFreebieScheme,
 } from "@/server/admin/promotions-service";
 
 export const FREE_SHIPPING_THRESHOLD_PAISE = 99900; // ₹999 in paise (default fallback)
@@ -185,10 +186,84 @@ export async function validateAndPriceCart(
     // Non-fatal
   }
 
+  // 6. Freebie Scheme Evaluation & Auto-Add
+  let freebieProgress: ValidatedCartResponse["freebie"] = null;
+  try {
+    const activeScheme = await getActiveFreebieScheme();
+    if (activeScheme && activeScheme.isActive) {
+      const isQualified = subtotalMinor >= activeScheme.minOrderMinor && subtotalMinor > 0;
+      const isQuotaAvailable =
+        activeScheme.maxCustomersLimit <= 0 ||
+        activeScheme.claimedCount < activeScheme.maxCustomersLimit;
+
+      const amountNeededMinor = Math.max(0, activeScheme.minOrderMinor - subtotalMinor);
+      const percentage =
+        activeScheme.minOrderMinor > 0
+          ? Math.min(100, Math.round((subtotalMinor / activeScheme.minOrderMinor) * 100))
+          : 100;
+      const remainingSpots =
+        activeScheme.maxCustomersLimit > 0
+          ? Math.max(0, activeScheme.maxCustomersLimit - activeScheme.claimedCount)
+          : 999;
+
+      freebieProgress = {
+        schemeId: activeScheme.id,
+        title: activeScheme.title,
+        freebieName: activeScheme.freebieProductName,
+        freebieImageUrl: activeScheme.freebieImageUrl,
+        freebieWorthMinor: activeScheme.freebiePriceMinor,
+        minOrderMinor: activeScheme.minOrderMinor,
+        currentSubtotalMinor: subtotalMinor,
+        amountNeededMinor,
+        isUnlocked: isQualified && isQuotaAvailable,
+        percentage,
+        maxCustomers: activeScheme.maxCustomersLimit,
+        claimedCount: activeScheme.claimedCount,
+        remainingSpots,
+        bannerText: activeScheme.bannerText,
+      };
+
+      if (isQualified && isQuotaAvailable) {
+        // Auto-add freebie line item with price ₹0
+        const freebieLineId = `freebie-${activeScheme.id}`;
+        validatedLines.push({
+          lineId: freebieLineId,
+          productId: activeScheme.freebieProductId,
+          productSlug: activeScheme.freebieProductSlug,
+          productName: activeScheme.freebieProductName,
+          variantId: activeScheme.freebieVariantId,
+          variantName: activeScheme.freebieVariantName || "Complimentary Freebie Gift",
+          sku: `FREEBIE-${activeScheme.id.slice(-6).toUpperCase()}`,
+          imageUrl: activeScheme.freebieImageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp",
+          imageAlt: activeScheme.freebieProductName,
+          priceMinor: 0, // strictly 0 paise
+          compareAtPriceMinor: activeScheme.freebiePriceMinor, // original value in paise (e.g. ₹149)
+          quantity: 1,
+          subtotalMinor: 0, // strictly 0 paise
+          isDevPrice: false,
+          inStock: true,
+          availableStock: 99,
+          isFreebie: true,
+          originalValueMinor: activeScheme.freebiePriceMinor,
+        });
+
+        notices.push({
+          lineId: freebieLineId,
+          type: "INFO",
+          message: `🎁 Free gift worth ₹${Math.round(activeScheme.freebiePriceMinor / 100)} unlocked and auto-added to your bag at ₹0!`,
+        });
+      }
+    }
+  } catch (freebieErr) {
+    console.warn("[CartValidator] Freebie evaluation notice:", freebieErr);
+  }
+
+  const finalItemCount = validatedLines.reduce((acc, line) => acc + line.quantity, 0);
+
   return {
     valid: validatedLines.length > 0 || intents.length === 0,
     lines: validatedLines,
-    itemCount,
+    itemCount: finalItemCount,
     subtotalMinor,
     shippingMinor,
     discountMinor,
@@ -198,5 +273,6 @@ export async function validateAndPriceCart(
     notices,
     appliedCoupon,
     availableOffers,
+    freebie: freebieProgress,
   };
 }

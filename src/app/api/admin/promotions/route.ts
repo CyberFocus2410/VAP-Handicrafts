@@ -7,19 +7,25 @@ import {
   createDiscountCoupon,
   updateDiscountCoupon,
   deleteDiscountCoupon,
+  listFreebieSchemes,
+  createFreebieScheme,
+  updateFreebieScheme,
+  deleteFreebieScheme,
 } from "@/server/admin/promotions-service";
 
 export async function GET() {
   try {
-    const [shipping, coupons] = await Promise.all([
+    const [shipping, coupons, freebies] = await Promise.all([
       getShippingConfig(),
       listDiscountCoupons(),
+      listFreebieSchemes(),
     ]);
 
     return NextResponse.json({
       success: true,
       shipping,
       coupons,
+      freebies,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load promotions";
@@ -95,6 +101,65 @@ export async function POST(req: NextRequest) {
 
       revalidatePath("/cart");
       revalidatePath("/checkout");
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "create_freebie") {
+      const { freebie } = body;
+      if (!freebie || !freebie.title || !freebie.freebieProductName || freebie.minOrderMinor === undefined) {
+        return NextResponse.json({ success: false, error: "Invalid freebie payload" }, { status: 400 });
+      }
+      const created = await createFreebieScheme({
+        title: freebie.title,
+        minOrderMinor: Number(freebie.minOrderMinor),
+        freebieProductId: freebie.freebieProductId,
+        freebieProductSlug: freebie.freebieProductSlug,
+        freebieProductName: freebie.freebieProductName,
+        freebieVariantId: freebie.freebieVariantId,
+        freebieVariantName: freebie.freebieVariantName,
+        freebiePriceMinor: Number(freebie.freebiePriceMinor || 14900),
+        freebieImageUrl: freebie.freebieImageUrl,
+        maxCustomersLimit: freebie.maxCustomersLimit !== undefined ? Number(freebie.maxCustomersLimit) : 11,
+        isActive: freebie.isActive !== undefined ? Boolean(freebie.isActive) : true,
+        isBannerVisible: freebie.isBannerVisible !== undefined ? Boolean(freebie.isBannerVisible) : true,
+        bannerText: freebie.bannerText,
+      });
+
+      revalidatePath("/cart");
+      revalidatePath("/checkout");
+      revalidatePath("/");
+      revalidatePath("/shop");
+      return NextResponse.json({ success: true, freebie: created });
+    }
+
+    if (action === "update_freebie") {
+      const { id, patch } = body;
+      if (!id || !patch) {
+        return NextResponse.json({ success: false, error: "Missing id or patch" }, { status: 400 });
+      }
+      const updated = await updateFreebieScheme(id, patch);
+      if (!updated) {
+        return NextResponse.json({ success: false, error: "Freebie scheme not found" }, { status: 404 });
+      }
+
+      revalidatePath("/cart");
+      revalidatePath("/checkout");
+      revalidatePath("/");
+      revalidatePath("/shop");
+      return NextResponse.json({ success: true, freebie: updated });
+    }
+
+    if (action === "delete_freebie") {
+      const { id } = body;
+      if (!id) {
+        return NextResponse.json({ success: false, error: "Missing freebie scheme id" }, { status: 400 });
+      }
+      await deleteFreebieScheme(id);
+
+      revalidatePath("/cart");
+      revalidatePath("/checkout");
+      revalidatePath("/");
+      revalidatePath("/shop");
       return NextResponse.json({ success: true });
     }
 

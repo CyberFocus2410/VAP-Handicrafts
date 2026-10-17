@@ -7,6 +7,7 @@ import { enqueueOrderPaidEmails, enqueueEmail } from "@/server/email/outbox";
 import { EmailOrderDetails } from "@/server/email/types";
 import { getSupabaseAdminClient, getSupabaseAnonClient } from "@/server/db/supabase";
 import { env } from "@/lib/env";
+import { incrementFreebieClaim } from "@/server/admin/promotions-service";
 
 export interface StoredOrder {
   id: string;
@@ -47,6 +48,7 @@ export interface StoredOrder {
   paymentProofSubmittedAt?: string;
   paymentVerifiedAt?: string;
   couponCode?: string;
+  freebieSchemeId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -313,7 +315,10 @@ export async function createOrder(params: {
     quantity: line.quantity,
     priceMinor: line.priceMinor,
     subtotalMinor: line.subtotalMinor,
-    customization: line.customization as Record<string, unknown> | undefined,
+    customization: {
+      ...((line.customization as Record<string, unknown> | undefined) || {}),
+      ...(line.isFreebie ? { isFreebie: true, originalValueMinor: line.originalValueMinor } : {}),
+    },
   }));
 
   const storedOrder: StoredOrder = {
@@ -332,6 +337,7 @@ export async function createOrder(params: {
     accessToken,
     accessTokenHash,
     couponCode: validatedCart.appliedCoupon?.code,
+    freebieSchemeId: validatedCart.freebie?.isUnlocked ? validatedCart.freebie.schemeId : undefined,
     items: orderItems,
     stockReservations,
     createdAt: new Date().toISOString(),
@@ -342,6 +348,10 @@ export async function createOrder(params: {
     import("@/server/admin/promotions-service")
       .then((m) => m.incrementCouponUsage(validatedCart.appliedCoupon!.code))
       .catch(() => {});
+  }
+
+  if (validatedCart.freebie?.isUnlocked && validatedCart.freebie.schemeId) {
+    incrementFreebieClaim(validatedCart.freebie.schemeId).catch(() => {});
   }
 
   memoryOrders.set(orderReference, storedOrder);

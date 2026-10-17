@@ -87,6 +87,8 @@ export interface ValidatedCartLine {
   inStock: boolean;
   availableStock: number;
   customization?: CustomizationValues;
+  isFreebie?: boolean;
+  originalValueMinor?: number;
 }
 
 export interface CartNotice {
@@ -102,6 +104,23 @@ export interface PublicCouponOffer {
   discountDisplay: string;
   minOrderMinor?: number;
   description?: string;
+}
+
+export interface FreebieUnlockProgress {
+  schemeId: string;
+  title: string;
+  freebieName: string;
+  freebieImageUrl: string;
+  freebieWorthMinor: number;
+  minOrderMinor: number;
+  currentSubtotalMinor: number;
+  amountNeededMinor: number;
+  isUnlocked: boolean;
+  percentage: number;
+  maxCustomers: number;
+  claimedCount: number;
+  remainingSpots: number;
+  bannerText?: string;
 }
 
 export interface ValidatedCartResponse {
@@ -121,4 +140,5 @@ export interface ValidatedCartResponse {
     message?: string;
   };
   availableOffers?: PublicCouponOffer[];
+  freebie?: FreebieUnlockProgress | null;
 }

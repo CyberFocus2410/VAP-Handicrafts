@@ -9,6 +9,12 @@ import {
   listPublicStorefrontCoupons,
   updateDiscountCoupon,
   deleteDiscountCoupon,
+  listFreebieSchemes,
+  getActiveFreebieScheme,
+  createFreebieScheme,
+  updateFreebieScheme,
+  deleteFreebieScheme,
+  incrementFreebieClaim,
 } from "@/server/admin/promotions-service";
 
 describe("Promotions & Coupon Service", () => {
@@ -185,5 +191,50 @@ describe("Promotions & Coupon Service", () => {
     // Must be gone from list
     const all = await listDiscountCoupons();
     expect(all.some((c) => c.id === coupon.id)).toBe(false);
+  });
+
+  it("lists, creates, pauses, resumes and deletes freebie gift schemes", async () => {
+    // 1. Initial list has default scheme
+    const initialList = await listFreebieSchemes();
+    expect(initialList.length).toBeGreaterThanOrEqual(1);
+
+    const defaultScheme = initialList.find((s) => s.minOrderMinor === 29900);
+    expect(defaultScheme).toBeDefined();
+    expect(defaultScheme?.freebiePriceMinor).toBe(14900); // Worth ₹149
+    expect(defaultScheme?.bannerText.toLowerCase()).toContain("worth rupees 149");
+
+    // 2. Create custom freebie scheme
+    const created = await createFreebieScheme({
+      title: "Festive Special Gift",
+      minOrderMinor: 49900, // ₹499
+      freebieProductName: "Handmade Cowrie Charm Keychain",
+      freebiePriceMinor: 19900, // ₹199
+      maxCustomersLimit: 5,
+      isActive: true,
+      bannerText: "Free gift worth ₹199 on ₹499+ for 5 customers!",
+    });
+
+    expect(created.id).toBeDefined();
+    expect(created.title).toBe("Festive Special Gift");
+    expect(created.claimedCount).toBe(0);
+
+    // 3. Increment claim
+    await incrementFreebieClaim(created.id);
+    let updatedList = await listFreebieSchemes();
+    let target = updatedList.find((s) => s.id === created.id);
+    expect(target?.claimedCount).toBe(1);
+
+    // 4. Pause scheme
+    await updateFreebieScheme(created.id, { isActive: false });
+    updatedList = await listFreebieSchemes();
+    target = updatedList.find((s) => s.id === created.id);
+    expect(target?.isActive).toBe(false);
+
+    // 5. Delete scheme
+    const deleted = await deleteFreebieScheme(created.id);
+    expect(deleted).toBe(true);
+
+    const afterDelete = await listFreebieSchemes();
+    expect(afterDelete.some((s) => s.id === created.id)).toBe(false);
   });
 });

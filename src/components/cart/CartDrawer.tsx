@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Sparkles, Tag } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Sparkles, Tag, Gift } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCartStore } from "@/lib/cart/cart-store";
 import { type ValidatedCartResponse } from "@/lib/cart/types";
@@ -74,6 +74,7 @@ export function CartDrawer() {
   }, [items, couponCode, hasHydrated]);
 
   const handleUpdateQty = (lineId: string, currentQty: number, delta: number, name: string) => {
+    if (lineId.startsWith("freebie-")) return;
     const newQty = currentQty + delta;
     updateQuantity(lineId, newQty);
     setLiveAnnouncement(
@@ -84,6 +85,10 @@ export function CartDrawer() {
   };
 
   const handleRemove = (lineId: string, name: string) => {
+    if (lineId.startsWith("freebie-")) {
+      setLiveAnnouncement("The freebie gift is complimentary and auto-managed with your order total.");
+      return;
+    }
     removeItem(lineId);
     setLiveAnnouncement(`Removed ${name} from cart.`);
   };
@@ -98,6 +103,7 @@ export function CartDrawer() {
   const freeShippingThreshold = validatedCart?.freeShippingThresholdMinor ?? 99900;
   const neededForFreeShipping = validatedCart?.amountNeededForFreeShippingMinor ?? 99900;
   const freeShippingProgress = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
+  const freebie = validatedCart?.freebie;
 
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,22 +159,50 @@ export function CartDrawer() {
             List of items in your shopping bag and subtotal summary
           </div>
 
-          {/* Free Shipping Banner */}
+          {/* Promotional Progress Banners */}
           {items.length > 0 && (
-            <div className="bg-sand/40 border-b border-border/60 px-5 py-3">
-              <div className="flex items-center justify-between text-xs text-cocoa mb-1.5 font-medium">
-                <span>
-                  {neededForFreeShipping > 0
-                    ? `Add ${formatINR(neededForFreeShipping)} more for FREE shipping!`
-                    : "You have unlocked FREE standard delivery! 🎉"}
-                </span>
-                <span className="font-semibold text-rose-deep">{freeShippingProgress}%</span>
-              </div>
-              <div className="w-full bg-sand rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-rose-deep h-full rounded-full transition-all duration-500"
-                  style={{ width: `${freeShippingProgress}%` }}
-                />
+            <div className="border-b border-border/60 divide-y divide-border/40">
+              {/* Freebie Gift Progress Banner */}
+              {freebie && (
+                <div className="bg-amber-500/10 px-5 py-2.5">
+                  <div className="flex items-center justify-between text-xs text-cocoa mb-1 font-medium">
+                    <span className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-200">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>
+                        {freebie.isUnlocked
+                          ? `🎉 FREE GIFT worth ₹${Math.round(freebie.freebieWorthMinor / 100)} unlocked at ₹0!`
+                          : `Add ₹${Math.round(freebie.amountNeededMinor / 100)} more for FREE GIFT (Worth ₹${Math.round(freebie.freebieWorthMinor / 100)})!`}
+                      </span>
+                    </span>
+                    <span className="font-bold text-amber-700">{freebie.percentage}%</span>
+                  </div>
+                  <div className="w-full bg-amber-500/20 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        freebie.isUnlocked ? "bg-emerald-600" : "bg-amber-600"
+                      }`}
+                      style={{ width: `${freebie.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Free Shipping Banner */}
+              <div className="bg-sand/40 px-5 py-2.5">
+                <div className="flex items-center justify-between text-xs text-cocoa mb-1 font-medium">
+                  <span>
+                    {neededForFreeShipping > 0
+                      ? `Add ${formatINR(neededForFreeShipping)} more for FREE delivery!`
+                      : "You have unlocked FREE standard delivery! 🎉"}
+                  </span>
+                  <span className="font-semibold text-rose-deep">{freeShippingProgress}%</span>
+                </div>
+                <div className="w-full bg-sand rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-rose-deep h-full rounded-full transition-all duration-500"
+                    style={{ width: `${freeShippingProgress}%` }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -227,22 +261,39 @@ export function CartDrawer() {
                         >
                           {line.productName}
                         </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(line.lineId, line.productName)}
-                          className="text-cocoa-muted hover:text-error transition-colors p-1"
-                          aria-label={`Remove ${line.productName} from cart`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {line.isFreebie ? (
+                          <span
+                            className="text-amber-600 p-1 cursor-default"
+                            title="Complimentary gift unlocked with your order"
+                          >
+                            <Gift className="w-3.5 h-3.5" />
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(line.lineId, line.productName)}
+                            className="text-cocoa-muted hover:text-error transition-colors p-1"
+                            aria-label={`Remove ${line.productName} from cart`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
 
-                      <p className="text-xs text-cocoa-muted mt-0.5">
-                        Option: {line.variantName}
-                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                        <p className="text-xs text-cocoa-muted">
+                          Option: {line.variantName}
+                        </p>
+                        {line.isFreebie && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                            <span>FREE GIFT (Worth ₹{Math.round((line.originalValueMinor || 14900) / 100)})</span>
+                          </span>
+                        )}
+                      </div>
 
                       {/* Customization Details Pill */}
-                      {line.customization && (
+                      {line.customization && !line.isFreebie && (
                         <div className="mt-2 rounded-md bg-sand/60 p-2 text-[11px] text-cocoa space-y-0.5 border border-cocoa/5">
                           <div className="flex items-center gap-1 font-semibold text-rose-deep">
                             <Sparkles className="w-3 h-3" />
@@ -276,32 +327,47 @@ export function CartDrawer() {
 
                     {/* Price and Quantity Stepper */}
                     <div className="flex items-center justify-between pt-3 border-t border-border/40 mt-2">
-                      <div className="flex items-center gap-2 border border-border rounded-full px-2 py-1 bg-surface">
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateQty(line.lineId, line.quantity, -1, line.productName)}
-                          className="text-cocoa hover:text-rose-deep transition-colors"
-                          aria-label={`Decrease quantity of ${line.productName}`}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-xs font-semibold text-cocoa min-w-4 text-center">
-                          {line.quantity}
+                      {line.isFreebie ? (
+                        <span className="text-[11px] font-medium text-cocoa-muted italic bg-sand/60 px-2.5 py-1 rounded-full border border-border/60">
+                          1 free gift unlocked
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateQty(line.lineId, line.quantity, 1, line.productName)}
-                          className="text-cocoa hover:text-rose-deep transition-colors"
-                          aria-label={`Increase quantity of ${line.productName}`}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="flex items-center gap-2 border border-border rounded-full px-2 py-1 bg-surface">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQty(line.lineId, line.quantity, -1, line.productName)}
+                            className="text-cocoa hover:text-rose-deep transition-colors"
+                            aria-label={`Decrease quantity of ${line.productName}`}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-xs font-semibold text-cocoa min-w-4 text-center">
+                            {line.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQty(line.lineId, line.quantity, 1, line.productName)}
+                            className="text-cocoa hover:text-rose-deep transition-colors"
+                            aria-label={`Increase quantity of ${line.productName}`}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
 
                       <div className="text-right">
-                        <span className="text-sm font-semibold text-cocoa">
-                          {formatINR(line.subtotalMinor)}
-                        </span>
+                        {line.isFreebie ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-bold text-emerald-600">FREE</span>
+                            <span className="text-[10px] text-cocoa-muted line-through">
+                              {formatINR(line.originalValueMinor || 14900)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm font-semibold text-cocoa">
+                            {formatINR(line.subtotalMinor)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
