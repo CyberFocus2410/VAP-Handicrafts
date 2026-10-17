@@ -14,10 +14,10 @@
 | Hosting | Vercel |
 | Brand name | **VAP Handicrafts** (O-01 confirmed) |
 | Source of truth | `docs/PRD.md` (v1.0) |
-| **Current phase** | **Phase 26 Complete: Promotional Freebie Scheme, Authoritative Auto-Cart Injection, Sliding Bottom Bar & CMS Engine** |
+| **Current phase** | **Phase 27 Complete: Google Search Console Indexing Optimization & Edge ISR Pre-rendering** |
 | Last updated | 2026-10-17 |
 | Repo exists? | ✅ Yes (`main` on GitHub `CyberFocus2410/VAP-Handicrafts`) |
-| Deployable build? | ✅ Yes (27 pages/routes compiled, 0 errors, 106 unit tests green) |
+| Deployable build? | ✅ Yes (46 pages/routes compiled, 0 errors, 106 unit tests green) |
 
 ## 2. Phase Tracker
 
@@ -50,6 +50,7 @@
 | 24 Secret/Public Coupons & Resilient CMS Image Upload | ✅ Done | Secret code system enabling private discounts not shown publicly; public coupon visibility toggle with live storefront banner; pause/resume and permanent deletion of coupons in CMS; client-side image compression resizing raw phone photos (down from 10MB+ to ~250KB WebP) before upload to prevent Vercel 4.5MB payload limit errors; automated Supabase bucket creation and zero-downtime base64 Data URL fallback; 103 unit tests passing, production build 100% green. |
 | 25 Categories CMS Image Upload & 1-Click Card Photo Modification | ✅ Done | Added direct photo upload to Storefront Categories CMS (`/admin/categories`); 1-click "📷 Change Photo" button on category cards in grid for immediate live update; Add & Edit Collection modals equipped with visual image previews, camera/device file picker, client compression, and ImgBB/URL resolver; 103 unit tests passing, production build 100% green. |
 | 26 Freebie Schemes Engine & Cart Auto-Add | ✅ Done | Default scheme for ₹149 gift on ₹299 order for first 11 customers; Top announcement bar banner with live spots left; Dynamic sliding progress bar at the bottom showing how much more to add to unlock the gift; Server-authoritative auto-injection of ₹0 gift line with strikethrough value upon reaching minimum order threshold; Locked quantity and complimentary badge in Cart Drawer and Cart Page; Full CMS management in `/admin/promotions` to list, create, pause/resume, and delete freebie schemes; 106 unit tests passing, production build green. |
+| 27 Google Search Console Indexing Optimization | ✅ Done | Resolved "Crawled - currently not indexed" status reported by GSC; transitioned homepage `/` and root layout from cold-start forced-dynamic SSR to ultra-fast Edge ISR pre-rendering (`revalidate = 60`); added rich Schema.org `OnlineStore` and `ItemList` product schemas for instant merchant indexation signals; cleaned up redundant verification tags; aligned canonical URLs with dynamic XML sitemaps; 106 tests passing, all 46 routes statically generated with 0 errors. |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ accepted (criteria demonstrated) · ⛔ blocked
 
