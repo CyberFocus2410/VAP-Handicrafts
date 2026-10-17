@@ -28,7 +28,11 @@ import {
   Gift,
   Edit3,
   Users,
+  Upload,
+  Camera,
+  Loader2,
 } from "lucide-react";
+import { compressImageForUpload, fileToDataUrl } from "@/lib/images/client-compress";
 
 export const AdminPromotionsView: React.FC = () => {
   const [shipping, setShipping] = useState<ShippingConfig>({
@@ -42,6 +46,10 @@ export const AdminPromotionsView: React.FC = () => {
   const [availableProducts, setAvailableProducts] = useState<
     Array<{ id: string; name: string; slug: string; priceMinor: number; imageUrl?: string }>
   >([]);
+
+  // Device upload states for freebie schemes
+  const [uploadingSchemeId, setUploadingSchemeId] = useState<string | null>(null);
+  const [isUploadingFreebieFormImage, setIsUploadingFreebieFormImage] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(true);
   const [savingShipping, setSavingShipping] = useState(false);
@@ -165,6 +173,81 @@ export const AdminPromotionsView: React.FC = () => {
     }
     setFreebieVariantId(`var-${prod.id}`);
     setFreebieVariantName("Complimentary Freebie Gift");
+  };
+
+  // Upload freebie image from device with client-side compression
+  const uploadSchemeImage = async (rawFile: File): Promise<string> => {
+    const file = await compressImageForUpload(rawFile);
+    let finalUrl: string | null = null;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/cms/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success && data?.url) {
+        finalUrl = data.url;
+      }
+    } catch (err) {
+      console.warn("[Scheme Upload] Server fetch notice, utilizing local fallback:", err);
+    }
+
+    if (!finalUrl) {
+      finalUrl = await fileToDataUrl(file);
+    }
+    return finalUrl;
+  };
+
+  // 1-Click photo update directly from freebie scheme card
+  const handleSchemeCardImageUpload = async (scheme: FreebieScheme, rawFile: File) => {
+    setUploadingSchemeId(scheme.id);
+    try {
+      const finalUrl = await uploadSchemeImage(rawFile);
+      if (finalUrl) {
+        const res = await fetch("/api/admin/promotions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_freebie",
+            id: scheme.id,
+            patch: { freebieImageUrl: finalUrl },
+          }),
+        });
+        const data = await res.json().catch(() => null);
+        if (data?.success && data?.freebie) {
+          setFreebies((prev) =>
+            prev.map((s) => (s.id === scheme.id ? data.freebie : s))
+          );
+        } else {
+          setFreebies((prev) =>
+            prev.map((s) => (s.id === scheme.id ? { ...s, freebieImageUrl: finalUrl } : s))
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed to upload scheme image:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingSchemeId(null);
+    }
+  };
+
+  // Device upload from the Create / Edit Freebie scheme form
+  const handleFreebieFormImageUpload = async (rawFile: File) => {
+    setIsUploadingFreebieFormImage(true);
+    try {
+      const finalUrl = await uploadSchemeImage(rawFile);
+      if (finalUrl) {
+        setFreebieImageUrl(finalUrl);
+      }
+    } catch (err) {
+      console.error("Failed to upload image in form:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingFreebieFormImage(false);
+    }
   };
 
   const handleSaveFreebie = async (e: React.FormEvent) => {
@@ -749,29 +832,63 @@ export const AdminPromotionsView: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Freebie Image URL */}
-                    <div className="sm:col-span-2 space-y-1">
-                      <label className="text-xs font-semibold text-[#2D1A16]">
-                        Gift Item Image URL
-                      </label>
-                      <div className="flex gap-3 items-center">
-                        <input
-                          type="text"
-                          value={freebieImageUrl}
-                          onChange={(e) => setFreebieImageUrl(e.target.value)}
-                          placeholder="/images/products/shell-cone-pink-crackle-bracelet.webp"
-                          className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#2D1A16]/15 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                        />
-                        {freebieImageUrl && (
-                          <div className="relative w-11 h-11 rounded-lg border border-border overflow-hidden bg-sand shrink-0">
-                            <Image
-                              src={freebieImageUrl}
-                              alt="Freebie preview"
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
+                    {/* Freebie Image & Device Upload */}
+                    <div className="sm:col-span-2 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[#2D1A16]">
+                          Gift Item Image (Upload or URL)
+                        </label>
+                        <span className="text-[11px] text-[#2D1A16]/60">
+                          Auto-compressed WebP format
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                        {/* Device Upload Button */}
+                        <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-950 border border-amber-600/30 text-xs font-bold cursor-pointer transition-colors shadow-xs shrink-0">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={isUploadingFreebieFormImage}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleFreebieFormImageUpload(f);
+                            }}
+                            className="sr-only"
+                          />
+                          {isUploadingFreebieFormImage ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-amber-800" />
+                              <span>Uploading &amp; Compressing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 text-amber-800" />
+                              <span>Upload from Device / Camera</span>
+                            </>
+                          )}
+                        </label>
+
+                        {/* Direct Image URL input */}
+                        <div className="flex-1 w-full flex gap-2 items-center">
+                          <input
+                            type="text"
+                            value={freebieImageUrl}
+                            onChange={(e) => setFreebieImageUrl(e.target.value)}
+                            placeholder="Or paste direct image URL or /images/..."
+                            className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#2D1A16]/15 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                          />
+                          {freebieImageUrl && (
+                            <div className="relative w-11 h-11 rounded-lg border-2 border-amber-600/40 overflow-hidden bg-[#EAE0D5] shrink-0 shadow-xs">
+                              <Image
+                                src={freebieImageUrl}
+                                alt="Freebie preview"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -963,20 +1080,50 @@ export const AdminPromotionsView: React.FC = () => {
 
                         {/* Details Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 items-center">
-                          {/* Freebie Item Preview */}
+                          {/* Freebie Item Preview with 1-Click Change Photo */}
                           <div className="flex items-center gap-3 bg-[#FAF5EF]/50 p-3 rounded-xl border border-[#2D1A16]/5">
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-border bg-sand shrink-0">
+                            <div className="relative w-14 h-14 rounded-lg overflow-hidden border-2 border-amber-600/40 bg-[#EAE0D5] shrink-0 shadow-xs">
                               <Image
                                 src={scheme.freebieImageUrl || "/images/products/shell-cone-pink-crackle-bracelet.webp"}
                                 alt={scheme.freebieProductName}
                                 fill
                                 className="object-cover"
                               />
+                              {uploadingSchemeId === scheme.id && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                                </div>
+                              )}
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">
-                                Freebie Gift Item
-                              </p>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">
+                                  Freebie Gift Item
+                                </p>
+                                <label className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-deep hover:text-rose-deeper cursor-pointer transition-colors">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="sr-only"
+                                    disabled={uploadingSchemeId === scheme.id}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleSchemeCardImageUpload(scheme, f);
+                                    }}
+                                  />
+                                  {uploadingSchemeId === scheme.id ? (
+                                    <>
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                      <span>Uploading...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Camera className="w-3 h-3" />
+                                      <span>Change Photo</span>
+                                    </>
+                                  )}
+                                </label>
+                              </div>
                               <p className="text-xs font-semibold text-[#2D1A16] truncate">
                                 {scheme.freebieProductName}
                               </p>
