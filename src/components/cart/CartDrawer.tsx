@@ -164,22 +164,22 @@ export function CartDrawer() {
             <div className="border-b border-border/60 divide-y divide-border/40">
               {/* Freebie Gift Progress Banner */}
               {freebie && (
-                <div className="bg-amber-500/10 px-5 py-2.5">
-                  <div className="flex items-center justify-between text-xs text-cocoa mb-1 font-medium">
-                    <span className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-200">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <div className="bg-amber-100/80 border-b border-amber-300/80 px-5 py-3">
+                  <div className="flex items-center justify-between text-xs text-cocoa mb-1.5 font-bold">
+                    <span className="flex items-center gap-1.5 text-amber-950 font-extrabold">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-700 shrink-0" />
                       <span>
                         {freebie.isUnlocked
                           ? `🎉 FREE GIFT worth ₹${Math.round(freebie.freebieWorthMinor / 100)} unlocked at ₹0!`
                           : `Add ₹${Math.round(freebie.amountNeededMinor / 100)} more for FREE GIFT (Worth ₹${Math.round(freebie.freebieWorthMinor / 100)})!`}
                       </span>
                     </span>
-                    <span className="font-bold text-amber-700">{freebie.percentage}%</span>
+                    <span className="font-extrabold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded text-[11px]">{freebie.percentage}%</span>
                   </div>
-                  <div className="w-full bg-amber-500/20 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-[#E8DDD1] rounded-full h-2 overflow-hidden border border-amber-300/70 shadow-inner">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        freebie.isUnlocked ? "bg-emerald-600" : "bg-amber-600"
+                        freebie.isUnlocked ? "bg-gradient-to-r from-emerald-600 to-teal-600" : "bg-gradient-to-r from-amber-500 to-[#96483E]"
                       }`}
                       style={{ width: `${freebie.percentage}%` }}
                     />
@@ -188,16 +188,16 @@ export function CartDrawer() {
               )}
 
               {/* Free Shipping Banner */}
-              <div className="bg-sand/40 px-5 py-2.5">
-                <div className="flex items-center justify-between text-xs text-cocoa mb-1 font-medium">
+              <div className="bg-[#F5EDE4] px-5 py-3 border-b border-border/80">
+                <div className="flex items-center justify-between text-xs text-cocoa mb-1.5 font-bold">
                   <span>
                     {neededForFreeShipping > 0
                       ? `Add ${formatINR(neededForFreeShipping)} more for FREE delivery!`
                       : "You have unlocked FREE standard delivery! 🎉"}
                   </span>
-                  <span className="font-semibold text-rose-deep">{freeShippingProgress}%</span>
+                  <span className="font-extrabold text-rose-deep bg-blush/60 px-1.5 py-0.5 rounded text-[11px]">{freeShippingProgress}%</span>
                 </div>
-                <div className="w-full bg-sand rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-[#E5D8CA] rounded-full h-2 overflow-hidden border border-border/60 shadow-inner">
                   <div
                     className="bg-rose-deep h-full rounded-full transition-all duration-500"
                     style={{ width: `${freeShippingProgress}%` }}

@@ -140,27 +140,27 @@ export function CartPageView() {
           <div className="space-y-3">
             {/* Freebie Gift Banner */}
             {freebie && (
-              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
-                <div className="flex items-center justify-between text-xs text-cocoa font-medium mb-2">
-                  <span className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-200">
-                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+              <div className="rounded-lg bg-amber-100/90 border-2 border-amber-300 p-4 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-cocoa font-bold mb-2">
+                  <span className="flex items-center gap-1.5 text-amber-950 font-extrabold text-xs sm:text-sm">
+                    <Sparkles className="w-4 h-4 text-amber-700 shrink-0" />
                     <span>
                       {freebie.isUnlocked
                         ? `🎉 FREE GIFT worth ₹${Math.round(freebie.freebieWorthMinor / 100)} unlocked and auto-added to your cart at ₹0!`
                         : `Add ₹${Math.round(freebie.amountNeededMinor / 100)} more to unlock a FREE GIFT worth ₹${Math.round(freebie.freebieWorthMinor / 100)}!`}
                     </span>
                   </span>
-                  <span className="font-bold text-amber-700">{freebie.percentage}%</span>
+                  <span className="font-extrabold text-amber-950 bg-amber-200/90 px-2 py-0.5 rounded text-xs">{freebie.percentage}%</span>
                 </div>
-                <div className="w-full bg-amber-500/20 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-[#E8DDD1] rounded-full h-2.5 overflow-hidden border border-amber-300/80 shadow-inner">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      freebie.isUnlocked ? "bg-emerald-600" : "bg-amber-600"
+                      freebie.isUnlocked ? "bg-gradient-to-r from-emerald-600 to-teal-600" : "bg-gradient-to-r from-amber-500 to-[#96483E]"
                     }`}
                     style={{ width: `${freebie.percentage}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-cocoa-muted mt-1.5">
+                <p className="text-[11px] text-cocoa font-medium mt-1.5">
                   {freebie.isUnlocked
                     ? "Complimentary gift added below at ₹0! Limited offer for early customers."
                     : `Minimum qualifying order: ₹${Math.round(freebie.minOrderMinor / 100)} • First ${freebie.maxCustomers} customers (${freebie.remainingSpots} spots remaining)`}
@@ -169,16 +169,16 @@ export function CartPageView() {
             )}
 
             {/* Free Shipping Alert Banner */}
-            <div className="rounded-lg bg-sand/40 border border-border p-4">
-              <div className="flex items-center justify-between text-xs text-cocoa font-medium mb-2">
+            <div className="rounded-lg bg-[#F5EDE4] border border-border/90 p-4 shadow-xs">
+              <div className="flex items-center justify-between text-xs text-cocoa font-bold mb-2">
                 <span>
                   {neededForFreeShipping > 0
                     ? `Add ${formatINR(neededForFreeShipping)} more for FREE delivery across India!`
                     : "You qualify for FREE standard shipping! 🎉"}
                 </span>
-                <span className="font-semibold text-rose-deep">{progressPercent}%</span>
+                <span className="font-extrabold text-rose-deep bg-blush/60 px-2 py-0.5 rounded text-xs">{progressPercent}%</span>
               </div>
-              <div className="w-full bg-sand rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-[#E5D8CA] rounded-full h-2.5 overflow-hidden border border-border/60 shadow-inner">
                 <div
                   className="bg-rose-deep h-full rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}

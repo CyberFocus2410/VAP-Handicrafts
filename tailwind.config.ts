@@ -29,6 +29,7 @@ const config: Config = {
           DEFAULT: "var(--cocoa)",
           muted: "var(--cocoa-muted)",
         },
+        sand: "var(--sand)",
         beige: "var(--beige)",
         lavender: "var(--lavender)",
         sage: "var(--sage)",

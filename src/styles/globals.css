@@ -3,24 +3,25 @@
 @tailwind utilities;
 
 :root {
-  /* PRD Palette + Accessible Deep Variants (ADR-006 & DESIGN.md §1) */
+  /* PRD Palette + High-Clarity Accessible Variants */
   --bg: #FAF5EF;
-  --surface: #FFFDF9;
+  --surface: #FFFFFF;
   --blush: #E8C1BC;
   --rose: #C9857B;          /* decorative only */
-  --rose-deep: #A15B52;     /* buttons, links (5.0:1 on ivory, 4.69:1 on bg) */
-  --rose-deeper: #9A554D;   /* hover/active state */
-  --cocoa: #4A2D28;         /* text (11.41:1 on bg) */
-  --cocoa-muted: #6B4F49;   /* secondary text (6.82:1 on bg) */
+  --rose-deep: #96483E;     /* buttons, links (5.6:1 on white, 5.2:1 on bg) */
+  --rose-deeper: #833A31;   /* hover/active state */
+  --cocoa: #3A1F1A;         /* text (14.2:1 on bg, 15.1:1 on white) */
+  --cocoa-muted: #573A34;   /* secondary text (8.2:1 on bg) */
   --beige: #E7D8C7;
+  --sand: #EAE0D5;          /* badges, progress tracks, neutral fills */
   --lavender: #C7B5D9;
   --sage: #B8C0A6;
   --gold: #B69A67;          /* decorative only */
-  --gold-deep: #7A6232;     /* readable gold (5.35:1 on bg) */
-  --success: #2F6B3F;       /* confirmations (5.88:1 on bg) */
-  --error: #A32B2B;         /* errors (6.59:1 on bg) */
-  --border: rgba(74, 45, 40, 0.14);
-  --ring: #6E3F38;          /* focus ring, >=3:1 contrast */
+  --gold-deep: #705423;     /* readable gold (6.2:1 on bg) */
+  --success: #256134;       /* confirmations (6.5:1 on bg) */
+  --error: #9C2222;         /* errors (7.2:1 on bg) */
+  --border: rgba(58, 31, 26, 0.20); /* crisp cards, inputs & dividers */
+  --ring: #5E322C;          /* focus ring, >=4.5:1 contrast */
 }
 
 @layer base {
