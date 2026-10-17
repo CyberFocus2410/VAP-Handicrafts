@@ -6,9 +6,9 @@ import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { PersonalizedGiftFeature } from "@/components/home/PersonalizedGiftFeature";
 import { BrandStory } from "@/components/home/BrandStory";
 import { getSiteContentConfig } from "@/server/admin/cms-service";
-import { listCategories } from "@/server/catalogue/queries";
+import { listCategories, listProducts } from "@/server/catalogue/queries";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "VAP Handicrafts | Shell Jewellery & Personalized Gifts",
@@ -59,13 +59,43 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [contentConfig, categories] = await Promise.all([
+  const [contentConfig, categories, productsResult] = await Promise.all([
     getSiteContentConfig().catch(() => null),
     listCategories().catch(() => []),
+    listProducts({ limit: 12 }).catch(() => ({ products: [] })),
   ]);
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+      ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+      : "https://vap-handicrafts.vercel.app";
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Featured Handcrafted Jewellery & Personalized Gifts",
+    description:
+      "Explore our collection of handcrafted shell bracelets, cowrie chokers, conch necklaces, and customizable keepsake cards.",
+    itemListElement: productsResult.products.map((p, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: p.name,
+      url: `${baseUrl}/shop/${p.slug}`,
+      image: p.images[0]?.url
+        ? p.images[0].url.startsWith("http")
+          ? p.images[0].url
+          : `${baseUrl}${p.images[0].url}`
+        : undefined,
+    })),
+  };
 
   return (
     <div className="flex flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
+
       {/* 1. Hero Section (dynamic CMS content) */}
       <HeroSection hero={contentConfig?.hero} />
 

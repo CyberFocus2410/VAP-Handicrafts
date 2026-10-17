@@ -11,7 +11,7 @@ import { FreebieUnlockSlidingBar } from "@/components/cart/FreebieUnlockSlidingB
 import { CookieConsentBanner } from "@/components/ui/cookie-consent";
 import "@/styles/globals.css";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const fontDisplay = Cormorant_Garamond({
   subsets: ["latin"],
@@ -109,7 +109,6 @@ export const metadata: Metadata = {
   verification: {
     google: "googlea03686d795340eb0",
     other: {
-      "google-site-verification": ["googlea03686d795340eb0", "googlea03686d795340eb0.html"],
       "msvalidate.01": "E5581AA9ABA3AF2FE0E16A129B506495",
     },
   },
@@ -120,9 +119,28 @@ const baseUrl =
     ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
     : "https://vap-handicrafts.vercel.app";
 
+const storeSchema = {
+  "@context": "https://schema.org",
+  "@type": "OnlineStore",
+  "@id": `${baseUrl}/#store`,
+  name: BRAND.name,
+  url: baseUrl,
+  logo: `${baseUrl}/images/brand/logo.png`,
+  image: `${baseUrl}/og-image.png`,
+  description: BRAND.description,
+  priceRange: "₹149 - ₹1,499",
+  currenciesAccepted: "INR",
+  paymentAccepted: "UPI, Credit Card, Debit Card, NetBanking",
+  address: {
+    "@type": "PostalAddress",
+    addressCountry: "IN",
+  },
+};
+
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": `${baseUrl}/#organization`,
   name: BRAND.name,
   legalName: BRAND.legalName,
   url: baseUrl,
@@ -142,6 +160,7 @@ const organizationSchema = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": `${baseUrl}/#website`,
   name: BRAND.name,
   url: baseUrl,
   description: BRAND.description,
@@ -168,6 +187,10 @@ export default function RootLayout({
       className={`${fontDisplay.variable} ${fontSans.variable} scroll-smooth`}
     >
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(storeSchema) }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
